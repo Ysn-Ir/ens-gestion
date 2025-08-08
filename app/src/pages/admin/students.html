@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestion des Étudiants</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <style>
+        body {
+            margin: 0;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            height: 100vh;
+            width: 220px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #343a40;
+            padding-top: 60px;
+            color: #fff;
+        }
+
+        .sidebar h4 {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #495057;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 12px 20px;
+            color: #adb5bd;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .sidebar a:hover {
+            background-color: #495057;
+            color: #ffffff;
+        }
+
+        .content {
+            margin-left: 220px;
+            padding: 20px;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+
+        .welcome-message {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .filter-group {
+            border-left: 5px solid #6c757d;
+            background-color: #fdfdfd;
+            transition: background-color 0.3s;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group:hover {
+            background-color: #f1f1f1;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c5282;
+            font-size: 0.9rem;
+        }
+
+        .table-responsive {
+            margin-top: 20px;
+        }
+
+        .table thead th {
+            background-color: #343a40;
+            color: white;
+            font-weight: 600;
+        }
+
+        .table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .toast {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            background-color: #343a40;
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .modal-content {
+            border-radius: 10px;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 10px;
+            border: 2px dashed #6c757d;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .file-upload-label:hover {
+            background-color: #e9ecef;
+        }
+
+        .file-upload-label i {
+            font-size: 1.5rem;
+            color: #6c757d;
+        }
+
+        .file-upload-label.selected {
+            border-color: #28a745;
+            background-color: #e6f4e9;
+        }
+
+        .file-upload-label.selected i {
+            color: #28a745;
+        }
+
+        .file-upload-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+
+        .import-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <button id="logoutBtn" class="btn btn-danger logout-btn">Déconnexion</button>
+
+    <div class="sidebar">
+        <h4>Menu</h4>
+        <a href="etudiants.html">Étudiants</a>
+        <a href="professeurs.html">Professeurs</a>
+        <a href="depart.html">Départements</a>
+        <a href="filieres.html">Filières</a>
+        <a href="modules.html">Modules</a>
+        <a href="notes.html">Notes</a>
+        <a href="parametres.html">Paramètres</a>
+    </div>
+
+    <div class="content">
+        <div class="welcome-message mb-4">
+            Bonjour <span id="usernameDisplay"></span> !
+        </div>
+        <div class="alert alert-info">
+            Vous êtes connecté en tant que: <strong id="userRole"></strong>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3">
+            <div class="p-2">
+                <h2>Gestion des Étudiants</h2>
+            </div>
+            <div class="p-2">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addStudentModal" id="btnAddStudent">
+                    <i class="bi bi-plus-circle me-1"></i> Ajouter Étudiant
+                </button>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importStudentsModal" id="btnImportStudents">
+                <i class="bi bi-upload me-1"></i> Importer Étudiants
+            </button>
+        </div>
+
+        <div class="modal fade" id="importStudentsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <form id="importStudentsForm" enctype="multipart/form-data">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Importer des Étudiants depuis CSV</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="csvFile" class="form-label required">Fichier CSV</label>
+                                <label class="file-upload-label" id="fileUploadLabel">
+                                    <i class="bi bi-upload"></i>
+                                    <p class="mb-0" id="fileUploadText">Cliquez pour sélectionner un fichier CSV</p>
+                                    <input type="file" class="form-control d-none" id="csvFile" accept=".csv" required />
+                                </label>
+                                <div class="file-upload-info">
+                                    Le fichier CSV doit contenir les colonnes suivantes : username, password, email, cin, cne, nom, prenom, date_naissance, nationalite, telephone, adresse, department_id, field_id, cycle_id, group_id, annee_id, semestre_id, section_id
+                                </div>
+                            </div>
+                            <div id="importResults" class="import-results d-none">
+                                <h6>Résultats de l'importation :</h6>
+                                <ul id="importResultsList" class="mb-0"></ul>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-primary" id="importBtn">
+                                <span class="spinner-border spinner-border-sm d-none" id="importSpinner"></span>
+                                Importer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <div class="row mb-3 g-3">
+                <div class="col-md-2">
+                    <div class="filter-label">Année</div>
+                    <select class="form-select" id="yearFilter">
+                        <option value="">Toutes les années</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Département</div>
+                    <select class="form-select" id="departmentFilter">
+                        <option value="">Tous les départements</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Cycles</div>
+                    <select class="form-select" id="cycleFilter">
+                        <option value="">Tous les Cycles</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Filière</div>
+                    <select class="form-select" id="filiereFilter">
+                        <option value="">Toutes les filières</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Etape</div>
+                    <select class="form-select" id="etapeFilter">
+                        <option value="">Toutes les étapes</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Semestre</div>
+                    <select class="form-select" id="semesterFilter">
+                        <option value="">Tous les semestres</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Section</div>
+                    <select class="form-select" id="sectionFilter">
+                        <option value="">Toutes les sections</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label">Groupe</div>
+                    <select class="form-select" id="groupeFilter">
+                        <option value="">Tous les groupes</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="filter-label">Recherche</div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Rechercher..." />
+                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-label"> </div>
+                    <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>CNE</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Email</th>
+                        <th>Département</th>
+                        <th>Filière</th>
+                        <th>Année</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTable">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted" id="paginationInfo">Chargement en cours...</div>
+            <nav>
+                <ul class="pagination justify-content-center" id="pagination">
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form id="studentForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Ajouter un Étudiant</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="studentId" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label required">Nom d'utilisateur</label>
+                                <input type="text" class="form-control" id="username" required />
+                                <div class="form-text">Doit être unique</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label required">Mot de passe</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" required minlength="8" />
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Minimum 8 caractères</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cne" class="form-label required">CNE</label>
+                                <input type="text" class="form-control" id="cne" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label required">Nom</label>
+                                <input type="text" class="form-control" id="lastName" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label required">Prénom</label>
+                                <input type="text" class="form-control" id="firstName" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label required">Email</label>
+                                <input type="email" class="form-control" id="email" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Téléphone</label>
+                                <input type="tel" class="form-control" id="phone" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="department" class="form-label required">Département</label>
+                                <select class="form-select" id="department" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="filiere" class="form-label required">Filière</label>
+                                <select class="form-select" id="filiere" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="year" class="form-label required">Année</label>
+                                <select class="form-select" id="year" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cycle_id" class="form-label required">Cycle</label>
+                                <select class="form-select" id="cycle_id" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="etape_id" class="form-label required">Étape</label>
+                                <select class="form-select" id="etape_id" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="semester_id" class="form-label required">Semestre</label>
+                                <select class="form-select" id="semester_id" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="section_id" class="form-label required">Section</label>
+                                <select class="form-select" id="section_id" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="groupe_id" class="form-label required">Groupe</label>
+                                <select class="form-select" id="groupe_id" required>
+                                    <option value="">Chargement...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cin" class="form-label">CIN</label>
+                                <input type="text" class="form-control" id="cin" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="birthdate" class="form-label">Date de naissance</label>
+                                <input type="date" class="form-control" id="birthdate" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nationality" class="form-label">Nationalité</label>
+                                <input type="text" class="form-control" id="nationality" value="Marocaine" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="address" class="form-label">Adresse</label>
+                                <input type="text" class="form-control" id="address" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary" id="saveBtn">
+                            <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer cet étudiant ?</p>
+                    <p class="fw-bold" id="deleteStudentName"></p>
+                    <p class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-danger" id="confirmDeleteBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="deleteSpinner"></span>
+                        Supprimer définitivement
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modulesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modulesModalTitle">Modules de l'Étudiant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover align-middle text-center">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Sélection</th>
+                                    <th>ID</th>
+                                    <th>Nom du Module</th>
+                                    <th>Code</th>
+                                    <th>Cycle</th>
+                                    <th>Filière</th>
+                                    <th>Étape</th>
+                                    <th>Semestre</th>
+                                    <th>Année</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modulesTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-primary" id="saveModulesBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="saveModulesSpinner"></span>
+                        Enregistrer les modules sélectionnés
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-check-circle-fill text-success me-2" id="toastIcon"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Opération effectuée avec succès
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const yearFilter = document.getElementById('yearFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const cycleFilter = document.getElementById('cycleFilter');
+    const filiereFilter = document.getElementById('filiereFilter');
+    const etapeFilter = document.getElementById('etapeFilter');
+    const semesterFilter = document.getElementById('semesterFilter');
+    const sectionFilter = document.getElementById('sectionFilter');
+    const groupeFilter = document.getElementById('groupeFilter');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+    const departmentSelect = document.getElementById('department');
+    const filiereSelect = document.getElementById('filiere');
+    const yearSelect = document.getElementById('year');
+    const cycleSelect = document.getElementById('cycle_id');
+    const etapeSelect = document.getElementById('etape_id');
+    const semesterSelect = document.getElementById('semester_id');
+    const groupeSelect = document.getElementById('groupe_id');
+    const sectionSelect = document.getElementById('section_id');
+    const studentsTable = document.querySelector('#studentsTable');
+    const pagination = document.getElementById('pagination');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const studentForm = document.getElementById('studentForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const modulesTable = document.querySelector('#modulesTable');
+    const modulesModal = new bootstrap.Modal(document.getElementById('modulesModal'));
+    const saveModulesBtn = document.getElementById('saveModulesBtn');
+    
+    const addStudentModal = new bootstrap.Modal(document.getElementById('addStudentModal'));
+    const deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
+    
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const importStudentsModal = new bootstrap.Modal(document.getElementById('importStudentsModal'));
+    const importStudentsForm = document.getElementById('importStudentsForm');
+    const csvFileInput = document.getElementById('csvFile');
+    const importBtn = document.getElementById('importBtn');
+    const importSpinner = document.getElementById('importSpinner');
+    const importResults = document.getElementById('importResults');
+    const importResultsList = document.getElementById('importResultsList');
+    const fileUploadLabel = document.getElementById('fileUploadLabel');
+    const fileUploadText = document.getElementById('fileUploadText');
+    
+    csvFileInput.addEventListener('change', () => {
+        if (csvFileInput.files.length > 0) {
+            fileUploadLabel.classList.add('selected');
+            fileUploadText.textContent = `Fichier sélectionné : ${csvFileInput.files[0].name}`;
+        } else {
+            fileUploadLabel.classList.remove('selected');
+            fileUploadText.textContent = 'Cliquez pour sélectionner un fichier CSV';
+        }
+    });
+
+    importStudentsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!csvFileInput.files.length) {
+            showNotification('Veuillez sélectionner un fichier CSV', false);
+            return;
+        }
+        const formData = new FormData();
+        formData.append('csv_file', csvFileInput.files[0]);
+        try {
+            importBtn.disabled = true;
+            importSpinner.classList.remove('d-none');
+            const response = await fetch(`${API_ENDPOINTS.importStudents}&action=importStudents`, {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken },
+                body: formData
+            });
+            const result = await response.json();
+            if (response.ok && (result.status === 200 || result.status === 207)) {
+                showNotification(result.message, true);
+                importResultsList.innerHTML = '';
+                if (result.errors && result.errors.length > 0) {
+                    result.errors.forEach(error => {
+                        const li = document.createElement('li');
+                        li.textContent = error;
+                        importResultsList.appendChild(li);
+                    });
+                    importResults.classList.remove('d-none');
+                } else {
+                    importResults.classList.add('d-none');
+                }
+                loadStudents(currentPage);
+            } else {
+                throw new Error(result.message || 'Échec de l\'importation');
+            }
+        } catch (error) {
+            console.error('Erreur lors de l\'importation:', error);
+            showNotification('Erreur lors de l\'importation: ' + error.message, false);
+        } finally {
+            importBtn.disabled = false;
+            importSpinner.classList.add('d-none');
+        }
+    });
+
+    document.getElementById('importStudentsModal').addEventListener('hidden.bs.modal', () => {
+        importStudentsForm.reset();
+        importResults.classList.add('d-none');
+        importResultsList.innerHTML = '';
+        fileUploadLabel.classList.remove('selected');
+        fileUploadText.textContent = 'Cliquez pour sélectionner un fichier CSV';
+    });
+
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let totalStudents = 0;
+    let studentsData = [];
+    let studentToDelete = null;
+    let currentStudentId = null;
+    
+    const API_BASE_URL = 'http://localhost/ens-gestion/api/admin.php';
+    const API_ENDPOINTS = {
+        years: `${API_BASE_URL}?action=getAllyears`,
+        departments: `${API_BASE_URL}?action=getAllDepartments`,
+        filieres: `${API_BASE_URL}?action=getFilieres`,
+        cycles: `${API_BASE_URL}?action=getCycles`,
+        students: `${API_BASE_URL}?action=getStudents`,
+        studentDetails: `${API_BASE_URL}?action=getStudentDetails`,
+        createStudent: `${API_BASE_URL}?action=createStudent`,
+        updateStudent: `${API_BASE_URL}?action=updateStudent`,
+        deleteStudent: `${API_BASE_URL}?action=deleteStudent`,
+        modules: `${API_BASE_URL}?action=getStudentModules`,
+        assignModules: `${API_BASE_URL}?action=assignModules`,
+        semsetres: `${API_BASE_URL}?action=getAllSemesters`,
+        etapes: `${API_BASE_URL}?action=getAllEtapes`,
+        groupes: `${API_BASE_URL}?action=getAllGroupes`,
+        sections: `${API_BASE_URL}?action=getAllSections`,
+        importStudents: `${API_BASE_URL}?action=importStudents`,
+        logout:`http://localhost/ens-gestion/api/index.php?action=auth/logout`
+    };
+
+    let csrfToken = localStorage.getItem('csrfToken') || '';
+
+    init();
+
+    yearFilter.addEventListener('change', () => loadStudents(1));
+    departmentFilter.addEventListener('change', () => {
+        updateFilieresDropdown(departmentFilter.value);
+        loadStudents(1);
+    });
+    filiereFilter.addEventListener('change', () => loadStudents(1));
+    cycleFilter.addEventListener('change', () => loadStudents(1));
+    etapeFilter.addEventListener('change', () => loadStudents(1));
+    semesterFilter.addEventListener('change', () => loadStudents(1));
+    sectionFilter.addEventListener('change', () => loadStudents(1));
+    groupeFilter.addEventListener('change', () => loadStudents(1));
+    searchInput.addEventListener('input', debounce(() => loadStudents(1), 300));
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        loadStudents(1);
+    });
+
+    document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+    studentForm.addEventListener('submit', handleStudentFormSubmit);
+    document.getElementById('confirmDeleteBtn').addEventListener('click', handleDelete);
+    togglePassword.addEventListener('click', togglePasswordVisibility);
+    document.getElementById('btnAddStudent').addEventListener('click', () => {
+        resetForm();
+        addStudentModal.show();
+    });
+    saveModulesBtn.addEventListener('click', handleSaveModules);
+    
+    logoutBtn.addEventListener('click', async () => {
+    try {
+        const response = await fetch(`${API_ENDPOINTS.logout}`, {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken }
+        });
+        const result = await response.json();
+        console.log(result);
+        if (response.ok && result.data.status === 'success') {
+            localStorage.removeItem('userData');
+            localStorage.removeItem('csrfToken');
+            showNotification('Déconnexion réussie !', true);
+            setTimeout(() => {
+                window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
+            }, 100); // Delay redirect to allow notification to show
+        } else {
+            throw new Error(result.message || 'Échec de la déconnexion');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la déconnexion:', error);
+        showNotification('Erreur lors de la déconnexion: ' + error.message, false);
+    }
+});
+
+    function init() {
+        loadYears();
+        loadDepartments();
+        loadCycles();
+        loadSemesters();
+        loadEtapes();
+        loadGroupes();
+        loadSections();
+        loadFilieres();
+        loadStudents();
+        
+        const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
+        localStorage.setItem("userData", JSON.stringify(userData));
+        document.getElementById('usernameDisplay').textContent = userData.username;
+        document.getElementById('userRole').textContent = userData.role;
+    }
+
+    async function updateFilieresDropdown(departmentId) {
+        if (!departmentId) {
+            filiereFilter.innerHTML = '<option value="">Toutes les filières</option>';
+            filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+            return;
+        }
+        try {
+            const response = await fetch(`${API_ENDPOINTS.filieres}&department_id=${departmentId}`, {
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const data = await response.json();
+            const filieres = data.data || [];
+            filiereFilter.innerHTML = '<option value="">Toutes les filières</option>';
+            filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+            filieres.forEach(fil => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = fil.field_id;
+                optionFilter.textContent = fil.nom;
+                filiereFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = fil.field_id;
+                optionSelect.textContent = fil.nom;
+                filiereSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des filières:', error);
+            showNotification('Erreur lors du chargement des filières', false);
+        }
+    }
+
+    function resetFilters() {
+        yearFilter.value = '';
+        departmentFilter.value = '';
+        cycleFilter.value = '';
+        filiereFilter.value = '';
+        etapeFilter.value = '';
+        semesterFilter.value = '';
+        sectionFilter.value = '';
+        groupeFilter.value = '';
+        searchInput.value = '';
+        loadStudents(1);
+    }
+
+    function togglePasswordVisibility() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        togglePassword.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+    }
+
+    function showNotification(message, isSuccess = true) {
+        const toastIcon = document.getElementById('toastIcon');
+        toastIcon.className = isSuccess 
+            ? 'bi bi-check-circle-fill text-success me-2' 
+            : 'bi bi-exclamation-triangle-fill text-danger me-2';
+        document.getElementById('toastMessage').textContent = message;
+        notificationToast.show();
+    }
+
+    function resetForm() {
+        studentForm.reset();
+        document.getElementById('studentId').value = '';
+        document.getElementById('username').disabled = false;
+        document.getElementById('password').disabled = false;
+        document.getElementById('password').type = 'password';
+        togglePassword.innerHTML = '<i class="bi bi-eye"></i>';
+        modalTitle.textContent = 'Ajouter un Étudiant';
+        document.querySelectorAll('#studentForm select').forEach(select => {
+            select.selectedIndex = 0;
+        });
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+    }
+    
+    async function loadYears() {
+        try {
+            const response = await fetch(API_ENDPOINTS.years, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const years = data.data?.data || data.data || [];
+            yearFilter.innerHTML = '<option value="">Toutes les années</option>';
+            yearSelect.innerHTML = '<option value="">Sélectionner une année</option>';
+            years.forEach(year => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = year.annee_id;
+                optionFilter.textContent = year.annee_id + (year.current_flag == 1 ? ' (actuelle)' : '');
+                yearFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = year.annee_id;
+                optionSelect.textContent = year.annee_id;
+                yearSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des années:', error);
+            showNotification('Erreur lors du chargement des années: ' + error.message, false);
+        }
+    }
+    
+    async function loadDepartments() {
+        try {
+            const response = await fetch(API_ENDPOINTS.departments, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const departments = data.data || data;
+            departmentFilter.innerHTML = '<option value="">Tous les départements</option>';
+            departmentSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+            departments.forEach(dep => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = dep.department_id;
+                optionFilter.textContent = dep.nom;
+                departmentFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = dep.department_id;
+                optionSelect.textContent = dep.nom;
+                departmentSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des départements:', error);
+            showNotification('Erreur lors du chargement des départements: ' + error.message, false);
+        }
+    }
+    
+    async function loadCycles() {
+        try {
+            const response = await fetch(API_ENDPOINTS.cycles, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const cycles = data.data || data;
+            cycleFilter.innerHTML = '<option value="">Tous les Cycles</option>';
+            cycleSelect.innerHTML = '<option value="">Sélectionner un cycle</option>';
+            cycles.forEach(cyc => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = cyc.cycle_id;
+                optionFilter.textContent = cyc.nom;
+                cycleFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = cyc.cycle_id;
+                optionSelect.textContent = cyc.nom;
+                cycleSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des cycles:', error);
+            showNotification('Erreur lors du chargement des cycles: ' + error.message, false);
+        }
+    }
+    
+    async function loadEtapes() {
+        try {
+            const response = await fetch(API_ENDPOINTS.etapes, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const etapes = data.data || data;
+            etapeFilter.innerHTML = '<option value="">Toutes les étapes</option>';
+            etapeSelect.innerHTML = '<option value="">Sélectionner une étape</option>';
+            etapes.forEach(etape => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = etape.etape_id;
+                optionFilter.textContent = etape.nom_etape;
+                etapeFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = etape.etape_id;
+                optionSelect.textContent = etape.nom;
+                etapeSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des étapes:', error);
+            showNotification('Erreur lors du chargement des étapes: ' + error.message, false);
+        }
+    }
+    
+    async function loadSemesters() {
+        try {
+            const response = await fetch(API_ENDPOINTS.semsetres, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const semesters = data.data || data;
+            semesterFilter.innerHTML = '<option value="">Tous les semestres</option>';
+            semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+            semesters.forEach(sem => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = sem.semestre_id;
+                optionFilter.textContent = sem.nom;
+                semesterFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = sem.semestre_id;
+                optionSelect.textContent = sem.nom;
+                semesterSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des semestres:', error);
+            showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+        }
+    }
+    
+    async function loadGroupes() {
+        try {
+            const response = await fetch(API_ENDPOINTS.groupes, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const groupes = data.data || data;
+            groupeFilter.innerHTML = '<option value="">Tous les groupes</option>';
+            groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+            groupes.forEach(grp => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = grp.group_id;
+                optionFilter.textContent = grp.nom;
+                groupeFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = grp.group_id;
+                optionSelect.textContent = grp.nom;
+                groupeSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des groupes:', error);
+            showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
+        }
+    }
+    
+    async function loadSections() {
+        try {
+            const response = await fetch(API_ENDPOINTS.sections, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const sections = data.data || data;
+            sectionFilter.innerHTML = '<option value="">Toutes les sections</option>';
+            sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+            sections.forEach(sec => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = sec.section_id;
+                optionFilter.textContent = sec.nom;
+                sectionFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = sec.section_id;
+                optionSelect.textContent = sec.nom;
+                sectionSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des sections:', error);
+            showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+        }
+    }
+    
+    async function loadFilieres() {
+        try {
+            const response = await fetch(API_ENDPOINTS.filieres, { headers: { 'X-CSRF-Token': csrfToken } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+            const filieres = data.data || [];
+            filiereFilter.innerHTML = '<option value="">Toutes les filières</option>';
+            filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+            filieres.forEach(fil => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = fil.field_id;
+                optionFilter.textContent = fil.nom;
+                filiereFilter.appendChild(optionFilter);
+                const optionSelect = document.createElement('option');
+                optionSelect.value = fil.field_id;
+                optionSelect.textContent = fil.nom;
+                filiereSelect.appendChild(optionSelect);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des filières:', error);
+            showNotification('Erreur lors du chargement des filières: ' + error.message, false);
+        }
+    }
+
+    async function loadStudents(page = 1) {
+        currentPage = page;
+        const filters = {
+            annee_id: yearFilter.value,
+            department_id: departmentFilter.value,
+            field_id: filiereFilter.value,
+            cycle_id: cycleFilter.value,
+            etape_id: etapeFilter.value,
+            semestre_id: semesterFilter.value,
+            section_id: sectionFilter.value,
+            groupe_id: groupeFilter.value,
+            search: searchInput.value.trim(),
+            page: page,
+            limit: itemsPerPage
+        };
+        studentsTable.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+        try {
+            const params = new URLSearchParams();
+            for (const [key, value] of Object.entries(filters)) {
+                if (value) params.append(key, value);
+            }
+            const response = await fetch(`${API_ENDPOINTS.students}&${params.toString()}`, {
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const result = await response.json();
+            if (result.status === 200 && result.data) {
+                studentsData = result.data.students || [];
+                totalStudents = result.data.count || 0;
+                renderStudentsTable();
+                renderPagination();
+            } else {
+                throw new Error(result.message || 'Erreur lors du chargement des étudiants');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            studentsTable.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">${error.message}</td></tr>`;
+            pagination.innerHTML = '';
+            paginationInfo.textContent = 'Erreur de chargement';
+        }
+    }
+
+    function renderStudentsTable() {
+        studentsTable.innerHTML = '';
+        if (studentsData.length === 0) {
+            studentsTable.innerHTML = '<tr><td colspan="9" class="text-center py-4">Aucun étudiant trouvé</td></tr>';
+            return;
+        }
+        studentsData.forEach(student => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${student.user_id || 'N/A'}</td>
+                <td>${student.cne || 'N/A'}</td>
+                <td>${student.nom || 'N/A'}</td>
+                <td>${student.prenom || 'N/A'}</td>
+                <td>${student.email || 'N/A'}</td>
+                <td>${student.departement_nom || 'N/A'}</td>
+                <td>${student.filiere_nom || 'N/A'}</td>
+                <td>${student.date || 'N/A'}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-primary action-btn edit-btn" data-id="${student.user_id}" title="Modifier">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger action-btn delete-btn" data-id="${student.user_id}" title="Supprimer">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary action-btn module-btn" data-id="${student.user_id}" title="Modules">
+                        <i class="bi bi-book"></i>
+                    </button>
+                </td>
+            `;
+            studentsTable.appendChild(tr);
+        });
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => editStudent(btn.dataset.id));
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.id;
+                const student = studentsData.find(s => s.user_id == id);
+                studentToDelete = id;
+                document.getElementById('deleteStudentName').textContent = 
+                    `${student.nom} ${student.prenom} (${student.cne})`;
+                deleteConfirmModal.show();
+            });
+        });
+        document.querySelectorAll('.module-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentStudentId = btn.dataset.id;
+                loadModules(currentStudentId);
+            });
+        });
+    }
+
+    async function loadModules(studentId) {
+        try {
+            modulesTable.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            const response = await fetch(`${API_ENDPOINTS.modules}&user_id=${studentId}`, {
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const result = await response.json();
+            if (result.status === 200 && result.data) {
+                const modules = result.data || [];
+                const student = studentsData.find(s => s.user_id == studentId);
+                document.getElementById('modulesModalTitle').textContent = 
+                    `Modules de ${student.nom} ${student.prenom} (${student.cne})`;
+                renderModulesTable(modules);
+                modulesModal.show();
+            } else {
+                throw new Error(result.message || 'Erreur lors du chargement des modules');
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des modules:', error);
+            modulesTable.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">${error.message}</td></tr>`;
+            showNotification('Erreur lors du chargement des modules: ' + error.message, false);
+        }
+    }
+
+    function renderModulesTable(modules) {
+        modulesTable.innerHTML = '';
+        if (modules.length === 0) {
+            modulesTable.innerHTML = '<tr><td colspan="9" class="text-center py-4">Aucun module trouvé</td></tr>';
+            return;
+        }
+        modules.forEach(module => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="checkbox" class="module-checkbox" value="${module.module_id}"></td>
+                <td>${module.module_id || 'N/A'}</td>
+                <td>${module.module_nom || 'N/A'}</td>
+                <td>${module.code || 'N/A'}</td>
+                <td>${module.cycle_id || 'N/A'}</td>
+                <td>${module.module_field_id || 'N/A'}</td>
+                <td>${module.etape_id || 'N/A'}</td>
+                <td>${module.semestre_nom || 'N/A'}</td>
+                <td>${module.module_annee_id || 'N/A'}</td>
+            `;
+            modulesTable.appendChild(tr);
+        });
+    }
+
+    async function handleSaveModules() {
+        if (!currentStudentId) {
+            showNotification('Aucun étudiant sélectionné', false);
+            return;
+        }
+        const selectedModules = Array.from(document.querySelectorAll('.module-checkbox:checked'))
+            .map(checkbox => parseInt(checkbox.value))
+            .filter(id => !isNaN(id));
+        if (selectedModules.length === 0) {
+            showNotification('Veuillez sélectionner au moins un module', false);
+            return;
+        }
+        try {
+            saveModulesBtn.disabled = true;
+            document.getElementById('saveModulesSpinner').classList.remove('d-none');
+            const response = await fetch(`${API_ENDPOINTS.assignModules}&id=${currentStudentId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                body: JSON.stringify({ module_ids: selectedModules })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Échec de l\'assignation des modules');
+            }
+            showNotification(result.message || 'Modules assignés avec succès', true);
+            modulesModal.hide();
+        } catch (error) {
+            console.error('Erreur d\'assignation:', error);
+            showNotification('Erreur lors de l\'assignation des modules: ' + error.message, false);
+        } finally {
+            saveModulesBtn.disabled = false;
+            document.getElementById('saveModulesSpinner').classList.add('d-none');
+        }
+    }
+
+    async function editStudent(id) {
+        try {
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('saveSpinner').classList.remove('d-none');
+            const response = await fetch(`${API_ENDPOINTS.studentDetails}&user_id=${id}`, {
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const data = await response.json();
+            if (data.status && data.data) {
+                const student = data.data.students;
+                document.getElementById('studentId').value = student.user_id || '';
+                document.getElementById('cne').value = student.cne || '';
+                document.getElementById('lastName').value = student.nom || '';
+                document.getElementById('firstName').value = student.prenom || '';
+                document.getElementById('email').value = student.email || '';
+                document.getElementById('phone').value = student.telephone || '';
+                document.getElementById('department').value = student.department_id || '';
+                document.getElementById('filiere').value = student.field_id || '';
+                document.getElementById('year').value = student.annee_id || '';
+                document.getElementById('cycle_id').value = student.cycle_id || '';
+                document.getElementById('etape_id').value = student.etape_id || '';
+                document.getElementById('semester_id').value = student.semestre_id || '';
+                document.getElementById('section_id').value = student.section_id || '';
+                document.getElementById('groupe_id').value = student.groupe_id || '';
+                document.getElementById('cin').value = student.cin || '';
+                document.getElementById('birthdate').value = student.date_naissance || '';
+                document.getElementById('nationality').value = student.nationalite || 'Marocaine';
+                document.getElementById('address').value = student.adresse || '';
+                document.getElementById('username').value = student.username || '';
+                document.getElementById('password').value = '';
+                modalTitle.textContent = 'Modifier un Étudiant';
+                addStudentModal.show();
+            } else {
+                throw new Error(data.message || 'Étudiant introuvable');
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des détails de l\'étudiant:', error);
+            showNotification('Erreur lors du chargement des détails: ' + error.message, false);
+        } finally {
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('saveSpinner').classList.add('d-none');
+        }
+    }
+
+    async function handleStudentFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const isUpdate = !!document.getElementById('studentId').value;
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        let isValid = true;
+        document.querySelectorAll('#studentForm [required]').forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+        const email = document.getElementById('email').value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            document.getElementById('email').classList.add('is-invalid');
+            isValid = false;
+        }
+        if (!isUpdate && document.getElementById('password').value.length < 8) {
+            document.getElementById('password').classList.add('is-invalid');
+            isValid = false;
+        }
+        if (!isValid) {
+            showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
+            return;
+        }
+        const formData = {
+            username: document.getElementById('username').value.trim(),
+            email: email,
+            cne: document.getElementById('cne').value.trim(),
+            nom: document.getElementById('lastName').value.trim(),
+            prenom: document.getElementById('firstName').value.trim(),
+            telephone: document.getElementById('phone').value.trim() || null,
+            department_id: document.getElementById('department').value,
+            field_id: document.getElementById('filiere').value,
+            annee_id: document.getElementById('year').value,
+            cycle_id: document.getElementById('cycle_id').value,
+            etape_id: document.getElementById('etape_id').value,
+            semestre_id: document.getElementById('semester_id').value,
+            section_id: document.getElementById('section_id').value,
+            groupe_id: document.getElementById('groupe_id').value,
+            cin: document.getElementById('cin').value.trim() || null,
+            date_naissance: document.getElementById('birthdate').value || "2000-01-01",
+            nationalite: document.getElementById('nationality').value || 'Marocaine',
+            adresse: document.getElementById('address').value || null
+        };
+        if (!isUpdate) formData.password = document.getElementById('password').value;
+        try {
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            document.getElementById('saveSpinner').classList.remove('d-none');
+            const endpoint = isUpdate 
+                ? `${API_ENDPOINTS.updateStudent}&id=${document.getElementById('studentId').value}`
+                : API_ENDPOINTS.createStudent;
+            const method = isUpdate ? 'PUT' : 'POST';
+            const response = await fetch(endpoint, {
+                method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                body: JSON.stringify(formData)
+            });
+            const result = await response.json();
+            if (result.status) {
+                showNotification(isUpdate ? 'Étudiant mis à jour' : 'Étudiant créé', true);
+                addStudentModal.hide();
+                loadStudents(currentPage);
+            } else {
+                throw new Error(result.message || (isUpdate ? 'Échec de la mise à jour' : 'Échec de la création'));
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showNotification('Erreur lors de l\'enregistrement: ' + error.message, false);
+        } finally {
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('saveSpinner').classList.add('d-none');
+        }
+    }
+
+    async function handleDelete() {
+        if (!studentToDelete) return;
+        try {
+            document.getElementById('confirmDeleteBtn').disabled = true;
+            document.getElementById('deleteSpinner').classList.remove('d-none');
+            const response = await fetch(`${API_ENDPOINTS.deleteStudent}&id=${studentToDelete}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const result = await response.json();
+            if (result.status) {
+                showNotification('Étudiant supprimé avec succès', true);
+                deleteConfirmModal.hide();
+                loadStudents(currentPage);
+            } else {
+                throw new Error(result.message || 'Échec de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la suppression de l\'étudiant:', error);
+            showNotification('Erreur lors de la suppression: ' + error.message, false);
+        } finally {
+            document.getElementById('confirmDeleteBtn').disabled = false;
+            document.getElementById('deleteSpinner').classList.add('d-none');
+            studentToDelete = null;
+        }
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(totalStudents / itemsPerPage);
+        pagination.innerHTML = '';
+        if (totalPages <= 1) {
+            paginationInfo.textContent = `Affichage de ${studentsData.length} étudiant(s)`;
+            return;
+        }
+        const prevLi = document.createElement('li');
+        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous"><span aria-hidden="true">«</span></a>`;
+        prevLi.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage > 1) loadStudents(currentPage - 1);
+        });
+        pagination.appendChild(prevLi);
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        for (let i = startPage; i <= endPage; i++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            li.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (i !== currentPage) loadStudents(i);
+            });
+            pagination.appendChild(li);
+        }
+        const nextLi = document.createElement('li');
+        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">»</span></a>`;
+        nextLi.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentPage < totalPages) loadStudents(currentPage + 1);
+        });
+        pagination.appendChild(nextLi);
+        const start = (currentPage - 1) * itemsPerPage + 1;
+        const end = Math.min(currentPage * itemsPerPage, totalStudents);
+        paginationInfo.textContent = `Affichage des étudiants ${start} à ${end} sur ${totalStudents}`;
+    }
+
+    function debounce(fn, delay) {
+        let timer;
+        return function (...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+});
+    </script>
+</body>
+</html>

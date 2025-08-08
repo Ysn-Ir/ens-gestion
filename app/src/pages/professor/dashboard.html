@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Professeur</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            display: flex; /* Utilisation de flexbox pour la sidebar et le contenu principal */
+            min-height: 100vh;
+        }
+        #sidebar {
+            width: 250px;
+            background-color: #343a40; /* Couleur sombre pour la sidebar */
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        #sidebar .nav-link {
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #sidebar .nav-link:hover, #sidebar .nav-link.active {
+            background-color: #007bff;
+        }
+        #main-content {
+            flex-grow: 1; /* Prend l'espace restant */
+            padding: 30px;
+            background-color: #f8f9fa;
+        }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        /* Styles existants du dashboard.html peuvent être conservés ou adaptés */
+        .container {
+            max-width: none; /* Supprimer la limite de largeur du container pour laisser flexbox gérer */
+            margin-top: 0;
+            padding: 0;
+            background-color: transparent;
+            box-shadow: none;
+        }
+        /* ... (autres styles existants) ... */
+        .note-input {
+            width: 80px; /* Increased width for better usability */
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            padding: 6px 10px;
+            transition: border-color 0.3s ease;
+        }
+        .note-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        .btn-primary, .btn-success, .btn-danger, .btn-info {
+            border-radius: 8px;
+            padding: 8px 15px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover, .btn-success:hover, .btn-danger:hover, .btn-info:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table thead {
+            background-color: #007bff;
+            color: white;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .alert {
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .period-status-section {
+            background-color: #e9f7ef;
+            border: 1px solid #d4edda;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .period-status-section .status-text {
+            font-size: 1.1em;
+            color: #28a745; /* Green for open */
+        }
+        .period-status-section .status-text.closed {
+            color: #dc3545; /* Red for closed */
+        }
+        /* Removed fixed positioning for logout-btn as it's now in sidebar */
+        .professor-info {
+            background-color: #f0f8ff;
+            border: 1px solid #b0e0e6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .professor-info h4 {
+            margin-bottom: 10px;
+            color: #0056b3;
+        }
+        .professor-info p {
+            margin-bottom: 5px;
+        }
+        /* Style pour la modale des notes */
+        #notesModal .modal-header {
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        #notesModal .modal-content {
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        #notesModal .modal-body {
+            padding: 25px;
+        }
+        #notesModal .table {
+            margin-bottom: 0;
+        }
+        .module-filter-section {
+            background-color: #f8f9fa;
+            border: 1px solid #e2e6ea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h3 class="text-center mb-4">ENS Gestion</h3>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-section="profile">
+                    <i class="fas fa-user-circle me-2"></i> Mon Profil
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="grade-period">
+                    <i class="fas fa-calendar-alt me-2"></i> Période de Saisie
+                </a>
+            </li>
+            <li class="nav-item" id="chefManagementNavLinkContainer" style="display:none;"> <!-- Initialement masqué, visible pour les chefs -->
+                <a class="nav-link" href="#" data-section="chef-management" id="chefManagementNavLink">
+                    <i class="fas fa-chalkboard-teacher me-2"></i> Gestion Chef
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="teaching-elements">
+                    <i class="fas fa-book me-2"></i> Mes Éléments
+                </a>
+            </li>
+            <!-- Plus d'éléments de menu ici -->
+        </ul>
+        <button id="logoutBtn" class="btn btn-danger mt-auto">
+            <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
+        </button>
+    </div>
+
+    <div id="main-content">
+        <div class="header-bar">
+            <h2>Tableau de Bord Professeur</h2>
+        </div>
+
+        <!-- Les sections de contenu sont maintenant masquées/affichées par le JavaScript de la sidebar -->
+        <div id="profileSection" class="content-section">
+            <div class="professor-info">
+                <h4>Informations du Professeur</h4>
+                <p>Nom: <span id="professorName">Chargement...</span></p>
+                <p>Rôle: <span id="professorRole">Chargement...</span></p>
+                <p>Degré: <span id="professorDegree">N/A</span></p>
+            </div>
+        </div>
+
+        <div id="grade-periodSection" class="content-section d-none">
+            <div class="period-status-section mb-4">
+                <h4>Gestion de la Période de Saisie des Notes Normales</h4>
+                <div id="gradePeriodStatus" class="status-text">Chargement du statut...</div>
+                <div id="gradePeriodActions" class="d-none">
+                    <button id="openPeriodBtn" class="btn btn-success me-2">Ouvrir la période</button>
+                    <button id="closePeriodBtn" class="btn btn-danger">Fermer la période</button>
+                </div>
+            </div>
+
+            <!-- Nouvelle section pour la période de rattrapage -->
+            <div class="period-status-section">
+                <h4>Gestion de la Période de Saisie des Notes de Rattrapage</h4>
+                <div id="resitGradePeriodStatus" class="status-text">Chargement du statut...</div>
+                <div id="resitGradePeriodActions" class="d-none">
+                    <button id="openResitPeriodBtn" class="btn btn-success me-2">Ouvrir la période de rattrapage</button>
+                    <button id="closeResitPeriodBtn" class="btn btn-danger">Fermer la période de rattrapage</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chef-managementSection" class="content-section d-none">
+            <h3>Gestion des Notes (Chef)</h3>
+            <!-- Le bouton "Afficher les Outils de Gestion" est masqué car la visibilité est gérée par le rôle -->
+            <button id="showChefToolsBtn" class="btn btn-info mb-3 d-none">Afficher les Outils de Gestion</button>
+            
+            <!-- SECTION SPÉCIFIQUE AU CHEF DE FILIÈRE -->
+            <div id="fieldChefSection" class="mb-4 d-none">
+                <h4>Notes de ma Filière: <span id="managedFieldName"></span></h4>
+                <button id="showFieldNotesBtn" class="btn btn-info mt-2 me-2">Afficher toutes les notes de ma filière</button>
+                <button id="showAllFieldModulesNotesBtn" class="btn btn-primary mt-2">Afficher toutes les notes des modules de ma filière</button>
+                
+                <!-- SECTION DE FILTRAGE PAR MODULE POUR LE CHEF DE FILIÈRE -->
+                <div id="fieldModuleFilterSection" class="module-filter-section mt-3 d-none">
+                    <h5>Filtrer les notes par module de filière</h5>
+                    <div class="input-group mb-3">
+                        <label class="input-group-text rounded" for="fieldModuleSelect">Module:</label>
+                        <select class="form-select rounded" id="fieldModuleSelect">
+                            <option selected disabled>Sélectionner un module...</option>
+                        </select>
+                        <button class="btn btn-primary rounded" id="showFieldModuleNotesBtn">Afficher les notes du module</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION SPÉCIFIQUE AU CHEF DE DÉPARTEMENT -->
+            <div id="departmentChefSection" class="mb-4 d-none">
+                <h4>Notes de mon Département: <span id="managedDepartmentName"></span></h4>
+                <button id="showDepartmentNotesBtn" class="btn btn-info mt-2 me-2">Afficher toutes les notes de mon département</button>
+                <button id="showAllDepartmentModulesNotesBtn" class="btn btn-primary mt-2">Afficher toutes les notes des modules de mon département</button>
+                <div id="departmentFieldFilterSection" class="module-filter-section mt-3 d-none">
+                    <h5>Filtrer les notes par filière du département</h5>
+                    <div class="input-group mb-3">
+                        <label class="input-group-text rounded" for="departmentFieldSelect">Filière:</label>
+                        <select class="form-select rounded" id="departmentFieldSelect">
+                            <option selected disabled>Sélectionner une filière...</option>
+                        </option>
+                    </div>
+                </div>
+                <div id="departmentModuleFilterSection" class="module-filter-section mt-3 d-none">
+                    <h5>Filtrer les notes par module de département</h5>
+                    <div class="input-group mb-3">
+                        <label class="input-group-text rounded" for="departmentModuleSelect" disabled>Module:</label>
+                        <select class="form-select rounded" id="departmentModuleSelect" disabled>
+                            <option selected disabled>Sélectionner un module...</option>
+                        </select>
+                        <button class="btn btn-primary rounded" id="showDepartmentModuleNotesBtn" disabled>Afficher les notes du module</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="teaching-elementsSection" class="content-section d-none">
+            <h3>Mes Éléments Enseignés</h3>
+            <div id="elementsList" class="list-group mt-3">
+                <div class="list-group-item text-center text-muted">Chargement des éléments...</div>
+            </div>
+            <div id="notesContainer" class="mt-4 d-none">
+                <h3>Notes de l'élément: <span id="elementName"></span></h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead id="notesTableHeader">
+                            <!-- Les en-têtes seront générés dynamiquement par JavaScript -->
+                        </thead>
+                        <tbody id="notesTableBody">
+                            <tr><td colspan="7" class="text-center text-muted">Sélectionnez un élément pour voir les notes.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button id="saveAllBtn" class="btn btn-primary mt-2">Enregistrer toutes les modifications</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale pour afficher les notes (inchangée) -->
+    <div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notesModalLabel">Notes détaillées</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Étudiant</th>
+                                    <th>Module</th>
+                                    <th>Élément</th>
+                                    <th>TP</th>
+                                    <th>TD</th>
+                                    <th>CC</th>
+                                    <th>Examen</th>
+                                    <th>Rattrapage</th>
+                                    <th>Finale</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notesModalTableBody">
+                                <tr><td colspan="9" class="text-center text-muted">Chargement des notes...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        console.log('Script dashboard.html chargé.'); // Debug: Vérifie que le script est chargé
+
+        let currentElementId = null;
+        let modifiedNotes = {};
+        let isGradePeriodActive = false;
+        let isResitGradePeriodActive = false; // Nouvelle variable pour la période de rattrapage
+        let professorProfileData = null;
+        // Nouveau: Stocke les rôles d'enseignement du professeur pour chaque élément
+        let elementTeachingRoles = {}; // Clé: element_id, Valeur: { is_main_prof: bool, is_tp_prof: bool }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOMContentLoaded event fired.'); // Debug: Vérifie que l\'événement DOMContentLoaded est déclenché
+
+            try {
+                const user = JSON.parse(localStorage.getItem('userData'));
+                if (!user) {
+                    console.warn('User data not found in localStorage. Redirecting to login.');
+                    window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
+                    return;
+                }
+                console.log('Données utilisateur du localStorage:', user);
+
+                await loadProfessorProfile();
+                console.log('loadProfessorProfile completed.');
+                
+                // Fetch initial period statuses
+                await updatePeriodStatuses(); // This new function will fetch and update both flags
+
+                // Get references to main content sections and sidebar links
+                const profileSection = document.getElementById('profileSection');
+                const gradePeriodSection = document.getElementById('grade-periodSection');
+                const chefManagementSection = document.getElementById('chef-managementSection');
+                const teachingElementsSection = document.getElementById('teaching-elementsSection');
+
+                const profileLink = document.querySelector('#sidebar .nav-link[data-section="profile"]');
+                const gradePeriodLink = document.querySelector('#sidebar .nav-link[data-section="grade-period"]');
+                const chefManagementNavLinkContainer = document.getElementById('chefManagementNavLinkContainer'); // The <li> element
+                const chefManagementNavLink = document.getElementById('chefManagementNavLink'); // The <a> element inside the <li>
+                const teachingElementsLink = document.querySelector('#sidebar .nav-link[data-section="teaching-elements"]');
+
+                const openPeriodBtn = document.getElementById('openPeriodBtn');
+                const closePeriodBtn = document.getElementById('closePeriodBtn');
+                const openResitPeriodBtn = document.getElementById('openResitPeriodBtn');
+                const closeResitPeriodBtn = document.getElementById('closeResitPeriodBtn');
+                const saveAllBtn = document.getElementById('saveAllBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const showFieldNotesBtn = document.getElementById('showFieldNotesBtn');
+                const showAllFieldModulesNotesBtn = document.getElementById('showAllFieldModulesNotesBtn');
+                const showFieldModuleNotesBtn = document.getElementById('showFieldModuleNotesBtn');
+                const showDepartmentNotesBtn = document.getElementById('showDepartmentNotesBtn');
+                const showAllDepartmentModulesNotesBtn = document.getElementById('showAllDepartmentModulesNotesBtn');
+                const departmentFieldSelect = document.getElementById('departmentFieldSelect');
+                const departmentModuleSelect = document.getElementById('departmentModuleSelect');
+                const showDepartmentModuleNotesBtn = document.getElementById('showDepartmentModuleNotesBtn');
+
+                console.log('openPeriodBtn:', openPeriodBtn); // Debug: Vérifie si le bouton est trouvé
+                console.log('closePeriodBtn:', closePeriodBtn);
+                console.log('openResitPeriodBtn:', openResitPeriodBtn);
+                console.log('closeResitPeriodBtn:', closeResitPeriodBtn);
+                console.log('saveAllBtn:', saveAllBtn);
+                console.log('logoutBtn:', logoutBtn);
+                console.log('showFieldNotesBtn:', showFieldNotesBtn);
+                console.log('showAllFieldModulesNotesBtn:', showAllFieldModulesNotesBtn);
+                console.log('showFieldModuleNotesBtn:', showFieldModuleNotesBtn);
+                console.log('showDepartmentNotesBtn:', showDepartmentNotesBtn);
+                console.log('showAllDepartmentModulesNotesBtn:', showAllDepartmentModulesNotesBtn);
+                console.log('departmentFieldSelect:', departmentFieldSelect);
+                console.log('departmentModuleSelect:', departmentModuleSelect);
+                console.log('showDepartmentModuleNotesBtn:', showDepartmentModuleNotesBtn);
+
+
+                if (user.role === 'chef_dep' || user.role === 'chef_fill') {
+                    document.getElementById('gradePeriodActions').classList.remove('d-none');
+                    console.log('Grade Period Actions container visibility removed d-none.');
+                    if (openPeriodBtn) openPeriodBtn.addEventListener('click', () => { console.log('openPeriodBtn clicked'); updateGradePeriod(true); });
+                    if (closePeriodBtn) closePeriodBtn.addEventListener('click', () => { console.log('closePeriodBtn clicked'); updateGradePeriod(false); });
+
+                    // Actions pour la période de rattrapage
+                    document.getElementById('resitGradePeriodActions').classList.remove('d-none');
+                    console.log('Resit Grade Period Actions container visibility removed d-none.');
+                    if (openResitPeriodBtn) openResitPeriodBtn.addEventListener('click', () => { console.log('openResitPeriodBtn clicked'); updateResitGradePeriod(true); });
+                    if (closeResitPeriodBtn) closeResitPeriodBtn.addEventListener('click', () => { console.log('closeResitPeriodBtn clicked'); updateResitGradePeriod(false); });
+                }
+
+                if (professorProfileData) {
+                    const isChef = (professorProfileData.professor_degree_role === 'Chef_de_Filiere' && professorProfileData.managed_field_id) ||
+                                (professorProfileData.professor_degree_role === 'Chef_de_Departement' && professorProfileData.managed_department_id);
+
+                    if (isChef) {
+                        chefManagementNavLinkContainer.style.display = 'block'; // Affiche l'élément de menu "Gestion Chef"
+                        
+                        // Définit "Gestion Chef" comme la section active par défaut pour les chefs
+                        profileSection.classList.add('d-none'); // Masque la section profil
+                        profileLink.classList.remove('active'); // Désactive le lien profil
+
+                        chefManagementSection.classList.remove('d-none'); // Affiche la section de gestion chef
+                        chefManagementNavLink.classList.add('active'); // Active le lien de gestion chef
+
+                        // Affiche la sous-section correcte (filière ou département) immédiatement
+                        if (professorProfileData.professor_degree_role === 'Chef_de_Filiere' && professorProfileData.managed_field_id) {
+                            document.getElementById('fieldChefSection').classList.remove('d-none'); // Affiche la section de gestion de filière
+                            document.getElementById('departmentChefSection').classList.add('d-none'); // Masque la section de gestion de département
+                            document.getElementById('managedFieldName').textContent = professorProfileData.managed_field_name || `ID: ${professorProfileData.managed_field_id}`;
+                            
+                            // Charge les modules pour la filière et peuple le sélecteur
+                            await loadModulesForChef('field', professorProfileData.managed_field_id, 'fieldModuleSelect');
+                            document.getElementById('fieldModuleFilterSection').classList.remove('d-none'); // Affiche la section de filtrage par module
+                        } else if (professorProfileData.professor_degree_role === 'Chef_de_Departement' && professorProfileData.managed_department_id) {
+                            document.getElementById('departmentChefSection').classList.remove('d-none');
+                            document.getElementById('fieldChefSection').classList.add('d-none');
+                            document.getElementById('managedDepartmentName').textContent = professorProfileData.managed_department_name || `ID: ${professorProfileData.managed_department_id}`;
+                            await loadDepartmentFields(professorProfileData.managed_department_id, 'departmentFieldSelect');
+                            document.getElementById('departmentFieldFilterSection').classList.remove('d-none');
+                            document.getElementById('departmentModuleFilterSection').classList.remove('d-none');
+                        }
+
+                    } else {
+                        // Si ce n'est pas un chef, assure que "Mon Profil" est la section active par défaut
+                        profileSection.classList.remove('d-none');
+                        profileLink.classList.add('active');
+                        chefManagementSection.classList.add('d-none'); // Masque la section de gestion chef
+                        chefManagementNavLink.classList.remove('active'); // Désactive le lien de gestion chef
+                        chefManagementNavLinkContainer.style.display = 'none'; // Masque explicitement l'élément de menu
+                    }
+                }
+
+                loadTeachingElements(); // Charge la liste initiale des éléments enseignés
+
+                if (saveAllBtn) saveAllBtn.addEventListener('click', () => { console.log('saveAllBtn clicked'); saveAllNotes(); });
+                if (logoutBtn) logoutBtn.addEventListener('click', () => {
+                    console.log('logoutBtn clicked');
+                    localStorage.removeItem('userData');
+                    window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
+                });
+
+                // Écouteurs d'événements pour les boutons spécifiques au chef de filière
+                if (showFieldNotesBtn) showFieldNotesBtn.addEventListener('click', () => {
+                    console.log('showFieldNotesBtn clicked');
+                    // Affiche toutes les notes de la filière dans la modale
+                    loadAndDisplayOverallNotes('Filière', professorProfileData.managed_field_id, professorProfileData.managed_field_name);
+                });
+                if (showAllFieldModulesNotesBtn) showAllFieldModulesNotesBtn.addEventListener('click', () => {
+                    console.log('showAllFieldModulesNotesBtn clicked');
+                    // Affiche toutes les notes de tous les modules de la filière dans la modale
+                    loadAllFieldModulesNotesForDisplay(professorProfileData.managed_field_id, professorProfileData.managed_field_name);
+                });
+                if (showFieldModuleNotesBtn) showFieldModuleNotesBtn.addEventListener('click', () => {
+                    console.log('showFieldModuleNotesBtn clicked');
+                    // Affiche les notes d'un module spécifique de la filière sélectionné dans le filtre
+                    const moduleSelect = document.getElementById('fieldModuleSelect');
+                    const selectedModuleId = moduleSelect.value;
+                    const selectedModuleName = moduleSelect.options[moduleSelect.selectedIndex].text;
+                    if (selectedModuleId && selectedModuleId !== "Sélectionner un module...") {
+                        loadAndDisplayModuleNotes(selectedModuleId, selectedModuleName);
+                    } else {
+                        alert("Veuillez sélectionner un module.");
+                    }
+                });
+
+                // Écouteurs d'événements pour les boutons spécifiques au chef de département (inchangés)
+                if (showDepartmentNotesBtn) showDepartmentNotesBtn.addEventListener('click', () => {
+                    console.log('showDepartmentNotesBtn clicked');
+                    loadAndDisplayOverallNotes('Département', professorProfileData.managed_department_id, professorProfileData.managed_department_name);
+                });
+                if (showAllDepartmentModulesNotesBtn) showAllDepartmentModulesNotesBtn.addEventListener('click', () => {
+                    console.log('showAllDepartmentModulesNotesBtn clicked');
+                    loadAllDepartmentModulesNotesForDisplay(professorProfileData.managed_department_id, professorProfileData.managed_department_name);
+                });
+                
+                if (departmentFieldSelect) departmentFieldSelect.addEventListener('change', async () => {
+                    console.log('departmentFieldSelect changed');
+                    const selectedFieldId = departmentFieldSelect.value;
+                    console.log('Filière sélectionnée dans le département:', selectedFieldId);
+                    if (selectedFieldId && selectedFieldId !== "Sélectionner une filière...") {
+                        await loadModulesForFieldInDepartment(selectedFieldId, 'departmentModuleSelect');
+                        departmentModuleSelect.disabled = false;
+                        if (showDepartmentModuleNotesBtn) showDepartmentModuleNotesBtn.disabled = true;
+                    } else {
+                        departmentModuleSelect.innerHTML = '<option selected disabled>Sélectionner un module...</option>';
+                        departmentModuleSelect.disabled = true;
+                        if (showDepartmentModuleNotesBtn) showDepartmentModuleNotesBtn.disabled = true;
+                    }
+                });
+
+                if (departmentModuleSelect) departmentModuleSelect.addEventListener('change', () => {
+                    console.log('departmentModuleSelect changed');
+                    if (showDepartmentModuleNotesBtn) showDepartmentModuleNotesBtn.disabled = (departmentModuleSelect.value === "Sélectionner un module..." || !departmentModuleSelect.value);
+                });
+
+                if (showDepartmentModuleNotesBtn) showDepartmentModuleNotesBtn.addEventListener('click', () => {
+                    console.log('showDepartmentModuleNotesBtn clicked');
+                    const selectedModuleId = departmentModuleSelect.value;
+                    const selectedModuleName = departmentModuleSelect.options[departmentModuleSelect.selectedIndex].text;
+                    if (selectedModuleId && selectedModuleId !== "Sélectionner un module...") {
+                        loadAndDisplayModuleNotes(selectedModuleId, selectedModuleName);
+                    } else {
+                        alert("Veuillez sélectionner un module.");
+                    }
+                });
+
+
+                // Logique de navigation de la barre latérale
+                document.querySelectorAll('#sidebar .nav-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('Sidebar link clicked:', this.dataset.section); // Debug: Vérifie quel lien est cliqué
+                        document.querySelectorAll('.content-section').forEach(section => {
+                            section.classList.add('d-none');
+                        });
+                        document.querySelectorAll('#sidebar .nav-link').forEach(nav => nav.classList.remove('active'));
+                        
+                        const targetSectionId = this.dataset.section + 'Section';
+                        const targetSection = document.getElementById(targetSectionId);
+                        if (targetSection) {
+                            targetSection.classList.remove('d-none');
+                            this.classList.add('active');
+                        } else {
+                            console.error('Target section not found:', targetSectionId);
+                        }
+
+                        // Gestion spéciale pour la section 'chef-management' pour assurer que la bonne sous-section est visible
+                        if (this.dataset.section === 'chef-management') {
+                            if (professorProfileData && professorProfileData.professor_degree_role === 'Chef_de_Filiere' && professorProfileData.managed_field_id) {
+                                document.getElementById('fieldChefSection').classList.remove('d-none');
+                                document.getElementById('departmentChefSection').classList.add('d-none'); // Masque la section département
+                            } else if (professorProfileData && professorProfileData.professor_degree_role === 'Chef_de_Departement' && professorProfileData.managed_department_id) {
+                                document.getElementById('departmentChefSection').classList.remove('d-none');
+                                document.getElementById('fieldChefSection').classList.add('d-none'); // Masque la section filière
+                            }
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('An error occurred during DOMContentLoaded initialization:', error);
+                // Optionally display a user-friendly message on the page
+            }
+        });
+
+        /**
+         * Charge et affiche les informations du profil du professeur.
+         */
+        async function loadProfessorProfile() {
+            try {
+                console.log('Tentative de récupération du profil du professeur...'); // Debug
+                const response = await fetch('http://localhost/ens-gestion/api/professor/profile');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Réponse d\'erreur de l\'API pour le profil:', errorData); // Debug: Affiche les détails de l'erreur API
+                    throw new Error(errorData.error || 'Erreur lors du chargement du profil du professeur.');
+                }
+                const result = await response.json();
+                console.log('Réponse de l\'API pour le profil:', result); // Debug: Affiche la réponse complète de l'API
+
+                const profile = result.data;
+                if (!profile) {
+                    throw new Error('Données de profil du professeur manquantes dans la réponse de l\'API (result.data est vide ou null).');
+                }
+                professorProfileData = profile;
+                console.log('Données du profil professeur chargées:', professorProfileData);
+
+                document.getElementById('professorName').textContent = `${profile.prenom} ${profile.nom}`;
+                document.getElementById('professorRole').textContent = formatRole(profile.role);
+                document.getElementById('professorDegree').textContent = formatProfessorDegreeRole(profile.professor_degree_role);
+
+            } catch (error) {
+                console.error('Erreur lors du chargement du profil:', error);
+                document.getElementById('professorName').textContent = 'Erreur';
+                document.getElementById('professorRole').textContent = 'Erreur';
+                document.getElementById('professorDegree').textContent = 'Erreur';
+            }
+        }
+
+        /**
+         * Formate le rôle pour un affichage plus lisible.
+         * @param {string} role Le rôle brut de la base de données.
+         * @returns {string} Le rôle formaté.
+         */
+        function formatRole(role) {
+            switch (role) {
+                case 'prof': return 'Professeur';
+                case 'chef_dep': return 'Chef de Département';
+                case 'chef_fill': return 'Chef de Filière';
+                case 'admin': return 'Administrateur';
+                case 'student': return 'Étudiant';
+                default: return role;
+            }
+        }
+
+        /**
+         * Formate le rôle de "degré" pour un affichage plus lisible.
+         * @param {string|null} degreeRole Le rôle de degré brut de la base de données (ex: 'Regular', 'Chef_de_Departement').
+         * @returns {string} Le rôle formaté ou 'N/A'.
+         */
+        function formatProfessorDegreeRole(degreeRole) {
+            if (!degreeRole) {
+                return 'N/A';
+            }
+            switch (degreeRole) {
+                case 'Regular': return 'Professeur Régulier';
+                case 'Chef_de_Departement': return 'Chef de Département';
+                case 'Chef_de_Filiere': return 'Chef de Filière';
+                default: return degreeRole;
+            }
+        }
+
+        /**
+         * Met à jour les drapeaux globaux isGradePeriodActive et isResitGradePeriodActive
+         * en interrogeant l'API.
+         */
+        async function updatePeriodStatuses() {
+            console.log('Fetching and updating all period statuses...');
+            isGradePeriodActive = await checkGradePeriod();
+            isResitGradePeriodActive = await checkResitGradePeriod();
+            console.log(`Current statuses: Normal=${isGradePeriodActive}, Resit=${isResitGradePeriodActive}`);
+        }
+
+        /**
+         * Vérifie le statut actuel de la période de saisie des notes.
+         * Met à jour l'affichage et la variable globale `isGradePeriodActive`.
+         * @returns {Promise<boolean>} Le statut actuel de la période.
+         */
+        async function checkGradePeriod() {
+            try {
+                const response = await fetch('http://localhost/ens-gestion/api/professor/grade-period-status');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur lors de la récupération du statut de la période.');
+                }
+                const result = await response.json();
+                const data = result.data;
+
+                const statusDiv = document.getElementById('gradePeriodStatus');
+                const activeStatus = data.active; // Use a local variable for clarity
+
+                statusDiv.textContent = `Période de saisie: ${activeStatus ? 'OUVERTE' : 'FERMÉE'}`;
+                statusDiv.className = `status-text ${activeStatus ? 'open' : 'closed'}`;
+                
+                return activeStatus; // Return the fetched status
+            } catch (error) {
+                console.error('Erreur lors de la vérification de la période de saisie:', error);
+                const statusDiv = document.getElementById('gradePeriodStatus');
+                statusDiv.textContent = `Statut de la période indisponible: ${error.message}`;
+                statusDiv.className = 'status-text closed';
+                return false;
+            }
+        }
+
+        /**
+         * Vérifie le statut actuel de la période de saisie des notes de rattrapage.
+         * Met à jour l'affichage et la variable globale `isResitGradePeriodActive`.
+         * @returns {Promise<boolean>} Le statut actuel de la période de rattrapage.
+         */
+        async function checkResitGradePeriod() {
+            try {
+                const response = await fetch('http://localhost/ens-gestion/api/professor/resit-grade-period-status');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur lors de la récupération du statut de la période de rattrapage.');
+                }
+                const result = await response.json();
+                const data = result.data;
+
+                const statusDiv = document.getElementById('resitGradePeriodStatus');
+                const activeStatus = data.active; // Use a local variable for clarity
+
+                statusDiv.textContent = `Période de saisie: ${activeStatus ? 'OUVERTE' : 'FERMÉE'}`;
+                statusDiv.className = `status-text ${activeStatus ? 'open' : 'closed'}`;
+                
+                return activeStatus; // Return the fetched status
+            } catch (error) {
+                console.error('Erreur lors de la vérification de la période de rattrapage:', error);
+                const statusDiv = document.getElementById('resitGradePeriodStatus');
+                statusDiv.textContent = `Statut de la période de rattrapage indisponible: ${error.message}`;
+                statusDiv.className = 'status-text closed';
+                return false;
+            }
+        }
+
+        /**
+         * Met à jour le statut de la période de saisie des notes via l'API.
+         * @param {boolean} active True pour ouvrir, False pour fermer.
+         */
+        async function updateGradePeriod(active) {
+            console.log('updateGradePeriod called with active:', active);
+            // Re-fetch current statuses immediately before attempting to change
+            await updatePeriodStatuses(); // Ensure flags are most recent
+
+            console.log(`Before updateGradePeriod API call: isGradePeriodActive=${isGradePeriodActive}, isResitGradePeriodActive=${isResitGradePeriodActive}`);
+
+            // Empêcher l'activation si la période de rattrapage est active
+            if (active && isResitGradePeriodActive) {
+                alert('Impossible d\'ouvrir la période de saisie normale car la période de rattrapage est actuellement ouverte. Veuillez la fermer d\'abord.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost/ens-gestion/api/professor/grade-period', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ active: active })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erreur lors de la mise à jour de la période.');
+                }
+
+                alert(result.message);
+                // After successful update, refresh all statuses
+                await updatePeriodStatuses();
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de la période:', error);
+                alert(`Échec de la mise à jour de la période: ${error.message}`);
+            }
+        }
+
+        /**
+         * Met à jour le statut de la période de saisie des notes de rattrapage via l'API.
+         * @param {boolean} active True pour ouvrir, False pour fermer.
+         */
+        async function updateResitGradePeriod(active) {
+            console.log('updateResitGradePeriod called with active:', active);
+            // Re-fetch current statuses immediately before attempting to change
+            await updatePeriodStatuses(); // Ensure flags are most recent
+
+            console.log(`Before updateResitGradePeriod API call: isGradePeriodActive=${isGradePeriodActive}, isResitGradePeriodActive=${isResitGradePeriodActive}`);
+
+            // Empêcher l'activation si la période normale est active
+            if (active && isGradePeriodActive) {
+                alert('Impossible d\'ouvrir la période de rattrapage car la période de saisie normale est actuellement ouverte. Veuillez la fermer d\'abord.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost/ens-gestion/api/professor/resit-grade-period', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ active: active })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erreur lors de la mise à jour de la période de rattrapage.');
+                }
+
+                alert(result.message);
+                // After successful update, refresh all statuses
+                await updatePeriodStatuses();
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de la période de rattrapage:', error);
+                alert(`Échec de la mise à jour de la période de rattrapage: ${error.message}`);
+            }
+        }
+
+        /**
+         * Charge et affiche les éléments enseignés par le professeur.
+         * Met à jour la variable globale `elementTeachingRoles` avec les rôles spécifiques.
+         */
+        async function loadTeachingElements() {
+            console.log('loadTeachingElements called.'); // Debug: Vérifie l'appel de la fonction
+            try {
+                const user = JSON.parse(localStorage.getItem('userData'));
+                if (!user || !user.user_id) {
+                    console.error("User data not found in localStorage or user_id is missing.");
+                    // Optionally redirect to login or show an error
+                    return;
+                }
+                const currentUserId = user.user_id; // Get the current logged-in user's ID
+
+                const response = await fetch('http://localhost/ens-gestion/api/professor/elements');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur lors du chargement des éléments enseignés.');
+                }
+                const result = await response.json();
+                const elements = result.data;
+
+                const container = document.getElementById('elementsList');
+                container.innerHTML = '';
+                elementTeachingRoles = {}; // Reset previous roles
+
+                if (!Array.isArray(elements) || elements.length === 0) {
+                    container.innerHTML = '<div class="list-group-item text-center text-muted">Aucun élément enseigné trouvé.</div>';
+                    return;
+                }
+
+                elements.forEach(element => {
+                    // Détermine si le professeur actuel est le prof principal ou le prof de TP pour cet élément
+                    const isMainProf = (element.Ref_prof_element == currentUserId);
+                    const isTpProf = (element.Ref_prof_tp == currentUserId);
+
+                    // Stocke ces rôles pour une utilisation ultérieure lors de l'affichage des notes
+                    elementTeachingRoles[element.element_id] = {
+                        is_main_prof: isMainProf,
+                        is_tp_prof: isTpProf
+                    };
+
+                    const elem = document.createElement('a');
+                    elem.href = '#';
+                    elem.className = 'list-group-item list-group-item-action rounded';
+                    let roleIndicator = '';
+                    if (isMainProf && isTpProf) {
+                        roleIndicator = '<span class="badge bg-success rounded-pill ms-2">Prof. Principal & TP</span>';
+                    } else if (isMainProf) {
+                        roleIndicator = '<span class="badge bg-success rounded-pill ms-2">Prof. Principal</span>';
+                    } else if (isTpProf) {
+                        roleIndicator = '<span class="badge bg-info rounded-pill ms-2">Prof. TP</span>';
+                    }
+
+                    elem.innerHTML = `
+                        <strong>${element.module_code}</strong> - ${element.nom}
+                        <span class="badge bg-secondary rounded-pill">ID: ${element.element_id}</span>
+                        ${roleIndicator}
+                    `;
+                    elem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        console.log('Element link clicked for element ID:', element.element_id); // Debug
+                        loadElementNotes(element.element_id, element.nom);
+                    });
+                    container.appendChild(elem);
+                });
+            } catch (error) {
+                console.error('Erreur lors du chargement des éléments enseignés:', error);
+                document.getElementById('elementsList').innerHTML = `<div class="list-group-item text-center text-danger">Erreur de chargement des éléments: ${error.message}</div>`;
+            }
+        }
+
+        /**
+         * Charge et affiche les notes pour un élément spécifique.
+         * Active/désactive les champs de saisie en fonction du rôle d'enseignement du professeur
+         * et de l'état des périodes de saisie (normale ou rattrapage).
+         * @param {int} elementId L'ID de l'élément dont on veut afficher les notes.
+         * @param {string} elementName Le nom de l'élément à afficher dans le titre.
+         */
+        async function loadElementNotes(elementId, elementName) {
+            console.log('loadElementNotes called for element ID:', elementId); // Debug: Vérifie l'appel de la fonction
+            currentElementId = elementId;
+            document.getElementById('elementName').textContent = elementName;
+            modifiedNotes = {};
+
+            try {
+                const response = await fetch(`http://localhost/ens-gestion/api/professor/notes/${elementId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur lors du chargement des notes de l\'élément.');
+                }
+                const result = await response.json();
+                const notes = result.data;
+
+                const thead = document.getElementById('notesTableHeader');
+                const tbody = document.getElementById('notesTableBody');
+                tbody.innerHTML = ''; // Clear existing table body
+
+                // Récupère les rôles d'enseignement du professeur pour l'élément actuel
+                const rolesForCurrentElement = elementTeachingRoles[elementId] || { is_main_prof: false, is_tp_prof: false };
+                const isMainProf = rolesForCurrentElement.is_main_prof;
+                const isTpProf = rolesForCurrentElement.is_tp_prof;
+                const isChef = (professorProfileData && (professorProfileData.professor_degree_role === 'Chef_de_Filiere' || professorProfileData.professor_degree_role === 'Chef_de_Departement'));
+
+                // --- Construction dynamique de l'en-tête du tableau (<thead>) ---
+                let headerHtml = '<tr><th>Étudiant</th>';
+                let visibleColumns = [];
+
+                if (isTpProf || isChef) {
+                    headerHtml += '<th>TP</th>';
+                    visibleColumns.push('tp');
+                }
+                if (isMainProf || isChef) {
+                    headerHtml += '<th>TD</th><th>CC</th><th>Examen</th><th>Rattrapage</th><th>Finale</th>'; // Ajout de Rattrapage
+                    visibleColumns.push('td', 'cc', 'exam', 'rattrapage', 'final');
+                }
+                headerHtml += '<th>Actions</th></tr>';
+                thead.innerHTML = headerHtml;
+
+                if (!Array.isArray(notes) || notes.length === 0) {
+                    // Calculer le colspan en fonction du nombre de colonnes visibles + Étudiant + Actions
+                    const colspan = visibleColumns.length + 2;
+                    tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-muted">Aucune note trouvée pour cet élément.</td></tr>`;
+                    document.getElementById('notesContainer').classList.remove('d-none');
+                    return;
+                }
+
+                // --- Remplissage dynamique du corps du tableau (<tbody>) ---
+                notes.forEach(note => {
+                    const tr = document.createElement('tr');
+                    let rowHtml = `<td>${note.nom} ${note.prenom}</td>`;
+
+                    // TP
+                    if (visibleColumns.includes('tp')) {
+                        const disableTp = !(isTpProf || isChef) || !isGradePeriodActive;
+                        rowHtml += `<td><input type="number" class="form-control note-input rounded" value="${note.note_tp !== null ? note.note_tp : ''}"
+                               onchange="noteChanged(${note.note_id}, 'tp', this.value)" min="0" max="20" step="0.01" ${disableTp ? 'disabled' : ''}></td>`;
+                    }
+                    // TD, CC, Examen
+                    if (visibleColumns.includes('td')) { // Si TD est visible, les autres le sont aussi
+                        const disableOther = !(isMainProf || isChef) || !isGradePeriodActive;
+                        rowHtml += `<td><input type="number" class="form-control note-input rounded" value="${note.note_td !== null ? note.note_td : ''}"
+                               onchange="noteChanged(${note.note_id}, 'td', this.value)" min="0" max="20" step="0.01" ${disableOther ? 'disabled' : ''}></td>`;
+                        rowHtml += `<td><input type="number" class="form-control note-input rounded" value="${note.note_cc !== null ? note.note_cc : ''}"
+                               onchange="noteChanged(${note.note_id}, 'cc', this.value)" min="0" max="20" step="0.01" ${disableOther ? 'disabled' : ''}></td>`;
+                        rowHtml += `<td><input type="number" class="form-control note-input rounded" value="${note.note_exam !== null ? note.note_exam : ''}"
+                               onchange="noteChanged(${note.note_id}, 'exam', this.value)" min="0" max="20" step="0.01" ${disableOther ? 'disabled' : ''}></td>`;
+                    }
+
+                    // Rattrapage (toujours visible, mais désactivé si la période de rattrapage n'est pas active ou si pas prof principal/chef)
+                    if (visibleColumns.includes('rattrapage')) {
+                        const disableRattrapage = !(isMainProf || isChef) || !isResitGradePeriodActive;
+                        rowHtml += `<td><input type="number" class="form-control note-input rounded" value="${note.note_rattrapage !== null ? note.note_rattrapage : ''}"
+                               onchange="noteChanged(${note.note_id}, 'rattrapage', this.value)" min="0" max="20" step="0.01" ${disableRattrapage ? 'disabled' : ''}></td>`;
+                    }
+
+                    // Finale (toujours visible, mais désactivé si la période normale n'est pas active ou si pas prof principal/chef)
+                    if (visibleColumns.includes('final')) {
+                        const disableFinal = !(isMainProf || isChef) || !isGradePeriodActive;
+                        rowHtml += `<td><input type="number" class="form-control note-input rounded" value="${note.note_finale !== null ? note.note_finale : ''}"
+                               onchange="noteChanged(${note.note_id}, 'final', this.value)" min="0" max="20" step="0.01" ${disableFinal ? 'disabled' : ''}></td>`;
+                    }
+
+                    // Le bouton "Enregistrer" est activé si au moins un champ est modifiable par le prof ou si c'est un chef
+                    const enableSaveButton = (isTpProf && isGradePeriodActive) || (isMainProf && isGradePeriodActive) || (isMainProf && isResitGradePeriodActive) || isChef;
+                    rowHtml += `<td><button class="btn btn-sm btn-success rounded"
+                                onclick="saveNote(${note.note_id})" ${enableSaveButton ? '' : 'disabled'}>Enregistrer</button></td>`;
+                    tr.innerHTML = rowHtml;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('notesContainer').classList.remove('d-none');
+            } catch (error) {
+                console.error('Erreur lors du chargement des notes de l\'élément:', error);
+                const tbody = document.getElementById('notesTableBody');
+                // Calculer un colspan générique pour le message d'erreur si la table n'a pas encore de thead
+                const defaultColspan = 9; // Basé sur les 9 colonnes (Étudiant, TP, TD, CC, Examen, Rattrapage, Finale, Actions)
+                tbody.innerHTML = `<tr><td colspan="${defaultColspan}" class="text-center text-danger">Erreur de chargement des notes: ${error.message}</td></tr>`;
+                document.getElementById('notesContainer').classList.remove('d-none');
+            }
+        }
+
+        /**
+         * Enregistre une modification de note dans l'objet `modifiedNotes`.
+         * @param {int} noteId L'ID de la note.
+         * @param {string} type Le type de note (tp, td, cc, exam, rattrapage, final).
+         * @param {string} value La nouvelle valeur de la note.
+         */
+        function noteChanged(noteId, type, value) {
+            console.log(`Note changed: noteId=${noteId}, type=${type}, value=${value}`); // Debug
+            if (!modifiedNotes[noteId]) {
+                modifiedNotes[noteId] = {};
+            }
+            // Convertir la valeur en nombre ou null si vide
+            modifiedNotes[noteId][type] = value === '' ? null : parseFloat(value);
+        }
+
+        /**
+         * Enregistre les modifications d'une seule note sur le serveur.
+         * @param {int} noteId L'ID de la note à enregistrer.
+         */
+        async function saveNote(noteId) {
+            console.log('saveNote called for note ID:', noteId); // Debug: Vérifie l'appel de la fonction
+            if (!modifiedNotes[noteId]) {
+                alert('Aucune modification à enregistrer pour cette note.');
+                return;
+            }
+            
+            // Vérifier la période de saisie pertinente
+            const updates = modifiedNotes[noteId];
+            let canSave = true;
+            for (const type in updates) {
+                if (type === 'rattrapage' && !isResitGradePeriodActive) {
+                    alert('La période de saisie des notes de rattrapage est fermée. Vous ne pouvez pas enregistrer cette note.');
+                    canSave = false;
+                    break;
+                } else if (['tp', 'td', 'cc', 'exam', 'final'].includes(type) && !isGradePeriodActive) {
+                    alert('La période de saisie des notes normales est fermée. Vous ne pouvez pas enregistrer cette note.');
+                    canSave = false;
+                    break;
+                }
+            }
+
+            if (!canSave) {
+                return;
+            }
+            
+            try {
+                for (const [type, value] of Object.entries(updates)) {
+                    await updateNoteOnServer(noteId, type, value);
+                }
+                
+                delete modifiedNotes[noteId];
+                alert('Note mise à jour avec succès!');
+                // Recharger les notes pour refléter les changements et effacer les champs
+                loadElementNotes(currentElementId, document.getElementById('elementName').textContent);
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de la note:', error);
+                alert(`Erreur lors de la mise à jour: ${error.message}`);
+            }
+        }
+
+        /**
+         * Enregistre toutes les notes modifiées sur le serveur.
+         */
+        async function saveAllNotes() {
+            console.log('saveAllNotes called.'); // Debug: Vérifie l'appel de la fonction
+            if (Object.keys(modifiedNotes).length === 0) {
+                alert('Aucune modification en attente d\'enregistrement.');
+                return;
+            }
+
+            let allCanSave = true;
+            for (const noteId in modifiedNotes) {
+                const updates = modifiedNotes[noteId];
+                for (const type in updates) {
+                    if (type === 'rattrapage' && !isResitGradePeriodActive) {
+                        alert('La période de saisie des notes de rattrapage est fermée. Certaines notes n\'ont pas pu être enregistrées.');
+                        allCanSave = false;
+                        break;
+                    } else if (['tp', 'td', 'cc', 'exam', 'final'].includes(type) && !isGradePeriodActive) {
+                        alert('La période de saisie des notes normales est fermée. Certaines notes n\'ont pas pu être enregistrées.');
+                        allCanSave = false;
+                        break;
+                    }
+                }
+                if (!allCanSave) break;
+            }
+
+            if (!allCanSave) {
+                return;
+            }
+            
+            try {
+                for (const [noteId, updates] of Object.entries(modifiedNotes)) {
+                    for (const [type, value] of Object.entries(updates)) {
+                        await updateNoteOnServer(noteId, type, value);
+                    }
+                }
+                
+                modifiedNotes = {};
+                alert('Toutes les notes ont été mises à jour!');
+                // Recharger les notes pour refléter les changements et effacer les champs
+                loadElementNotes(currentElementId, document.getElementById('elementName').textContent);
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de toutes les notes:', error);
+                alert(`Erreur lors de la mise à jour de toutes les notes: ${error.message}`);
+            }
+        }
+
+        /**
+         * Envoie une requête PUT à l'API pour mettre à jour une note spécifique.
+         * @param {int} noteId L'ID de la note.
+         * @param {string} type Le type de note (tp, td, cc, exam, rattrapage, final).
+         * @param {float|null} value La nouvelle valeur de la note.
+         * @returns {Promise<void>}
+         */
+        async function updateNoteOnServer(noteId, type, value) {
+            console.log(`updateNoteOnServer called: noteId=${noteId}, type=${type}, value=${value}`); // Debug
+            const response = await fetch('http://localhost/ens-gestion/api/professor/notes', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    note_id: noteId,
+                    note_type: type,
+                    note_value: value
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur serveur inconnue');
+            }
+        }
+
+        /**
+         * Charge et affiche les notes de tous les étudiants pour une filière ou un département donné dans une modale.
+         * @param {string} type 'Filière' ou 'Département'.
+         * @param {int} id L'ID de la filière ou du département.
+         * @param {string} name Le nom de la filière ou du département.
+         */
+        async function loadAndDisplayOverallNotes(type, id, name) {
+            console.log(`loadAndDisplayOverallNotes called for ${type} ID:`, id); // Debug
+            const modalTitle = document.getElementById('notesModalLabel');
+            const tableBody = document.getElementById('notesModalTableBody');
+            
+            modalTitle.textContent = `Notes du ${type}: ${name || `ID: ${id}`}`;
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Chargement des notes...</td></tr>';
+
+            const notesModal = new bootstrap.Modal(document.getElementById('notesModal'));
+            notesModal.show();
+
+            try {
+                let endpoint = '';
+                if (type === 'Filière') {
+                    endpoint = `http://localhost/ens-gestion/api/professor/field-notes/${id}`;
+                } else if (type === 'Département') {
+                    endpoint = `http://localhost/ens-gestion/api/professor/department-notes/${id}`;
+                } else {
+                    throw new Error('Type de notes non reconnu.');
+                }
+                console.log(`[DEBUG] Appel API pour ${type} notes: ${endpoint}`);
+
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error(`[DEBUG] Réponse d'erreur de l'API pour ${type} notes:`, errorData);
+                    throw new Error(errorData.error || `Erreur lors du chargement des notes du ${type}.`);
+                }
+                const result = await response.json();
+                const notes = result.data;
+                console.log(`[DEBUG] Notes du ${type} reçues:`, notes);
+
+                tableBody.innerHTML = '';
+
+                if (!Array.isArray(notes) || notes.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Aucune note trouvée pour ce ${type}.</td></tr>`;
+                    return;
+                }
+
+                notes.forEach(note => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${note.student_nom} ${note.student_prenom}</td>
+                        <td>${note.module_name}</td>
+                        <td>${note.element_name}</td>
+                        <td>${note.note_tp !== null ? note.note_tp : 'N/A'}</td>
+                        <td>${note.note_td !== null ? note.note_td : 'N/A'}</td>
+                        <td>${note.note_cc !== null ? note.note_cc : 'N/A'}</td>
+                        <td>${note.note_exam !== null ? note.note_exam : 'N/A'}</td>
+                        <td>${note.note_rattrapage !== null ? note.note_rattrapage : 'N/A'}</td>
+                        <td>${note.note_finale !== null ? note.note_finale : 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error(`[DEBUG] Erreur lors du chargement des notes du ${type}:`, error);
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Erreur de chargement des notes: ${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * Charge les modules pour un chef (filière ou département) et peuple le sélecteur de modules.
+         * @param {string} chefType 'field' ou 'department'.
+         * @param {int} id L'ID de la filière ou du département.
+         * @param {string} selectId L'ID de l'élément select HTML à peupler.
+         */
+        async function loadModulesForChef(chefType, id, selectId) {
+            console.log(`loadModulesForChef called for ${chefType} ID:`, id); // Debug
+            const moduleSelect = document.getElementById(selectId);
+            moduleSelect.innerHTML = '<option selected disabled>Chargement des modules...</option>';
+
+            try {
+                let endpoint = '';
+                if (chefType === 'field') {
+                    endpoint = `http://localhost/ens-gestion/api/professor/modules-by-field/${id}`;
+                } else if (chefType === 'department') {
+                    endpoint = `http://localhost/ens-gestion/api/professor/modules-by-department/${id}`;
+                } else {
+                    throw new Error('Type de chef non reconnu pour le chargement des modules.');
+                }
+                console.log(`[DEBUG] Appel API pour modules (${chefType}): ${endpoint}`);
+
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error(`[DEBUG] Erreur API pour modules (${chefType}):`, errorData);
+                    throw new Error(errorData.error || `Erreur lors du chargement des modules du ${chefType}.`);
+                }
+                const result = await response.json();
+                const modules = result.data;
+                console.log(`[DEBUG] Modules (${chefType}) reçus:`, modules);
+
+                moduleSelect.innerHTML = '<option selected disabled>Sélectionner un module...</option>';
+                if (Array.isArray(modules) && modules.length > 0) {
+                    modules.forEach(module => {
+                        const option = document.createElement('option');
+                        option.value = module.module_id;
+                        if (chefType === 'department' && module.field_name) {
+                            option.textContent = `${module.code} - ${module.nom} (${module.field_name})`;
+                        } else {
+                            option.textContent = `${module.code} - ${module.nom}`;
+                        }
+                        moduleSelect.appendChild(option);
+                    });
+                } else {
+                    moduleSelect.innerHTML = '<option selected disabled>Aucun module trouvé pour cette entité.</option>';
+                }
+            } catch (error) {
+                console.error('[DEBUG] Erreur lors du chargement des modules:', error);
+                moduleSelect.innerHTML = '<option selected disabled>Erreur de chargement des modules.</option>';
+            }
+        }
+
+        /**
+         * Charge les filières d'un département donné et peuple le sélecteur de filières.
+         * @param {int} departmentId L'ID du département.
+         * @param {string} selectId L'ID de l'élément select HTML à peupler.
+         */
+        async function loadDepartmentFields(departmentId, selectId) {
+            console.log('loadDepartmentFields called for department ID:', departmentId); // Debug
+            const fieldSelect = document.getElementById(selectId);
+            fieldSelect.innerHTML = '<option selected disabled>Chargement des filières...</option>';
+
+            try {
+                const response = await fetch(`http://localhost/ens-gestion/api/professor/fields-by-department/${departmentId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('[DEBUG] Erreur API pour filières de département:', errorData);
+                    throw new Error(errorData.error || 'Erreur lors du chargement des filières du département.');
+                }
+                const result = await response.json();
+                const fields = result.data;
+                console.log('[DEBUG] Filières de département reçues:', fields);
+
+                fieldSelect.innerHTML = '<option selected disabled>Sélectionner une filière...</option>';
+                if (Array.isArray(fields) && fields.length > 0) {
+                    fields.forEach(field => {
+                        const option = document.createElement('option');
+                        option.value = field.field_id;
+                        option.textContent = field.nom;
+                        fieldSelect.appendChild(option);
+                    });
+                } else {
+                    fieldSelect.innerHTML = '<option selected disabled>Aucune filière trouvée pour ce département.</option>';
+                }
+            } catch (error) {
+                console.error('[DEBUG] Erreur lors du chargement des filières:', error);
+                fieldSelect.innerHTML = '<option selected disabled>Erreur de chargement des filières.</option>';
+            }
+        }
+
+        /**
+         * Charge les modules d'une filière donnée (dans le contexte d'un département) et peuple le sélecteur de modules.
+         * @param {int} fieldId L'ID de la filière.
+         * @param {string} selectId L'ID de l'élément select HTML à peupler.
+         */
+        async function loadModulesForFieldInDepartment(fieldId, selectId) {
+            console.log('loadModulesForFieldInDepartment called for field ID:', fieldId); // Debug
+            const moduleSelect = document.getElementById(selectId);
+            moduleSelect.innerHTML = '<option selected disabled>Chargement des modules...</option>';
+
+            try {
+                const response = await fetch(`http://localhost/ens-gestion/api/professor/modules-by-field/${fieldId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('[DEBUG] Erreur API pour modules par filière dans département:', errorData);
+                    throw new Error(errorData.error || `Erreur lors du chargement des modules de la filière.`);
+                }
+                const result = await response.json();
+                const modules = result.data;
+                console.log('[DEBUG] Modules par filière dans département reçus:', modules);
+
+                moduleSelect.innerHTML = '<option selected disabled>Sélectionner un module...</option>';
+                if (Array.isArray(modules) && modules.length > 0) {
+                    modules.forEach(module => {
+                        const option = document.createElement('option');
+                        option.value = module.module_id;
+                        option.textContent = `${module.code} - ${module.nom}`;
+                        moduleSelect.appendChild(option);
+                    });
+                } else {
+                    moduleSelect.innerHTML = '<option selected disabled>Aucun module trouvé pour cette filière.</option>';
+                }
+            } catch (error) {
+                console.error('[DEBUG] Erreur lors du chargement des modules pour la filière:', error);
+                moduleSelect.innerHTML = '<option selected disabled>Erreur de chargement des modules.</option>';
+            }
+        }
+
+        /**
+         * Charge et affiche les notes de tous les étudiants pour un module donné dans une modale.
+         * @param {int} moduleId L'ID du module.
+         * @param {string} moduleName Le nom du module.
+         */
+        async function loadAndDisplayModuleNotes(moduleId, moduleName) {
+            console.log('loadAndDisplayModuleNotes called for module ID:', moduleId); // Debug
+            const modalTitle = document.getElementById('notesModalLabel');
+            const tableBody = document.getElementById('notesModalTableBody');
+            
+            modalTitle.textContent = `Notes du Module: ${moduleName || `ID: ${moduleId}`}`;
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Chargement des notes du module...</td></tr>';
+
+            const notesModal = new bootstrap.Modal(document.getElementById('notesModal'));
+            notesModal.show();
+
+            try {
+                const response = await fetch(`http://localhost/ens-gestion/api/professor/module-notes/${moduleId}`);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('[DEBUG] Erreur API pour notes de module:', errorData);
+                    throw new Error(errorData.error || 'Erreur lors du chargement des notes du module.');
+                }
+                const result = await response.json();
+                const notes = result.data;
+                console.log('[DEBUG] Notes de module reçues:', notes);
+
+                tableBody.innerHTML = '';
+
+                if (!Array.isArray(notes) || notes.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Aucune note trouvée pour ce module.</td></tr>';
+                    return;
+                }
+
+                notes.forEach(note => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${note.student_nom} ${note.student_prenom}</td>
+                        <td>${note.module_name}</td>
+                        <td>${note.element_name}</td>
+                        <td>${note.note_tp !== null ? note.note_tp : 'N/A'}</td>
+                        <td>${note.note_td !== null ? note.note_td : 'N/A'}</td>
+                        <td>${note.note_cc !== null ? note.note_cc : 'N/A'}</td>
+                        <td>${note.note_exam !== null ? note.note_exam : 'N/A'}</td>
+                        <td>${note.note_rattrapage !== null ? note.note_rattrapage : 'N/A'}</td>
+                        <td>${note.note_finale !== null ? note.note_finale : 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('[DEBUG] Erreur lors du chargement des notes du module:', error);
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Erreur de chargement des notes: ${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * Charge et affiche toutes les notes de tous les modules d'une filière dans une modale.
+         * Cette fonction est appelée par le bouton "Afficher toutes les notes des modules de ma filière".
+         * @param {int} fieldId L'ID de la filière.
+         * @param {string} fieldName Le nom de la filière.
+         */
+        async function loadAllFieldModulesNotesForDisplay(fieldId, fieldName) {
+            console.log('loadAllFieldModulesNotesForDisplay called for field ID:', fieldId); // Debug
+            const modalTitle = document.getElementById('notesModalLabel');
+            const tableBody = document.getElementById('notesModalTableBody');
+            
+            modalTitle.textContent = `Notes de tous les modules de la Filière: ${fieldName || `ID: ${fieldId}`}`;
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Chargement des notes de tous les modules de la filière...</td></tr>';
+
+            const notesModal = new bootstrap.Modal(document.getElementById('notesModal'));
+            notesModal.show();
+
+            try {
+                // Récupère d'abord tous les modules de la filière
+                const modulesResponse = await fetch(`http://localhost/ens-gestion/api/professor/modules-by-field/${fieldId}`);
+                if (!modulesResponse.ok) {
+                    const errorData = await modulesResponse.json();
+                    throw new Error(errorData.error || 'Erreur lors du chargement des modules de la filière.');
+                }
+                const modulesResult = await modulesResponse.json();
+                const modules = modulesResult.data;
+
+                let allNotes = [];
+                if (Array.isArray(modules) && modules.length > 0) {
+                    // Pour chaque module, récupère ses notes et les ajoute à la liste globale
+                    for (const module of modules) {
+                        const moduleNotesResponse = await fetch(`http://localhost/ens-gestion/api/professor/module-notes/${module.module_id}`);
+                        if (!moduleNotesResponse.ok) {
+                            console.warn(`Avertissement: Impossible de charger les notes pour le module ${module.nom} (ID: ${module.module_id}).`);
+                            continue; // Passe au module suivant en cas d'erreur
+                        }
+                        const moduleNotesResult = await moduleNotesResponse.json();
+                        if (Array.isArray(moduleNotesResult.data)) {
+                            allNotes = allNotes.concat(moduleNotesResult.data);
+                        }
+                    }
+                }
+
+                tableBody.innerHTML = '';
+
+                if (allNotes.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Aucune note trouvée pour les modules de cette filière.</td></tr>';
+                    return;
+                }
+
+                // Affiche toutes les notes collectées
+                allNotes.forEach(note => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${note.student_nom} ${note.student_prenom}</td>
+                        <td>${note.module_name}</td>
+                        <td>${note.element_name}</td>
+                        <td>${note.note_tp !== null ? note.note_tp : 'N/A'}</td>
+                        <td>${note.note_td !== null ? note.note_td : 'N/A'}</td>
+                        <td>${note.note_cc !== null ? note.note_cc : 'N/A'}</td>
+                        <td>${note.note_exam !== null ? note.note_exam : 'N/A'}</td>
+                        <td>${note.note_rattrapage !== null ? note.note_rattrapage : 'N/A'}</td>
+                        <td>${note.note_finale !== null ? note.note_finale : 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('[DEBUG] Erreur lors du chargement de toutes les notes des modules de la filière:', error);
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Erreur de chargement des notes des modules: ${error.message}</td></tr>`;
+            }
+        }
+
+        /**
+         * Charge et affiche toutes les notes de tous les modules d'un département dans une modale.
+         * @param {int} departmentId L'ID du département.
+         * @param {string} departmentName Le nom du département.
+         */
+        async function loadAllDepartmentModulesNotesForDisplay(departmentId, departmentName) {
+            console.log('loadAllDepartmentModulesNotesForDisplay called for department ID:', departmentId); // Debug
+            const modalTitle = document.getElementById('notesModalLabel');
+            const tableBody = document.getElementById('notesModalTableBody');
+            
+            modalTitle.textContent = `Notes de tous les modules du Département: ${departmentName || `ID: ${departmentId}`}`;
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Chargement des notes de tous les modules du département...</td></tr>';
+
+            const notesModal = new bootstrap.Modal(document.getElementById('notesModal'));
+            notesModal.show();
+
+            try {
+                const modulesResponse = await fetch(`http://localhost/ens-gestion/api/professor/modules-by-department/${departmentId}`);
+                if (!modulesResponse.ok) {
+                    const errorData = await modulesResponse.json();
+                    throw new Error(errorData.error || 'Erreur lors du chargement des modules du département.');
+                }
+                const modulesResult = await modulesResponse.json();
+                const modules = modulesResult.data;
+
+                let allNotes = [];
+                if (Array.isArray(modules) && modules.length > 0) {
+                    for (const module of modules) {
+                        const moduleNotesResponse = await fetch(`http://localhost/ens-gestion/api/professor/module-notes/${module.module_id}`);
+                        if (!moduleNotesResponse.ok) {
+                            console.warn(`Avertissement: Impossible de charger les notes pour le module ${module.nom} (ID: ${module.module_id}).`);
+                            continue; // Skip this module and continue with others
+                        }
+                        const moduleNotesResult = await moduleNotesResponse.json();
+                        if (Array.isArray(moduleNotesResult.data)) {
+                            allNotes = allNotes.concat(moduleNotesResult.data);
+                        }
+                    }
+                }
+
+                tableBody.innerHTML = '';
+
+                if (allNotes.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Aucune note trouvée pour les modules de ce département.</td></tr>';
+                    return;
+                }
+
+                allNotes.forEach(note => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${note.student_nom} ${note.student_prenom}</td>
+                        <td>${note.module_name}</td>
+                        <td>${note.element_name}</td>
+                        <td>${note.note_tp !== null ? note.note_tp : 'N/A'}</td>
+                        <td>${note.note_td !== null ? note.note_td : 'N/A'}</td>
+                        <td>${note.note_cc !== null ? note.note_cc : 'N/A'}</td>
+                        <td>${note.note_exam !== null ? note.note_exam : 'N/A'}</td>
+                        <td>${note.note_rattrapage !== null ? note.note_rattrapage : 'N/A'}</td>
+                        <td>${note.note_finale !== null ? note.note_finale : 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('[DEBUG] Erreur lors du chargement de toutes les notes des modules du département:', error);
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Erreur de chargement des notes des modules: ${error.message}</td></tr>`;
+            }
+        }
+    </script>
+</body>
+</html>
