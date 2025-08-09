@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Filières</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      height: 100vh;
+      width: 220px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #343a40;
+      padding-top: 60px;
+      color: #fff;
+    }
+    .sidebar h4 {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #495057;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #adb5bd;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #fff;
+    }
+    .content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+      background-color: #fff;
+    }
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <button id="logoutBtn" class="btn btn-danger logout-btn">Déconnexion</button>
+
+  <div class="sidebar">
+    <h4>Menu</h4>
+    <a href="etudiants.html">Étudiants</a>
+    <a href="professeurs.html">Professeurs</a>
+    <a href="depart.html">Départements</a>
+    <a href="filieres.html">Filières</a>
+    <a href="modules.html">Modules</a>
+    <a href="notes.html">Notes</a>
+    <a href="parametres.html">Paramètres</a>
+  </div>
+
+  <div class="content">
+    <div class="welcome-message mb-4">
+      Bonjour <span id="usernameDisplay"></span> !
+    </div>
+    <div class="alert alert-info">
+      Vous êtes connecté en tant que: <strong id="userRole"></strong>
+    </div>
+
+    
+
+    <!-- TABLEAU FILIÈRES -->
+
+      <div class="d-flex justify-content-between mb-3">
+          <div class="p-2 ">     
+            <h2>Liste des Filières</h2>
+      </div>
+          <div class="p-2 ">     
+            <button type="button" class="btn btn-success" onclick="AjouterFiliere()"> + Ajouter une filière</button>
+      </div>
+        </div>
+        <h4>Filterer </h4>
+        <div class="row">
+         
+          
+          <div class="col-md-3 mb-3">
+            <label>Cycle </label>
+            <select class="form-select" id="cycle" required onchange="filtrerFilieresParCycle()">
+              <option disabled selected value="">Choisissez le cycle</option>
+            </select>
+          </div>
+         
+          
+          
+        </div>
+   
+      <div class="table-responsive mt-4">
+        <table class="table table-bordered table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th>ID Filière</th>
+              <th>Nom Filière</th>
+              <th>Nom Department </th>
+              <th>Chef de Filière</th>
+              <th>Année d'accréditation</th>
+              <th>Cycle </th>
+              <th>Modifier</th>
+              <th>Supprimer</th>
+
+            </tr>
+          </thead>
+          <tbody id="filiereTableBody">
+            <tr><td colspan="7" class="text-center">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    const cycleSelect=document.getElementById("cycle");
+    document.addEventListener('DOMContentLoaded', function () {
+      // Simuler un utilisateur connecté (pour test)
+      let userData = localStorage.getItem("userData");
+      if (!userData) {
+        localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
+        userData = localStorage.getItem("userData");
+      }
+
+      userData = JSON.parse(userData);
+      document.getElementById('usernameDisplay').textContent = userData.username;
+      document.getElementById('userRole').textContent = userData.role;
+
+      document.getElementById('logoutBtn').addEventListener('click', function () {
+        localStorage.removeItem('userData');
+        alert("Déconnecté !");
+        window.location.reload();
+      });
+
+
+
+      
+      // Charger les filières
+                fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieres', {
+                            method: 'GET',
+                            credentials: 'include'
+                          })
+                          .then(response => response.json())
+                          .then(data => {
+                            const filiereTableBody = document.getElementById('filiereTableBody');
+                            filiereTableBody.innerHTML = '';
+                            
+
+                            if (data.status === "success" && Array.isArray(data.data)) {
+                              data.data.sort((a, b) => (a.annee_accreditation ?? "").localeCompare(b.annee_accreditation ?? ""));
+                              
+                              data.data.forEach(filiere => {
+                                const row = document.createElement('tr');
+                                // <td>${filiere.field_id ?? ""}</td>
+                                row.innerHTML = `
+                                  <td>${filiere.field_id ?? ""}</td>
+                                  <td>${filiere.nom_filiere ?? ""}</td>
+                                  <td>${filiere.nom_departement ?? ""}</td>
+                                  <td>${filiere.nom_professeur_responsable ?? ""}</td>
+                                  <td>${filiere.annee_accreditation ?? ""}</td>
+                                  <td>${filiere.nom_cycle ?? ""}</td>
+                                  <td class="text-center">
+                                      <button class="btn btn-sm btn-primary me-2" onclick='modifierFiliere(${JSON.stringify(filiere)})'>
+                                            <i class="bi bi-pencil"></i>
+                                      </button>
+                                    </td>
+                                  <td class="text-center">
+                                    <button class="btn btn-sm btn-danger" onclick="supprimerFiliere('${filiere.field_id}')">
+                                        <i class="bi bi-trash"></i></button>
+                                  </td>
+                                `;
+                                filiereTableBody.appendChild(row);
+                              });
+                            } else {
+                              filiereTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Aucune filière disponible</td></tr>';
+                            }
+                          })
+                          .catch(error => {
+                            console.error('Erreur de chargement des filières :', error);
+                            document.getElementById('filiereTableBody').innerHTML =
+                              '<tr><td colspan="7" class="text-center text-danger">Erreur lors du chargement</td></tr>';
+                    });
+
+
+
+                      fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllCycle')
+  .then(res => res.json())
+  .then(data => {
+    console.log(data);
+
+    // Remove http_code and get only cycle objects
+    const cycles = Object.values(data).filter(item => typeof item === 'object' && item.cycle_id);
+    cycleSelect.innerHTML = ''; // Clear old options
+
+// Ajouter l'option "Tous les cycles"
+const defaultOption = document.createElement('option');
+defaultOption.value = '';  // Important : valeur vide = tous
+defaultOption.textContent = 'Toutes les filières';
+defaultOption.selected = true;
+cycleSelect.appendChild(defaultOption);
+
+    cycles.forEach(cycle => {
+      const option = document.createElement('option');
+      option.value = cycle.cycle_id;
+      option.textContent = cycle.nom;
+      cycleSelect.appendChild(option);
+    });
+  })
+  .catch(() => alert("Erreur lors du chargement des cycles"));
+
+
+    });
+
+
+function filtrerFilieresParCycle() {
+  const selectedCycle = document.getElementById("cycle").value;
+  const url = selectedCycle
+    ? `http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieresByCycle&cycle_id=${selectedCycle}`
+    : `http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieres`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const filiereTableBody = document.getElementById('filiereTableBody');
+      filiereTableBody.innerHTML = '';
+
+      if (data.status === "success" && Array.isArray(data.data)) {
+        data.data.forEach(filiere => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${filiere.field_id ?? ""}</td>
+            <td>${filiere.nom_filiere ?? ""}</td>
+            <td>${filiere.nom_departement ?? ""}</td>
+            <td>${filiere.nom_professeur_responsable ?? ""}</td>
+            <td>${filiere.annee_accreditation ?? ""}</td>
+            <td>${filiere.nom_cycle ?? ""}</td>
+            <td><button class="btn btn-sm btn-primary me-2" onclick='modifierFiliere(${JSON.stringify(filiere)})'>Modifier</button></td>
+            <td><button class="btn btn-sm btn-danger" onclick="supprimerFiliere('${filiere.field_id}')">Supprimer</button></td>
+          `;
+          filiereTableBody.appendChild(row);
+        });
+      } else {
+        filiereTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Aucune filière trouvée</td></tr>';
+      }
+    })
+    .catch(error => {
+      console.error("Erreur:", error);
+      alert("Erreur lors du filtrage des filières.");
+    });
+}
+
+
+
+    
+    function modifierFiliere(filiere) {
+        // Store the whole filière object in localStorage
+        localStorage.setItem("filiereToUpdate", JSON.stringify(filiere));
+        localStorage.setItem("nom_filiere", filiere.nom_filiere);
+        localStorage.setItem("id_field", filiere.field_id);
+        window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/updateFiliere.html";
+    }
+
+      
+ 
+
+    function supprimerFiliere(id) {
+      if (confirm("Voulez-vous vraiment supprimer la filière ID " + id + " ?")) {
+        fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=deleteFili&field_id=${id}`, {
+          method: 'GET',
+          credentials: 'include'
+        })
+          .then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              alert("Filière supprimée.");
+              location.reload();
+            } else {
+              alert("Erreur lors de la suppression.");
+            }
+          })
+          .catch(error => {
+            console.error("Erreur:", error);
+            alert("Erreur de suppression.");
+          });
+      }
+    }
+
+    function AjouterFiliere(id) {
+        window.location.href="AjouterFiliere.html";
+    }
+  </script>
+</body>
+</html>
