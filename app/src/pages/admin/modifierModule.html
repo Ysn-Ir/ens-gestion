@@ -507,7 +507,7 @@ fetch(url, {
   try {
     const result = JSON.parse(text);
     if (result.status === "success") {
-      window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/modules.html";
+      window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modules.html";
     } else {
       alert("Erreur : " + result.message);
     }
@@ -600,7 +600,7 @@ fetch(url, {
           elements: elementNoms
         };
 
-        fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=ModifierModuleAvecElement', {
+        fetch('http://localhost/ens-gestion/api/admin2.php?action=ModifierModuleAvecElement', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fullData)
@@ -608,7 +608,7 @@ fetch(url, {
         .then(response => response.json())
         .then(data => {
           if(data.message === "Module avec éléments modifié"){
-            window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/modules.html";
+            window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modules.html";
           } else {
             alert("Erreur : " + data.message);
           }
@@ -640,4 +640,5 @@ fetch(url, {
 
 </body>
 </html>
+
 
