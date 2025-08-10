@@ -194,7 +194,7 @@
 
 
           //Charger les modules 
-          fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=infoModules', {
+          fetch('http://localhost/ens-gestion/api/admin2.php?action=infoModules', {
               method: 'GET',
               credentials: 'include'
             })
@@ -216,7 +216,7 @@
           addDefaultOption(filiereSelect, "Tous les filières");
          
           // Charger les filières
-          fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieres', {
+          fetch('http://localhost/ens-gestion/api/admin2.php?action=getFilieres', {
                     method: 'GET',
                     credentials: 'include'
                   })
@@ -266,7 +266,7 @@
                             // Add default BEFORE loading semestres
                             addDefaultOption(semestreSelect, "Choisissez un semestre");
 
-                            fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
                               .then(res => res.json())
                               .then(data => {
                                 if (data.status === "success") {
@@ -308,12 +308,12 @@
 
 
 
-                          window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/modifierModule.html";
+                          window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modifierModule.html";
                         }
 
                         function suppModule(id) {
                           if (confirm("Voulez-vous vraiment supprimer le module ID " + id + " ?")) {
-                            fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=deletemodule&field_id=${id}`, {
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deletemodule&field_id=${id}`, {
                               method: 'DELETE',
                               credentials: 'include'
                             })
@@ -341,7 +341,7 @@
                         function deleteModule(nom,id) {
                                   console.log(nom, id);
                           if (confirm("Voulez-vous vraiment supprimer le module  " + nom + " ?")) {
-                            fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=deleteModule&module_id=${id}`, {
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteModule&module_id=${id}`, {
                               method: 'DELETE',
                               credentials: 'include'
                             })
@@ -363,7 +363,7 @@
 
                             function deleteElement(nom, id) {
                           if (confirm("Voulez-vous vraiment supprimer l'élément " + nom + " ?")) {
-                            fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=deleteElement&element_id=${id}`, {
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteElement&element_id=${id}`, {
                               method: 'DELETE',
                               credentials: 'include'
                             })
@@ -394,7 +394,7 @@
                         if (filiereId) queryParams.append('field_id', filiereId);
                         if (semestre) queryParams.append('semestre', semestre);
                         console.log(queryParams.toString());
-                        fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=getModules&${queryParams.toString()}`, {
+                        fetch(`http://localhost/ens-gestion/api/admin2.php?action=getModules&${queryParams.toString()}`, {
                           method: 'GET',
                           credentials: 'include'
                         })
@@ -501,3 +501,4 @@
   </script>
 </body>
 </html>
+
