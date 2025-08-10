@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let allProfs = [];
 
   // Charger les filières
-  fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieres', {
+  fetch('http://localhost/ens-gestion/api/admin2.php?action=getFilieres', {
     method: 'GET',
     credentials: 'include'
   })
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // });
 
   //Charger Prof
-                      fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllProffessors')
+                      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllProffessors')
                       .then(res => res.json())
                       .then(data => {
                         if (data.status === "success") {
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Gestion du changement de filière pour charger les semestres
   filiereSelect.addEventListener("change", () => {
     const filiereId = filiereSelect.value;
-    fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
+    fetch(`http://localhost/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
       .then(res => res.json())
       .then(data => {
         if (data.status === "success") {
@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const url = `http://localhost:8080/ens-gestion/api/admin2.php?action=UpdateModuleSansElements` +
+      const url = `http://localhost/ens-gestion/api/admin2.php?action=UpdateModuleSansElements` +
   `&module_id=${localStorage.getItem("module_id")}` +
   `&nomMod=${encodeURIComponent(nom)}` +
   `&codeMod=${encodeURIComponent(code)}` +
@@ -633,10 +633,11 @@ fetch(url, {
 
 
   function retourner(){
-      window.location.href="http://localhost:8080/ens-gestion/app/src/pages/admin/modules.html";
+      window.location.href="http://localhost/ens-gestion/app/src/pages/admin/modules.html";
   }
 </script>
 
 
 </body>
 </html>
+
