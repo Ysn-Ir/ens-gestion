@@ -183,7 +183,7 @@
 
   <script>
     function retourner() {
-        window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/depart.html";
+        window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/depart.html";
     }
         const profSelect = document.getElementById('professeur');
         const nomDepart=document.getElementById('nom');
@@ -219,7 +219,7 @@
      
 
       /// Fetch Professors
-      fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
           .then(res => res.json())
           .then(data => {
           const profs = objectToArray(data);
@@ -260,7 +260,7 @@
                   alert("Dates non valides");
                   return;
                 }
-                fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=AjouterDepart&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&dateDebut=${dateD}&dateFin=${dateD}`, {
+                fetch(`http://localhost/ens-gestion/api/admin2.php?action=AjouterDepart&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&dateDebut=${dateD}&dateFin=${dateD}`, {
                   method: 'GET',
                   credentials: 'include'
                 })
@@ -289,3 +289,4 @@
   </script>
 </body>
 </html>
+
