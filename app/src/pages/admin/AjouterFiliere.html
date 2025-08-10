@@ -242,7 +242,7 @@
       }
 
       // Fetch Departments
-      fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllDepartment')
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllDepartment')
         .then(res => res.json())
         .then(data => {
           const departs = objectToArray(data);
@@ -256,7 +256,7 @@
         .catch(() => alert("Erreur lors du chargement des departements"));
 
       /// Fetch Professors
-      fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
           .then(res => res.json())
           .then(data => {
           const profs = objectToArray(data);
@@ -271,7 +271,7 @@
           .catch(() => alert("Erreur lors du chargement des professeurs"));
 
               // Fetch Cycles
-              fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllCycle')
+              fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllCycle')
                 .then(res => res.json())
                 .then(data => {
                   const cycles = objectToArray(data);
@@ -341,7 +341,7 @@
     sections // envoie toute la structure dynamique ici
   };
 
-  fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=AjouterFiliere', {
+  fetch('http://localhost/ens-gestion/api/admin2.php?action=AjouterFiliere', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -473,3 +473,4 @@ document.getElementById("filiereForm").addEventListener("submit", function (e) {
   </script>
 </body>
 </html>
+
