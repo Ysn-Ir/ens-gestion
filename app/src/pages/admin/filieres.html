@@ -153,7 +153,7 @@
 
       
       // Charger les filières
-                fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieres', {
+                fetch('http://localhost/ens-gestion/api/admin2.php?action=getFilieres', {
                             method: 'GET',
                             credentials: 'include'
                           })
@@ -200,7 +200,7 @@
 
 
 
-                      fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllCycle')
+                      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllCycle')
   .then(res => res.json())
   .then(data => {
     console.log(data);
@@ -232,8 +232,8 @@ cycleSelect.appendChild(defaultOption);
 function filtrerFilieresParCycle() {
   const selectedCycle = document.getElementById("cycle").value;
   const url = selectedCycle
-    ? `http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieresByCycle&cycle_id=${selectedCycle}`
-    : `http://localhost:8080/ens-gestion/api/admin2.php?action=getFilieres`;
+    ? `http://localhost/ens-gestion/api/admin2.php?action=getFilieresByCycle&cycle_id=${selectedCycle}`
+    : `http://localhost/ens-gestion/api/admin2.php?action=getFilieres`;
 
   fetch(url)
     .then(res => res.json())
@@ -274,7 +274,7 @@ function filtrerFilieresParCycle() {
         localStorage.setItem("filiereToUpdate", JSON.stringify(filiere));
         localStorage.setItem("nom_filiere", filiere.nom_filiere);
         localStorage.setItem("id_field", filiere.field_id);
-        window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/updateFiliere.html";
+        window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/updateFiliere.html";
     }
 
       
@@ -282,7 +282,7 @@ function filtrerFilieresParCycle() {
 
     function supprimerFiliere(id) {
       if (confirm("Voulez-vous vraiment supprimer la filière ID " + id + " ?")) {
-        fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=deleteFili&field_id=${id}`, {
+        fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteFili&field_id=${id}`, {
           method: 'GET',
           credentials: 'include'
         })
@@ -308,3 +308,4 @@ function filtrerFilieresParCycle() {
   </script>
 </body>
 </html>
+
