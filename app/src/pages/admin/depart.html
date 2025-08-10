@@ -134,7 +134,7 @@
                 });
 
                 // Charger les départements
-                fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=getAllDepart', {
+                fetch('http://localhost/ens-gestion/api/admin2.php?action=getAllDepart', {
                 method: 'GET',
                 credentials: 'include'
                 })
@@ -213,7 +213,7 @@
 
             function suppDepart(id) {
                     if (confirm("Voulez-vous vraiment supprimer la département ID " + id + " ?")) {
-                        fetch(`http://localhost:8080/ens-gestion/api/admin2.php?action=deleteDepart&depart_id=${id}`, {
+                        fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteDepart&depart_id=${id}`, {
                         method: 'DELETE',
                         credentials: 'include'
                         })
@@ -234,8 +234,9 @@
             }
 
             function AjouterDepart(id) {
-                window.location.href="http://localhost:8080/ens-gestion/app/src/pages/admin/AjouterDepart.html";
+                window.location.href="http://localhost/ens-gestion/app/src/pages/admin/AjouterDepart.html";
             }
   </script>
 </body>
 </html>
+
