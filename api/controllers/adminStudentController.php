@@ -328,3 +328,52 @@ public function getGroupesByFiliere($fieldId) {
         $elements = $this->model->getAllElements();
         $this->response->send(200, $elements);
     }
+   public function importStudents()
+    {
+        // Check if a file was uploaded
+        if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] === UPLOAD_ERR_NO_FILE) {
+            $this->sendResponse(400, ['message' => 'No file uploaded']);
+            return;
+        }
+
+        $file = $_FILES['csv_file'];
+        
+        // Validate file type
+        $allowedTypes = ['text/csv', 'application/csv', 'text/plain'];
+        $fileType = mime_content_type($file['tmp_name']);
+        if (!in_array($fileType, $allowedTypes)) {
+            $this->sendResponse(400, ['message' => 'Invalid file type. Please upload a CSV file']);
+            return;
+        }
+
+        // Validate file size (e.g., max 5MB)
+        $maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if ($file['size'] > $maxSize) {
+            $this->sendResponse(400, ['message' => 'File size exceeds 5MB limit']);
+            return;
+        }
+
+        try {
+            $result = $this->model->importStudentsFromCSV($file['tmp_name']);
+            
+            // Prepare response
+            $response = [
+                'message' => sprintf(
+                    'Import completed: %d students imported successfully',
+                    $result['success_count']
+                ),
+                'success_count' => $result['success_count'],
+                'errors' => $result['errors']
+            ];
+
+            $status = $result['success_count'] > 0 ? 200 : 400;
+            if (!empty($result['errors'])) {
+                $status = 207; // Partial success
+            }
+
+            $this->sendResponse($status, $response);
+        } catch (Exception $e) {
+            error_log("Student import error: " . $e->getMessage());
+            $this->sendResponse(500, ['message' => 'Server error during student import: ' . $e->getMessage()]);
+        }
+    }
