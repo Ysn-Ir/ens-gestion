@@ -62,7 +62,7 @@
   <script>
   document.addEventListener("DOMContentLoaded", () => {
     // Charger les informations du profil
-    fetch('http://localhost/ens-gestion/api/admin.php?action=get_profile')
+    fetch('http://localhost/ens-gestion/api/admin3.php?action=get_profile')
       .then(res => res.json())
       .then(json => {
         if (json.status === 200 && json.data.status === 'success') {
@@ -93,7 +93,7 @@
       const newPassword = document.getElementById("newPassword").value;
       const confirmPassword = document.getElementById("confirmPassword").value;
 
-      fetch('http://localhost/ens-gestion/api/admin.php?action=change_password', {
+      fetch('http://localhost/ens-gestion/api/admin3.php?action=change_password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ new_password: newPassword, confirm_password: confirmPassword })
