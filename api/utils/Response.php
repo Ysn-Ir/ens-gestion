@@ -15,6 +15,15 @@ class Response {
         ]);
         exit;
     }
+    public function sende(int $code, array $data = []) {
+            http_response_code($code);
+            header('Content-Type: application/json');
+            $response = $data;
+            $response['http_code'] = $code;
+            echo json_encode($response);
+            exit;
+    }
+
 
     /**
      * Envoie une réponse d'erreur
