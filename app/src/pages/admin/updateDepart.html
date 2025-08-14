@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Filières</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      height: 100vh;
+      width: 220px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #343a40;
+      padding-top: 60px;
+      color: #fff;
+    }
+    .sidebar h4 {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #495057;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #adb5bd;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #fff;
+    }
+    .content {
+      padding: 20px;
+      min-height: 100vh;
+      background-color: #fff;
+    }
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  
+
+  <div class="content">
+    <div class="welcome-message mb-4">
+      Bonjour <span id="usernameDisplay"></span> !
+    </div>
+    <div class="alert alert-info">
+      Vous êtes connecté en tant que: <strong id="userRole"></strong>
+    </div>
+    <div class="d-flex justify-content-between mb-3">
+          
+          <div class="p-2 ">     
+            <button type="button" class="btn btn-dark" onclick="retourner()"> Retourner à la liste des départements</button>
+      </div>
+        </div>
+
+    <div class="container mt-5">
+      <h3 class="mb-4">Modifier un département</h3>
+
+      <form id="departForm">
+        <div class="mb-3">
+          <label for="nom" class="form-label">Nom du département</label>
+          <input type="text" class="form-control" id="nom" placeholder="ex: Génie Informatique" required>
+        </div>
+
+
+        <div class="mb-3">
+          <label for="professeur" class="form-label">Chef de Département</label>
+          <select class="form-select" id="professeur" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="annee" class="form-label">Annee accréditation</label>
+          <select class="form-select" id="annee" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+
+
+       
+        
+
+        <button type="submit" class="btn btn-success" >Modifier le département</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function retourner() {
+      window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/depart.html";
+    }
+        const profSelect = document.getElementById('professeur');
+        const nomDepart=document.getElementById('nom');
+        const anneeSelect=document.getElementById('annee');
+
+        document.addEventListener('DOMContentLoaded', function () {
+                  // Simuler un utilisateur connecté (pour test)
+                  // let userData = localStorage.getItem("userData");
+                  // if (!userData) {
+                  //   localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
+                  //   userData = localStorage.getItem("userData");
+                  // }
+
+                  // userData = JSON.parse(userData);
+                  // document.getElementById('usernameDisplay').textContent = userData.username;
+                  // document.getElementById('userRole').textContent = userData.role;
+
+                  // document.getElementById('logoutBtn').addEventListener('click', function () {
+                  //   localStorage.removeItem('userData');
+                  //   alert("Déconnecté !");
+                  //   window.location.reload();
+                  // });
+
+
+              nomDepart.value=localStorage.getItem("nom_depart");
+
+              // Helper to convert numeric-keyed objects to arrays, ignoring non-object keys like http_code
+              function objectToArray(obj) {
+                return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+              }
+
+     
+
+      /// Fetch Professors
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
+          .then(res => res.json())
+          .then(data => {
+          const profs = objectToArray(data);
+          profs.forEach(prof => {
+              console.log(prof);
+              const option = document.createElement('option');
+              option.value = prof.user_id;
+              option.textContent = prof.nom + " " + prof.prenom;
+              profSelect.appendChild(option);
+          });
+          })
+          .catch(() => alert("Erreur lors du chargement des professeurs"));
+
+
+                // Fetch Années
+                fetch('http://localhost/ens-gestion/api/admin2.php?action=YEARS')
+                    .then(res => res.json())
+                    .then(data => {
+                    const years = objectToArray(data);
+                    years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year.annee_id;
+                        option.textContent = year.annee_id;
+                        anneeSelect.appendChild(option);
+                    });   
+                    })
+                    .catch(() => alert("Erreur lors du chargement des années"));
+        
+          
+
+        
+        });
+
+      
+       
+                        function updateDepart(){
+                            const prof = profSelect.value;
+                            const nom = nomDepart.value;
+                            const annee=anneeSelect.value ;
+
+                            if ( !prof  || !nom || !annee) {
+                            alert("Veuillez remplir tous les champs.");
+                            return;
+                            }
+
+                
+
+                            //Confirm the update 
+                            if (confirm("Voulez-vous vraiment modifier la filière  " + localStorage.getItem("nom_depart") + " ?")) {
+
+                                    //call the function update 
+                                    fetch(`http://localhost/ens-gestion/api/admin2.php?action=updateDepart&depart_id=${localStorage.getItem("id_depart")}&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&annee=${annee}`, {
+                                        method: 'GET',
+                                        credentials: 'include'
+                                    })
+                                    .then(response => response.json())
+                                    .then(result => {
+                                          console.log("Message retourné :", result.message);  // <== debug ici
+                                    if (result.message === "Département modifié avec succès") {
+                                            window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/depart.html";
+
+                                    } else {
+                                        console.log(result);
+                                        alert("Erreur : " + result.message);
+                                    }
+                                    })
+                                    .catch(error => {
+                                    console.error("Erreur:", error);
+                                    alert("Erreur lors de la modification du département.");
+                                    });
+                            }
+            }
+
+            document.getElementById("departForm").addEventListener("submit", function (e) {
+              e.preventDefault(); // <- empêche le rechargement de page
+              updateDepart();
+            });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Départements</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      height: 100vh;
+      width: 220px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #343a40;
+      padding-top: 60px;
+      color: #fff;
+    }
+    .sidebar h4 {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #495057;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #adb5bd;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #fff;
+    }
+    .content {
+      padding: 20px;
+      min-height: 100vh;
+      background-color: #fff;
+    }
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+
+  <div class="content">
+    <div class="welcome-message mb-4">
+      Bonjour <span id="usernameDisplay"></span> !
+    </div>
+    <div class="alert alert-info">
+      Vous êtes connecté en tant que: <strong id="userRole"></strong>
+    </div>
+
+    
+
+    <!-- TABLEAU FILIÈRES -->
+      <div class="d-flex justify-content-between mb-3">
+          <div class="p-2 ">     
+            <h2>Liste des Départements</h2>
+      </div>
+          <div class="p-2 ">     
+            <button type="button" class="btn btn-success" onclick="AjouterDepart()"> + Ajouter un département</button>
+      </div>
+        </div>
+   
+      <div class="table-responsive mt-4">
+        <table class="table table-bordered table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th>ID Département</th>
+              <th>Nom Département</th>
+              <th>Chef de Département</th>
+              <th>Date début d'affectation</th>
+              <th>Date fin d'affectation</th>
+              <th>Filières associé</th>
+              <th>Année d'accréditation</th>
+              <th>Modifier</th>
+              <th>Supprimer</th>
+
+            </tr>
+          </thead>
+          <tbody id="departTableBody">
+            <tr><td colspan="7" class="text-center">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+                // Simuler un utilisateur connecté (pour test)
+                let userData = localStorage.getItem("userData");
+                if (!userData) {
+                    localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
+                    userData = localStorage.getItem("userData");
+                }
+
+                userData = JSON.parse(userData);
+                document.getElementById('usernameDisplay').textContent = userData.username;
+                document.getElementById('userRole').textContent = userData.role;
+
+
+
+                // Charger les départements
+                fetch('http://localhost/ens-gestion/api/admin2.php?action=getAllDepart', {
+                method: 'GET',
+                credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('DEBUG getAllDepart response:', data);
+                    const isArray = Array.isArray(data.data);
+                    console.log('isArray(data.data)?', isArray);
+                const departTableBody = document.getElementById('departTableBody');
+                departTableBody.innerHTML = '';
+                
+
+                    if (data.status === "success" && Array.isArray(data.data)) {
+                            data.data.sort((a, b) => (a.annee_accreditation ?? "").localeCompare(b.annee_accreditation ?? ""));
+                            
+                            data.data.forEach(depart => {
+                        const row = document.createElement('tr');
+
+                        // Convertir les filières en tableau
+                        const filieres_associees = (depart.filieres_associees ?? "").split(',').filter(f => f.trim() !== "");
+
+                        // Générer la liste <ul> des filières
+                        let filieresList = "<ul>";
+                        filieres_associees.forEach(filiere => {
+                            filieresList += `<li>${filiere.trim()}</li>`;
+                        });
+                        filieresList += "</ul>";
+
+                        // Construire la ligne du tableau avec toutes les colonnes
+                        row.innerHTML = `
+                            <td>${depart.department_id ?? ""}</td>
+                            <td>${depart.nom_departement ?? ""}</td>
+                            <td>${depart.nom_chef_departement?? ""}</td>
+                            <td>${depart.date_debut?? ""}</td>
+                            <td>${depart.date_fin ?? ""}</td>
+                            <td>${filieresList}</td>
+                            <td>${depart.annee_accreditation ?? ""}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-primary me-2" onclick='modifierDepart(${JSON.stringify(depart)})'><i class="bi bi-pencil-square"></i></button>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-danger" onclick="suppDepart('${depart.department_id}')">
+                                                          <i class="bi bi-trash"></i>
+</button>
+                            </td>
+                        `;
+
+                        departTableBody.appendChild(row);
+                    });
+                    } 
+                    else {
+                    departTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Aucun departement disponible</td></tr>';
+                    }
+                    }).catch(error => {
+                    console.error('Erreur de chargement des Départements :', error);
+                    document.getElementById('departTableBody').innerHTML =
+                        '<tr><td colspan="7" class="text-center text-danger">Erreur lors du chargement</td></tr>';
+                    });
+
+                });
+
+    
+            function modifierDepart(depart) {
+                // Store the whole filière object in localStorage
+                localStorage.setItem("departToUpdate", JSON.stringify(depart));
+                localStorage.setItem("nom_depart", depart.nom_departement);
+                localStorage.setItem("id_depart", depart.department_id);
+                localStorage.setItem("date_debut", depart.date_debut);
+                localStorage.setItem("date_fin", depart.date_fin);
+
+                window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/updateDepart.html";
+            }
+
+      
+ 
+
+            function suppDepart(id) {
+                    if (confirm("Voulez-vous vraiment supprimer la département ID " + id + " ?")) {
+                        fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteDepart&depart_id=${id}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                            alert("Département supprimée.");
+                            location.reload();
+                            } else {
+                            alert("Erreur lors de la suppression.");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Erreur:", error);
+                            alert("Erreur de suppression.");
+                        });
+                    }
+            }
+
+            function AjouterDepart(id) {
+                window.location.href="http://localhost/ens-gestion/app/src/pages/admin/AjouterDepart.html";
+            }
+  </script>
+</body>
+</html>

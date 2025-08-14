@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Notes Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    .action-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-left-color: #3b82f6; animation: spin 1s linear infinite; border-radius: 50%; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; opacity: 0; transform: translateY(20px); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-100">
+  <!-- Main Content -->
+  <main id="content-area" class="p-6">
+    <h2 class="text-2xl font-semibold mb-6">Notes Management</h2>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h5 class="text-lg font-medium mb-4">Parameters</h5>
+      <div class="flex gap-4 flex-wrap">
+        <input
+          type="number positive"
+          class="border rounded-lg p-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          id="semestre_id"
+          placeholder="Semestre ID"
+        />
+        <select
+          id="annee_id"
+          class="border rounded-lg p-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="" disabled>Année (YYYY-YYYY)</option>
+          <!-- Options will be populated dynamically by JavaScript -->
+        </select>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-4">
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="generateEmptyNoteRows">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-file-earmark-plus text-3xl mb-2"></i>
+        <div>Generate Empty Note Rows</div>
+      </div>
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="calculateSemesterNotes">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-calculator text-3xl mb-2"></i>
+        <div>Calculate Semester Notes</div>
+      </div>
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="calculateYearNotes">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-calendar-check text-3xl mb-2"></i>
+        <div>Calculate Year Notes</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div
+    id="liveToast"
+    class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg flex items-center max-w-sm toast hidden"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <div class="flex-1 text-sm font-medium" id="toastMsg"></div>
+    <button
+      class="ml-4 p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      onclick="document.getElementById('liveToast').classList.remove('show', 'bg-green-500', 'bg-red-500', 'text-white'); document.getElementById('liveToast').classList.add('hidden')"
+      aria-label="Close notification"
+    >
+      <i class="bi bi-x text-lg"></i>
+    </button>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost/ens-gestion/api/admin.php";
+    let isLoading = false;
+
+    // Dynamically populate academic year dropdown and select current year
+    function populateAcademicYears() {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth(); // 0-11 (January-December)
+      // Academic year starts in August (month 7, since January is 0)
+      const currentAcademicYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+      const currentAcademicYear = `${currentAcademicYearStart}-${currentAcademicYearStart + 1}`;
+      
+      const anneeSelect = document.getElementById("annee_id");
+      // Start from 2015 and go up to current year + 5
+      for (let year = 2015; year <= currentAcademicYearStart + 5; year++) {
+        const academicYear = `${year}-${year + 1}`;
+        const option = document.createElement("option");
+        option.value = academicYear;
+        option.textContent = academicYear;
+        if (academicYear === currentAcademicYear) {
+          option.selected = true;
+        }
+        anneeSelect.appendChild(option);
+      }
+    }
+
+    function showToast(message, success = true) {
+      const toast = document.getElementById("liveToast");
+      const toastMsg = document.getElementById("toastMsg");
+      // Use a default message for success if none provided
+      toastMsg.textContent = message || (success ? "Action completed successfully" : "An error occurred");
+      toast.classList.remove("hidden", "bg-green-500", "bg-red-500", "text-white");
+      toast.classList.add("show", success ? "bg-green-500" : "bg-red-500", "text-white");
+      setTimeout(() => {
+        toast.classList.remove("show", "bg-green-500", "bg-red-500", "text-white");
+        toast.classList.add("hidden");
+      }, 3000);
+    }
+
+    async function callApi(action) {
+      if (isLoading) return;
+      const semestre = document.getElementById("semestre_id").value;
+      const annee = document.getElementById("annee_id").value;
+      let body = {};
+
+      if (action === "generateEmptyNoteRows" || action === "calculateSemesterNotes") {
+        if (!semestre || !annee) {
+          showToast("Semestre et Année requis", false);
+          return;
+        }
+        body = { semestre_id: parseInt(semestre), annee_id: annee };
+      } else if (action === "calculateYearNotes") {
+        if (!annee) {
+          showToast("Année requis", false);
+          return;
+        }
+        body = { annee_id: annee };
+      }
+
+      const card = document.querySelector(`[data-action="${action}"]`);
+      const spinner = card.querySelector(".spinner");
+      spinner.classList.remove("hidden");
+      isLoading = true;
+
+      try {
+        const res = await fetch(`${API_BASE}?action=${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        showToast(data.message, data.status !== "error");
+      } catch (err) {
+        showToast("Request failed: " + err.message, false);
+      } finally {
+        spinner.classList.add("hidden");
+        isLoading = false;
+      }
+    }
+
+    // Action card clicks
+    document.querySelectorAll(".action-card").forEach(card => {
+      card.addEventListener("click", () => callApi(card.dataset.action));
+    });
+
+    // Initialize the academic year dropdown on page load
+    populateAcademicYears();
+  </script>
+</body>
+</html>
