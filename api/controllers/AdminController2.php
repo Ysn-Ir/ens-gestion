@@ -2,8 +2,8 @@
 <?php
 require_once __DIR__ . '/../middlewares/AuthMiddleware.php';
 require_once __DIR__ . '/../middlewares/AdminMiddleware.php';
-require_once __DIR__ . '/../models/AdminModel.php';
 require_once __DIR__ . '/../models/AdminModel2.php';
+require_once __DIR__ . '/../models/AdminModel.php';
 
 require_once __DIR__ . '/../utils/Response.php';
 
@@ -70,7 +70,7 @@ class AdminController2 {
    public function deleteFiliere($fieldId){
     error_log("🔧 deleteFiliere called with ID = $fieldId");
 
-    $this->model = new AdminModel();
+    $this->model = new AdminModel2();
     $result = $this->model->deleteField($fieldId);
 
     error_log("🔧 Result of deleteField = " . var_export($result, true));
@@ -83,7 +83,7 @@ class AdminController2 {
 }
 public function getNombreSemestresByFiliere($filiere_id)
 {
-    $this->model = new AdminModel();
+    $this->model = new AdminModel2();
 
     if (!$filiere_id || !is_numeric($filiere_id)) {
         return $this->response->sende(400, [
@@ -110,8 +110,8 @@ public function AjouterModuleM1(
     $codeMod, $nomMod, $coeff_cc, $coeff_ecrit, $coeff_element, $coeff_tp,
     $ref_filiere, $ref_semestre, $ref_prof_element, $ref_prof_tp
 ) {
-    require_once __DIR__ . '/../models/AdminModel.php';
-    $model = new AdminModel();
+    require_once __DIR__ . '/../models/AdminModel2.php';
+    $model = new AdminModel2();
 
     try {
         $success = $model->AjouterModuleM1(
@@ -256,7 +256,7 @@ public function AjouterModuleAvecElements($data)
 
 public function GetAllProffessors()
 {
-    $this->model = new AdminModel();
+    $this->model = new AdminModel2();
     $profs = $this->model->GetAllProffessors();
 
     if ($profs && count($profs) > 0) {
@@ -332,7 +332,7 @@ public function deleteElement($element_id) {
     }
 
     public function deleteDepart($depart_id){
-        $this->model = new AdminModel();
+        $this->model = new AdminModel2();
         $result = $this->model->deleteDepart($depart_id);
 
         if ($result) {
