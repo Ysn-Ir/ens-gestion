@@ -88,34 +88,6 @@ try {
             $controller->getAllFilieres();
             break;
 
-        case 'Filiere':
-                $controller->Filiere();
-                break;
-
-            case 'getSections':
-                if (!$fieldId) {
-                    throw new Exception('Paramètre "field_id" requis', 400);
-                }
-                $controller->getSectionsByFiliere($fieldId);
-                break;
-
-            case 'getGroupesBySection':
-                if (!$sectionId) {
-                    throw new Exception('Paramètre "section_id" requis', 400);
-                }
-                $controller->getGroupesBySection($sectionId);
-                break;
-
-            case 'getGroupesByFiliere':
-                if (!$fieldId) {
-                    throw new Exception('Paramètre "field_id" requis', 400);
-                }
-                $controller->getGroupesByFiliere($fieldId);
-                break;
-
-            case 'getStudents':
-                $controller->getFilteredStudents($fieldId, $sectionId, $groupId);
-                break;
             case 'deleteFili':
                 if (!$fieldId) {
                     throw new Exception('Paramètre "field_id" requis', 400);
@@ -164,12 +136,7 @@ try {
             case 'YEARS': 
                 $controller->YEARS();  
                 break; 
-            case "updateFiliere":
-                if (!$nomFili || !$depart_id || !$cycle_id || !$prof_id) {
-                    throw new Exception("Paramètres requis pour l'ajout d'une filière manquants", 400);
-                }
-                $controller->updateFiliere($fieldId, $nomFili, $depart_id, $prof_id, $cycle_id, $anneeAccreditation);
-                break ; 
+             
             
             case "getAllDepart" :  
                 $controller->getAllDepart();
@@ -269,48 +236,48 @@ try {
                 break ; 
         
 
-            case 'UpdateModuleSansElements':
-                    try {
-                        if (!$module_id || !$codeMod || !$nomMod || $coeff_cc === false || $coeff_ecrit === false ||
-                            $coeff_element === false || $coeff_tp === false || !$ref_filiere || !$ref_semestre || !$ref_prof_element) {
-                            throw new Exception("Paramètres manquants ou invalides", 400);
-                        }
+            // case 'UpdateModuleSansElements':
+            //         try {
+            //             if (!$module_id || !$codeMod || !$nomMod || $coeff_cc === false || $coeff_ecrit === false ||
+            //                 $coeff_element === false || $coeff_tp === false || !$ref_filiere || !$ref_semestre || !$ref_prof_element) {
+            //                 throw new Exception("Paramètres manquants ou invalides", 400);
+            //             }
 
-                        // Traitement du prof TP
-                        if ($ref_prof_tp === 'null' || $ref_prof_tp === null || $ref_prof_tp === '') {
-                            $ref_prof_tp = null;
-                        } else {
-                            $ref_prof_tp = intval($ref_prof_tp);
-                        }
+            //             // Traitement du prof TP
+            //             if ($ref_prof_tp === 'null' || $ref_prof_tp === null || $ref_prof_tp === '') {
+            //                 $ref_prof_tp = null;
+            //             } else {
+            //                 $ref_prof_tp = intval($ref_prof_tp);
+            //             }
 
-                        $controller->UpdateModuleSansElements(
-                            $module_id,
-                            $codeMod,
-                            $nomMod,
-                            $coeff_cc,
-                            $coeff_ecrit,
-                            $coeff_element,
-                            $coeff_tp,
-                            $ref_filiere,
-                            $ref_semestre,
-                            $ref_prof_element,
-                            $ref_prof_tp
-                        );
+            //             $controller->UpdateModuleSansElements(
+            //                 $module_id,
+            //                 $codeMod,
+            //                 $nomMod,
+            //                 $coeff_cc,
+            //                 $coeff_ecrit,
+            //                 $coeff_element,
+            //                 $coeff_tp,
+            //                 $ref_filiere,
+            //                 $ref_semestre,
+            //                 $ref_prof_element,
+            //                 $ref_prof_tp
+            //             );
 
-                        // Réponse JSON
-                        echo json_encode(["status" => "success", "message" => "Module modifié avec succès"]);
-                        exit;
+            //             // Réponse JSON
+            //             echo json_encode(["status" => "success", "message" => "Module modifié avec succès"]);
+            //             exit;
 
-                    } catch (Exception $e) {
-                        http_response_code(400);
-                        echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-                        exit;
-                    }
+            //         } catch (Exception $e) {
+            //             http_response_code(400);
+            //             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+            //             exit;
+            //         }
 
            
-            case 'UpdateModuleAvecElements':
-                $controller->UpdateModuleAvecElements();
-                break;
+            // case 'UpdateModuleAvecElements':
+            //     $controller->UpdateModuleAvecElements();
+            //     break;
             case 'getFilieresByCycle':
                 if ($cycle_id) {
                     $result = $controller->getFilieresByCycle($cycle_id);
