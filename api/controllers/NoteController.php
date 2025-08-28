@@ -264,6 +264,8 @@ class NoteController
     }
      public function getElementNotes()
     {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
         $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
         $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
         validateRequiredParam($annee_id, 'annee_id');
@@ -278,6 +280,8 @@ class NoteController
 
     public function getModuleNotes()
     {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
         $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
         $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
         validateRequiredParam($annee_id, 'annee_id');
@@ -292,6 +296,8 @@ class NoteController
 
     public function getSemesterNotes()
     {
+                    $this->authMiddleware->verifySession();
+            $this->adminMiddleware->verifyAdmin();
         $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
         $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
         validateRequiredParam($annee_id, 'annee_id');
@@ -306,6 +312,8 @@ class NoteController
 
     public function getYearNotes()
     {
+                    $this->authMiddleware->verifySession();
+            $this->adminMiddleware->verifyAdmin();
         $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
         validateRequiredParam($annee_id, 'annee_id');
 

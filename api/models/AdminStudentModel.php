@@ -392,8 +392,8 @@ public function getFilteredStudents(
              et.prenom LIKE :search OR
             et.cne LIKE :search OR
             et.cin LIKE :search OR
-            u.email LIKE :search OR
-            et.date_naissance LIKE :search 
+            u.email LIKE :search 
+           
         )";
         $params[':search'] = '%' . $search . '%';
     }

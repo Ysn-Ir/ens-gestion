@@ -99,49 +99,49 @@
                     <div class="col-md-6">
                         <label for="department" class="form-label required">Département</label>
                         <select class="form-select" id="department" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner un département</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="filiere" class="form-label required">Filière</label>
                         <select class="form-select" id="filiere" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner une filière</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="year" class="form-label required">Année</label>
                         <select class="form-select" id="year" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner une année</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="cycle_id" class="form-label required">Cycle</label>
                         <select class="form-select" id="cycle_id" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner un cycle</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="etape_id" class="form-label required">Étape</label>
                         <select class="form-select" id="etape_id" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner une étape</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="semester_id" class="form-label required">Semestre</label>
                         <select class="form-select" id="semester_id" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner un semestre</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="section_id" class="form-label required">Section</label>
                         <select class="form-select" id="section_id" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner une section</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="groupe_id" class="form-label required">Groupe</label>
                         <select class="form-select" id="groupe_id" required>
-                            <option value="">Chargement...</option>
+                            <option value="">Sélectionner un groupe</option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -192,18 +192,22 @@
             const togglePassword = document.getElementById('togglePassword');
             const passwordInput = document.getElementById('password');
             const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
+            const departmentSelect = document.getElementById('department');
+            const filiereSelect = document.getElementById('filiere');
+            const sectionSelect = document.getElementById('section_id');
+            const groupeSelect = document.getElementById('groupe_id');
             
-            const API_BASE_URL = 'http://localhost/ens-gestion/api/admin.php';
+            const API_BASE_URL = 'http://localhost/ens-gestion/api/adminStudent.php';
             const API_ENDPOINTS = {
                 createStudent: `${API_BASE_URL}?action=createStudent`,
                 departments: `${API_BASE_URL}?action=getAllDepartments`,
-                filieres: `${API_BASE_URL}?action=getFilieres`,
+                filieres: `${API_BASE_URL}?action=getFilteredFiliers`,
                 years: `${API_BASE_URL}?action=getAllyears`,
                 cycles: `${API_BASE_URL}?action=getCycles`,
                 etapes: `${API_BASE_URL}?action=getAllEtapes`,
                 semesters: `${API_BASE_URL}?action=getAllSemesters`,
-                sections: `${API_BASE_URL}?action=getAllSections`,
-                groupes: `${API_BASE_URL}?action=getAllGroupes`,
+                sections: `${API_BASE_URL}?action=getSections`,
+                groupes: `${API_BASE_URL}?action=getGroupesBySection`,
                 logout: `http://localhost/ens-gestion/api/index.php?action=auth/logout`
             };
 
@@ -227,6 +231,18 @@
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
                 togglePassword.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+            });
+
+            departmentSelect.addEventListener('change', () => {
+                updateFilieresDropdown(departmentSelect.value);
+            });
+
+            filiereSelect.addEventListener('change', () => {
+                updateSectionsDropdown(filiereSelect.value);
+            });
+
+            sectionSelect.addEventListener('change', () => {
+                updateGroupesDropdown(sectionSelect.value);
             });
 
             studentForm.addEventListener('submit', handleStudentFormSubmit);
@@ -313,7 +329,6 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const departments = data.data || data;
-                    const departmentSelect = document.getElementById('department');
                     departmentSelect.innerHTML = '<option value="">Sélectionner un département</option>';
                     departments.forEach(dep => {
                         const option = document.createElement('option');
@@ -327,14 +342,16 @@
                 }
             }
 
-            async function loadFilieres() {
+            async function updateFilieresDropdown(departmentId) {
                 try {
-                    const response = await fetch(API_ENDPOINTS.filieres, { headers: { 'X-CSRF-Token': csrfToken } });
+                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+                    if (!departmentId) return;
+                    const response = await fetch(`${API_ENDPOINTS.filieres}&department_id=${departmentId}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const filieres = data.data || [];
-                    const filiereSelect = document.getElementById('filiere');
-                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
                     filieres.forEach(fil => {
                         const option = document.createElement('option');
                         option.value = fil.field_id;
@@ -344,6 +361,50 @@
                 } catch (error) {
                     console.error('Erreur lors du chargement des filières:', error);
                     showNotification('Erreur lors du chargement des filières: ' + error.message, false);
+                }
+            }
+
+            async function updateSectionsDropdown(fieldId) {
+                try {
+                    sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+                    if (!fieldId) return;
+                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const sections = data.data || [];
+                    sections.forEach(sec => {
+                        const option = document.createElement('option');
+                        option.value = sec.section_id;
+                        option.textContent = sec.nom;
+                        sectionSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des sections:', error);
+                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+                }
+            }
+
+            async function updateGroupesDropdown(sectionId) {
+                try {
+                    groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+                    if (!sectionId) return;
+                    const response = await fetch(`${API_ENDPOINTS.groupes}&section_id=${sectionId}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const groupes = data.data || [];
+                    groupes.forEach(grp => {
+                        const option = document.createElement('option');
+                        option.value = grp.groupe_id;
+                        option.textContent = grp.nom;
+                        groupeSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des groupes:', error);
+                    showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
                 }
             }
 
@@ -433,7 +494,6 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const sections = data.data || data;
-                    const sectionSelect = document.getElementById('section_id');
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
                     sections.forEach(sec => {
                         const option = document.createElement('option');
@@ -453,17 +513,35 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const groupes = data.data || data;
-                    const groupeSelect = document.getElementById('groupe_id');
                     groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
                     groupes.forEach(grp => {
                         const option = document.createElement('option');
-                        option.value = grp.group_id;
+                        option.value = grp.groupe_id;
                         option.textContent = grp.nom;
                         groupeSelect.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des groupes:', error);
                     showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
+                }
+            }
+
+            async function loadFilieres() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.filieres, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const filieres = data.data || [];
+                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+                    filieres.forEach(fil => {
+                        const option = document.createElement('option');
+                        option.value = fil.field_id;
+                        option.textContent = fil.nom;
+                        filiereSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des filières:', error);
+                    showNotification('Erreur lors du chargement des filières: ' + error.message, false);
                 }
             }
         });
