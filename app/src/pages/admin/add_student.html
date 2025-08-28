@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ajouter un Étudiant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .student-form-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .student-form-header {
+            background-color: #343a40;
+            color: white;
+            padding: 15px 20px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="student-form-container">
+            <div class="student-form-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0" id="formTitle">Ajouter un Étudiant</h2>
+                <a href="students.html" class="btn btn-light">
+                    <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+                </a>
+            </div>
+
+            <form id="studentForm">
+                <input type="hidden" id="studentId" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="username" class="form-label required">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" id="username" required />
+                        <div class="form-text">Doit être unique</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="password" class="form-label required">Mot de passe</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" required minlength="8" />
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Minimum 8 caractères</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cne" class="form-label required">CNE</label>
+                        <input type="text" class="form-control" id="cne" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="lastName" class="form-label required">Nom</label>
+                        <input type="text" class="form-control" id="lastName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="firstName" class="form-label required">Prénom</label>
+                        <input type="text" class="form-control" id="firstName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label required">Email</label>
+                        <input type="email" class="form-control" id="email" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="phone" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="department" class="form-label required">Département</label>
+                        <select class="form-select" id="department" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filiere" class="form-label required">Filière</label>
+                        <select class="form-select" id="filiere" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="year" class="form-label required">Année</label>
+                        <select class="form-select" id="year" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cycle_id" class="form-label required">Cycle</label>
+                        <select class="form-select" id="cycle_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="etape_id" class="form-label required">Étape</label>
+                        <select class="form-select" id="etape_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="semester_id" class="form-label required">Semestre</label>
+                        <select class="form-select" id="semester_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="section_id" class="form-label required">Section</label>
+                        <select class="form-select" id="section_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="groupe_id" class="form-label required">Groupe</label>
+                        <select class="form-select" id="groupe_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cin" class="form-label">CIN</label>
+                        <input type="text" class="form-control" id="cin" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="birthdate" class="form-label">Date de naissance</label>
+                        <input type="date" class="form-control" id="birthdate" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nationality" class="form-label">Nationalité</label>
+                        <input type="text" class="form-control" id="nationality" value="Marocaine" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="address" class="form-label">Adresse</label>
+                        <input type="text" class="form-control" id="address" />
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
+                        Enregistrer
+                    </button>
+                    <a href="students.html" class="btn btn-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-check-circle-fill text-success me-2" id="toastIcon"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Opération effectuée avec succès
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Le code JavaScript pour gérer le formulaire serait similaire à celui de la page principale
+        // mais adapté pour une page dédiée
+    </script>
+</body>
+</html>

@@ -392,8 +392,6 @@ public function getFilteredStudents(
              et.prenom LIKE :search OR
             et.cne LIKE :search OR
             et.cin LIKE :search OR
-            d.nom LIKE :search OR
-            f.nom LIKE :search OR
             u.email LIKE :search OR
             et.date_naissance LIKE :search 
         )";
@@ -407,87 +405,6 @@ public function getFilteredStudents(
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
-
-    public function assignModules(int $id, array $data) {
-        if (empty($data)) {
-            return [
-                'status' => 400,
-                'data' => [
-                    'success' => false,
-                    'message' => 'No module IDs provided'
-                ]
-            ];
-        }
-
-        // Validate user_id exists in the database
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM utilisateurs WHERE user_id = :user_id");
-        $stmt->execute([':user_id' => $id]);
-        if ($stmt->fetchColumn() == 0) {
-            return [
-                'status' => 400,
-                'data' => [
-                    'success' => false,
-                    'message' => 'Invalid user_id'
-                ]
-            ];
-        }
-
-        // Delete existing module assignments
-        $deleteSql = "DELETE FROM student_modules WHERE student_id = :user_id";
-        $deleteStmt = $this->db->prepare($deleteSql);
-        $deleteStmt->execute([':user_id' => $id]);
-
-        // Insert new module assignments
-        $insertSql = "INSERT INTO student_modules (student_id, module_id) VALUES ";
-        $params = [':user_id' => $id];
-        $valueParts = [];
-        $i = 0;
-        foreach ($data as $moduleId) {
-            $paramName = ":module_id_" . $i;
-            $valueParts[] = "(:user_id, $paramName)";
-            $params[$paramName] = $moduleId;
-            $i++;
-        }
-
-        if (empty($valueParts)) {
-            return [
-                'status' => 400,
-                'data' => [
-                    'success' => false,
-                    'message' => 'No valid module IDs provided'
-                ]
-            ];
-        }
-
-        $insertSql .= implode(", ", $valueParts);
-
-        try {
-            $this->db->beginTransaction();
-            $insertStmt = $this->db->prepare($insertSql);
-            $insertStmt->execute($params);
-            $this->db->commit();
-            
-            return [
-                'status' => 200,
-                'data' => [
-                    'success' => true,
-                    'message' => 'Modules assigned successfully',
-                    'assigned_modules' => $data,
-                    'student_id' => $id
-                ]
-            ];
-        } catch (PDOException $e) {
-            $this->db->rollBack();
-            return [
-                'status' => 500,
-                'data' => [
-                    'success' => false,
-                    'message' => 'Failed to assign modules',
-                    'error' => $e->getMessage()
-                ]
-            ];
-        }
-    }
 
 
     public function getAllFilieres()
@@ -515,30 +432,7 @@ public function getFilteredStudents(
     public function getAllSemesteres(){
         return $this->db->query("SELECT * FROM semestres ORDER BY nom")->fetchAll();
     }
-    public function getAllModule(){
-        return $this->db->query("SELECT 
-        m.module_id,    
-        m.code,
-        m.nom as module_nom,
-        m.semestre_id as module_semestre_id,
-        m.field_id as module_field_id,
-        m.annee_id as module_annee_id ,
-        m.responsible_professor_id,
-        m.coefficient,
-        s.semestre_id as semestre_id,
-        s.nom as semestre_nom,
-        c.cycle_id,
-        f.field_id as semestre_field_id,
-        e.etape_id
-        FROM 
-        modules m, 
-        semestres s,
-        etapes e,
-        cycles c,
-        filieres f
-         limit 10")->fetchAll();
-        
-    }
+   
     public function getFilierByDepartement($depId){
         $stmt=$this->db->prepare( " SELECT field_id , nom FROM filieres WHERE department_id= ? ");
         $stmt->execute([$depId]);
@@ -569,7 +463,36 @@ public function getFilteredStudents(
 
 // 🔎 Afficher tous les détails d'un professeur
 
-
+// In AdminStudentModel.php
+public function getStudentInfo($user_id) {
+    $stmt = $this->db->prepare("
+      SELECT 
+    et.*,
+    u.email,
+    d.nom AS departement_nom,
+    f.nom AS filiere_nom,
+    c.nom AS cycle_nom,
+    aa.annee_id,
+    s.nom AS semestre_nom,
+    sec.nom AS section_nom,
+    g.nom AS groupe_nom,
+    se.status AS statut
+FROM etudiants et
+JOIN utilisateurs u ON u.user_id = et.user_id
+LEFT JOIN departements d ON d.department_id = et.department_id
+LEFT JOIN filieres f ON f.field_id = et.field_id
+LEFT JOIN cycles c ON c.cycle_id = et.cycle_id
+LEFT JOIN student_enrollments se ON se.student_id = et.user_id
+LEFT JOIN annees_academiques aa ON aa.annee_id = se.annee_id
+LEFT JOIN semestres s ON s.semestre_id = se.semestre_id
+LEFT JOIN sections sec ON sec.section_id = se.section_id
+LEFT JOIN groupes g ON g.group_id = se.group_id
+WHERE et.user_id = ?
+LIMIT 1
+    ");
+    $stmt->execute([$user_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
 
     public function getAllYears()
     {
@@ -583,11 +506,7 @@ public function getFilteredStudents(
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getAllModules()
-    {
-        $stmt = $this->db->query("SELECT module_id, nom FROM modules");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+  
 
     public function getAllElements()
     {

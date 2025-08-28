@@ -96,7 +96,7 @@ public function getStudentDetail($user_id) {
     $cycleId  = filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
     $departementId =filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
     $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
-    $students = (new AdminModel())->getFilteredStudents(
+    $students = (new AdminStudentModel())->getFilteredStudents(
     $anneeId,
     $fieldId,
     $semestreId,
@@ -123,42 +123,6 @@ public function getStudentDetail($user_id) {
         ]
     ]);
     }
-public function assignModule($studentId, $moduleIds) {
-    $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-
-    try {
-        $result = $this->model->assignModules($studentId, $moduleIds);
-        
-        http_response_code($result['status']);
-        header('Content-Type: application/json');
-        echo json_encode($result['data']);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Server error: ' . $e->getMessage()
-        ]);
-    }
-    exit;
-}
-    public function getAllModule() {
-        $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        $modules = $this->model->getAllModule();
-        $this->response->send(200, $modules);
-    }
-   public function getAllFilieres() {
-    $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-    try {
-        $filieres = $this->model->getAllFilieres();
-        // Send data directly, don't wrap inside 'status' and 'data' keys
-        $this->response->send(200, $filieres);
-    } catch (Exception $e) {
-        $this->response->send(500, ['message' => 'Erreur lors du chargement des filières', 'error' => $e->getMessage()]);
-    }
-}
     public function getFilteredFilieres(){
         $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
@@ -182,7 +146,18 @@ public function assignModule($studentId, $moduleIds) {
         $this->response->send(500, ['message' => 'Erreur lors du chargement des cycles', 'error' => $e->getMessage()]);
     }
 }
+public function getAllFilieres(){
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $fields = $this->model->getAllFilieres
+();
+        $this->response->send(200, $fields);   //  ← send RAW array
 
+    } catch (Exception $e) {
+        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des fields', 'error' => $e->getMessage()]);
+    }
+}
 public function getAllSections() {
     $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
@@ -316,18 +291,33 @@ public function getGroupesByFiliere($fieldId) {
             ]);
         }
     }
-    public function getAllModules() {
-        $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        $modules = $this->model->getAllModules();
-        $this->response->send(200, $modules);
-    }
-    public function getAllElements() {
+        public function getAllElements() {
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
         $elements = $this->model->getAllElements();
         $this->response->send(200, $elements);
     }
+   public function getStudentInfo($user_id) {
+    try {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+        $student = $this->model->getStudentInfo($user_id);
+        if ($student) {
+            $this->response->send(200, [
+                'success' => true,
+                'student' => $student
+            ]);
+        } else {
+            $this->response->send(404, ['message' => 'Student not found']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500); // Use a valid HTTP status code
+        $this->response->send(500, [
+            'success' => false,
+            'message' => 'Database error: ' . $e->getMessage() . ' (MySQL Code: ' . $e->getCode() . ')'
+        ]);
+    }
+}
    public function importStudents()
     {
         // Check if a file was uploaded

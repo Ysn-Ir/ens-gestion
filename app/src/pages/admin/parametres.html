@@ -1,11 +1,418 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des Paramètres</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    omar
+<body class="p-4 bg-light">
+  <div class="container">
+    <h2 class="mb-4">Gestion des Paramètres</h2>
+
+    <!-- System Settings Section -->
+    <div class="mb-5">
+      <h3 class="mb-3">Paramètres du Système</h3>
+      <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addSettingModal">Ajouter un paramètre</button>
+      <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+          <tr>
+            <th>Nom</th>
+            <th>Valeur</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="settingsTableBody"></tbody>
+      </table>
+      <div id="settingsLoading" class="text-muted d-none">Chargement...</div>
+      <div id="settingsError" class="text-danger d-none"></div>
+    </div>
+
+    <!-- Grading Constraints Section -->
+    <div>
+      <h3 class="mb-3">Contraintes de Notation</h3>
+      <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addConstraintModal">Ajouter une contrainte</button>
+      <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Scope</th>
+            <th>Nom de la règle</th>
+            <th>Valeur</th>
+            <th>Semestre ID</th>
+            <th>Année ID</th>
+            <th>Field ID</th>
+            <th>Créé le</th>
+            <th>Mis à jour le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="constraintsTableBody"></tbody>
+      </table>
+      <div id="constraintsLoading" class="text-muted d-none">Chargement...</div>
+      <div id="constraintsError" class="text-danger d-none"></div>
+    </div>
+  </div>
+
+  <!-- Modal d'ajout pour Settings -->
+  <div class="modal fade" id="addSettingModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="addSettingForm" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Ajouter un paramètre</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-2">
+          <input name="name" class="form-control" placeholder="Nom" required />
+          <input name="value" class="form-control" placeholder="Valeur" required />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal d'édition pour Settings -->
+  <div class="modal fade" id="editSettingModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="editSettingForm" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Modifier un paramètre</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-2">
+          <input name="name" class="form-control" placeholder="Nom" required readonly />
+          <input name="value" class="form-control" placeholder="Valeur" required />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Modifier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de suppression pour Settings -->
+  <div class="modal fade" id="deleteSettingModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="deleteSettingForm" class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Supprimer un paramètre</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="name">
+          <p>Êtes-vous sûr de vouloir supprimer ce paramètre ?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal d'ajout pour Constraints -->
+  <div class="modal fade" id="addConstraintModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="addConstraintForm" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Ajouter une contrainte</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-2">
+          <input name="scope" class="form-control" placeholder="Scope" required />
+          <input name="rule_name" class="form-control" placeholder="Nom de la règle" required />
+          <input name="rule_value" class="form-control" placeholder="Valeur" required />
+          <input name="semestre_id" type="number" class="form-control" placeholder="Semestre ID" />
+          <input name="annee_id" type="number" class="form-control" placeholder="Année ID" />
+          <input name="field_id" type="number" class="form-control" placeholder="Field ID" />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal d'édition pour Constraints -->
+  <div class="modal fade" id="editConstraintModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="editConstraintForm" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Modifier une contrainte</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body row g-2">
+          <input type="hidden" name="rule_id" />
+          <input name="scope" class="form-control" placeholder="Scope" required />
+          <input name="rule_name" class="form-control" placeholder="Nom de la règle" required />
+          <input name="rule_value" class="form-control" placeholder="Valeur" required />
+          <input name="semestre_id" type="number" class="form-control" placeholder="Semestre ID" />
+          <input name="annee_id" type="number" class="form-control" placeholder="Année ID" />
+          <input name="field_id" type="number" class="form-control" placeholder="Field ID" />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning">Modifier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de suppression pour Constraints -->
+  <div class="modal fade" id="deleteConstraintModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form id="deleteConstraintForm" class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Supprimer une contrainte</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="rule_id">
+          <p>Êtes-vous sûr de vouloir supprimer cette contrainte ?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const apiUrl = "http://localhost/ens-gestion/api/settings.php";
+
+    async function fetchData(action, tableBodyId, loadingId, errorId, isSettings = true) {
+      const tableBody = document.getElementById(tableBodyId);
+      const loading = document.getElementById(loadingId);
+      const error = document.getElementById(errorId);
+
+      tableBody.innerHTML = "";
+      error.classList.add("d-none");
+      loading.classList.remove("d-none");
+
+      try {
+        const response = await fetch(`${apiUrl}?action=${action}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+          }
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Erreur inconnue");
+        }
+
+        if (data.message && data.message.length > 0) {
+          if (isSettings) {
+            tableBody.innerHTML = data.message.map(item => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.value}</td>
+                <td>
+                  <button class="btn btn-sm btn-warning" onclick='editSetting(${JSON.stringify(item)})'>Modifier</button>
+                  <button class="btn btn-sm btn-danger" onclick='deleteSetting("${item.name}")'>Supprimer</button>
+                </td>
+              </tr>
+            `).join("");
+          } else {
+            tableBody.innerHTML = data.message.map(item => `
+              <tr>
+                <td>${item.rule_id}</td>
+                <td>${item.scope}</td>
+                <td>${item.rule_name}</td>
+                <td>${item.rule_value}</td>
+                <td>${item.semestre_id || ""}</td>
+                <td>${item.annee_id || ""}</td>
+                <td>${item.field_id || ""}</td>
+                <td>${item.created_at}</td>
+                <td>${item.updated_at}</td>
+                <td>
+                  <button class="btn btn-sm btn-warning" onclick='editConstraint(${JSON.stringify(item)})'>Modifier</button>
+                  <button class="btn btn-sm btn-danger" onclick='deleteConstraint(${item.rule_id})'>Supprimer</button>
+                </td>
+              </tr>
+            `).join("");
+          }
+        } else {
+          tableBody.innerHTML = '<tr><td colspan="100%" class="text-center">Aucune donnée disponible</td></tr>';
+        }
+      } catch (err) {
+        error.textContent = "Erreur : " + err.message;
+        error.classList.remove("d-none");
+      } finally {
+        loading.classList.add("d-none");
+      }
+    }
+
+    // Load data
+    function loadSettings() {
+      fetchData("getAllSettings", "settingsTableBody", "settingsLoading", "settingsError", true);
+    }
+
+    function loadConstraints() {
+      fetchData("getAllConstraints", "constraintsTableBody", "constraintsLoading", "constraintsError", false);
+    }
+
+    // Add Setting
+    document.getElementById("addSettingForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this).entries());
+
+      try {
+        const response = await fetch(`${apiUrl}?action=addSetting`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message);
+        loadSettings();
+        bootstrap.Modal.getInstance(document.getElementById("addSettingModal")).hide();
+        this.reset();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    });
+
+    // Edit Setting
+    function editSetting(setting) {
+      const form = document.getElementById("editSettingForm");
+      form.name.value = setting.name;
+      form.value.value = setting.value;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("editSettingModal")).show();
+    }
+
+    document.getElementById("editSettingForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this).entries());
+
+      try {
+        const response = await fetch(`${apiUrl}?action=updateSetting`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message);
+        loadSettings();
+        bootstrap.Modal.getInstance(document.getElementById("editSettingModal")).hide();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    });
+
+    // Delete Setting
+    function deleteSetting(name) {
+      const form = document.getElementById("deleteSettingForm");
+      form.name.value = name;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("deleteSettingModal")).show();
+    }
+
+    document.getElementById("deleteSettingForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this).entries());
+
+      try {
+        const response = await fetch(`${apiUrl}?action=deleteSetting`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message);
+        loadSettings();
+        bootstrap.Modal.getInstance(document.getElementById("deleteSettingModal")).hide();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    });
+
+    // Add Constraint
+    document.getElementById("addConstraintForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this).entries());
+
+      try {
+        const response = await fetch(`${apiUrl}?action=addConstraint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message);
+        loadConstraints();
+        bootstrap.Modal.getInstance(document.getElementById("addConstraintModal")).hide();
+        this.reset();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    });
+
+    // Edit Constraint
+    function editConstraint(constraint) {
+      const form = document.getElementById("editConstraintForm");
+      form.rule_id.value = constraint.rule_id;
+      form.scope.value = constraint.scope;
+      form.rule_name.value = constraint.rule_name;
+      form.rule_value.value = constraint.rule_value;
+      form.semestre_id.value = constraint.semestre_id || "";
+      form.annee_id.value = constraint.annee_id || "";
+      form.field_id.value = constraint.field_id || "";
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("editConstraintModal")).show();
+    }
+
+    document.getElementById("editConstraintForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this).entries());
+
+      try {
+        const response = await fetch(`${apiUrl}?action=updateConstraint`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message);
+        loadConstraints();
+        bootstrap.Modal.getInstance(document.getElementById("editConstraintModal")).hide();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    });
+
+    // Delete Constraint
+    function deleteConstraint(rule_id) {
+      const form = document.getElementById("deleteConstraintForm");
+      form.rule_id.value = rule_id;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("deleteConstraintModal")).show();
+    }
+
+    document.getElementById("deleteConstraintForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(this).entries());
+
+      try {
+        const response = await fetch(`${apiUrl}?action=deleteConstraint`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message);
+        loadConstraints();
+        bootstrap.Modal.getInstance(document.getElementById("deleteConstraintModal")).hide();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    });
+
+    // Initial load
+    loadSettings();
+    loadConstraints();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

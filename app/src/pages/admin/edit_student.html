@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modifier un Étudiant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            height: 100vh;
+            width: 220px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #343a40;
+            padding-top: 60px;
+            color: #fff;
+        }
+
+        .sidebar h4 {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #495057;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 12px 20px;
+            color: #adb5bd;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .sidebar a:hover {
+            background-color: #495057;
+            color: #ffffff;
+        }
+
+        .content {
+            padding: 20px;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+        }
+
+        .student-form-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .student-form-header {
+            background-color: #343a40;
+            color: white;
+            padding: 15px 20px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .toast {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+  
+
+    <!-- Logout Button -->
+    <button class="btn btn-danger logout-btn" id="logoutBtn">
+        <i class="bi bi-box-arrow-right me-1"></i> Déconnexion
+    </button>
+
+    <!-- Main Content -->
+    <div class="content">
+        <div class="student-form-container">
+            <div class="student-form-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Modifier un Étudiant</h2>
+                <a href="students.html" class="btn btn-light">
+                    <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+                </a>
+            </div>
+
+            <form id="studentForm">
+                <input type="hidden" id="studentId" />
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label for="username" class="form-label required">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" id="username" required readonly />
+                        <div class="form-text">Le nom d'utilisateur ne peut pas être modifié</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Mot de passe</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" placeholder="Laisser vide pour ne pas modifier" />
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Minimum 8 caractères (laisser vide pour conserver l'actuel)</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cne" class="form-label required">CNE</label>
+                        <input type="text" class="form-control" id="cne" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="lastName" class="form-label required">Nom</label>
+                        <input type="text" class="form-control" id="lastName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="firstName" class="form-label required">Prénom</label>
+                        <input type="text" class="form-control" id="firstName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label required">Email</label>
+                        <input type="email" class="form-control" id="email" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="phone" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="department" class="form-label required">Département</label>
+                        <select class="form-select" id="department" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filiere" class="form-label required">Filière</label>
+                        <select class="form-select" id="filiere" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="year" class="form-label required">Année</label>
+                        <select class="form-select" id="year" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cycle_id" class="form-label required">Cycle</label>
+                        <select class="form-select" id="cycle_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="etape_id" class="form-label required">Étape</label>
+                        <select class="form-select" id="etape_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="semester_id" class="form-label required">Semestre</label>
+                        <select class="form-select" id="semester_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="section_id" class="form-label required">Section</label>
+                        <select class="form-select" id="section_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="groupe_id" class="form-label required">Groupe</label>
+                        <select class="form-select" id="groupe_id" required>
+                            <option value="">Chargement...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cin" class="form-label">CIN</label>
+                        <input type="text" class="form-control" id="cin" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="birthdate" class="form-label">Date de naissance</label>
+                        <input type="date" class="form-control" id="birthdate" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nationality" class="form-label">Nationalité</label>
+                        <input type="text" class="form-control" id="nationality" value="Marocaine" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="address" class="form-label">Adresse</label>
+                        <input type="text" class="form-control" id="address" />
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
+                        Enregistrer les modifications
+                    </button>
+                    <a href="students.html" class="btn btn-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-check-circle-fill text-success me-2" id="toastIcon"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Opération effectuée avec succès
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const studentForm = document.getElementById('studentForm');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
+            
+            // Récupérer l'ID de l'étudiant depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentId = urlParams.get('id');
+            
+            if (!studentId) {
+                showNotification('Aucun étudiant sélectionné', false);
+                setTimeout(() => {
+                    window.location.href = 'students.html';
+                }, 2000);
+                return;
+            }
+
+            const API_BASE_URL = 'http://localhost/ens-gestion/api/admin.php';
+            const API_ENDPOINTS = {
+                studentDetails: `${API_BASE_URL}?action=getStudentDetails`,
+                updateStudent: `${API_BASE_URL}?action=updateStudent`,
+                departments: `${API_BASE_URL}?action=getAllDepartments`,
+                filieres: `${API_BASE_URL}?action=getFilieres`,
+                years: `${API_BASE_URL}?action=getAllyears`,
+                cycles: `${API_BASE_URL}?action=getCycles`,
+                etapes: `${API_BASE_URL}?action=getAllEtapes`,
+                semesters: `${API_BASE_URL}?action=getAllSemesters`,
+                sections: `${API_BASE_URL}?action=getAllSections`,
+                groupes: `${API_BASE_URL}?action=getAllGroupes`,
+                logout: `http://localhost/ens-gestion/api/index.php?action=auth/logout`
+            };
+
+            let csrfToken = localStorage.getItem('csrfToken') || '';
+
+            init();
+
+            function init() {
+                const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
+                loadStudentDetails();
+                loadDepartments();
+                loadYears();
+                loadCycles();
+                loadEtapes();
+                loadSemesters();
+                loadSections();
+                loadGroupes();
+                loadFilieres();
+            }
+
+            togglePassword.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                togglePassword.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+            });
+
+            studentForm.addEventListener('submit', handleStudentFormSubmit);
+            
+            logoutBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch(`${API_ENDPOINTS.logout}`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
+                    const result = await response.json();
+                    if (response.ok && result.data.status === 'success') {
+                        localStorage.removeItem('userData');
+                        localStorage.removeItem('csrfToken');
+                        showNotification('Déconnexion réussie !', true);
+                        setTimeout(() => {
+                            window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
+                        }, 100);
+                    } else {
+                        throw new Error(result.message || 'Échec de la déconnexion');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors de la déconnexion:', error);
+                    showNotification('Erreur lors de la déconnexion: ' + error.message, false);
+                }
+            });
+
+            function showNotification(message, isSuccess = true) {
+                const toastIcon = document.getElementById('toastIcon');
+                toastIcon.className = isSuccess 
+                    ? 'bi bi-check-circle-fill text-success me-2' 
+                    : 'bi bi-exclamation-triangle-fill text-danger me-2';
+                document.getElementById('toastMessage').textContent = message;
+                notificationToast.show();
+            }
+
+            async function loadStudentDetails() {
+                try {
+                    document.getElementById('saveBtn').disabled = true;
+                    document.getElementById('saveSpinner').classList.remove('d-none');
+                    const response = await fetch(`${API_ENDPOINTS.studentDetails}&user_id=${studentId}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
+                    const data = await response.json();
+                    if (data.status && data.data) {
+                        const student = data.data.students;
+                        document.getElementById('studentId').value = student.user_id || '';
+                        document.getElementById('cne').value = student.cne || '';
+                        document.getElementById('lastName').value = student.nom || '';
+                        document.getElementById('firstName').value = student.prenom || '';
+                        document.getElementById('email').value = student.email || '';
+                        document.getElementById('phone').value = student.telephone || '';
+                        document.getElementById('department').value = student.department_id || '';
+                        document.getElementById('filiere').value = student.field_id || '';
+                        document.getElementById('year').value = student.annee_id || '';
+                        document.getElementById('cycle_id').value = student.cycle_id || '';
+                        document.getElementById('etape_id').value = student.etape_id || '';
+                        document.getElementById('semester_id').value = student.semestre_id || '';
+                        document.getElementById('section_id').value = student.section_id || '';
+                        document.getElementById('groupe_id').value = student.groupe_id || '';
+                        document.getElementById('cin').value = student.cin || '';
+                        document.getElementById('birthdate').value = student.date_naissance || '';
+                        document.getElementById('nationality').value = student.nationalite || 'Marocaine';
+                        document.getElementById('address').value = student.adresse || '';
+                        document.getElementById('username').value = student.username || '';
+                    } else {
+                        throw new Error(data.message || 'Étudiant introuvable');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du chargement des détails de l\'étudiant:', error);
+                    showNotification('Erreur lors du chargement des détails: ' + error.message, false);
+                } finally {
+                    document.getElementById('saveBtn').disabled = false;
+                    document.getElementById('saveSpinner').classList.add('d-none');
+                }
+            }
+
+            async function handleStudentFormSubmit(e) {
+                e.preventDefault();
+                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                let isValid = true;
+                document.querySelectorAll('#studentForm [required]').forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                });
+                const email = document.getElementById('email').value.trim();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    document.getElementById('email').classList.add('is-invalid');
+                    isValid = false;
+                }
+                if (!isValid) {
+                    showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
+                    return;
+                }
+                const formData = {
+                    username: document.getElementById('username').value.trim(),
+                    email: email,
+                    cne: document.getElementById('cne').value.trim(),
+                    nom: document.getElementById('lastName').value.trim(),
+                    prenom: document.getElementById('firstName').value.trim(),
+                    telephone: document.getElementById('phone').value.trim() || null,
+                    department_id: document.getElementById('department').value,
+                    field_id: document.getElementById('filiere').value,
+                    annee_id: document.getElementById('year').value,
+                    cycle_id: document.getElementById('cycle_id').value,
+                    etape_id: document.getElementById('etape_id').value,
+                    semestre_id: document.getElementById('semester_id').value,
+                    section_id: document.getElementById('section_id').value,
+                    groupe_id: document.getElementById('groupe_id').value,
+                    cin: document.getElementById('cin').value.trim() || null,
+                    date_naissance: document.getElementById('birthdate').value || "2000-01-01",
+                    nationalite: document.getElementById('nationality').value || 'Marocaine',
+                    adresse: document.getElementById('address').value || null
+                };
+                const password = document.getElementById('password').value;
+                if (password) {
+                    if (password.length < 8) {
+                        document.getElementById('password').classList.add('is-invalid');
+                        showNotification('Le mot de passe doit contenir au moins 8 caractères', false);
+                        return;
+                    }
+                    formData.password = password;
+                }
+                try {
+                    const saveBtn = document.getElementById('saveBtn');
+                    saveBtn.disabled = true;
+                    document.getElementById('saveSpinner').classList.remove('d-none');
+                    const response = await fetch(`${API_ENDPOINTS.updateStudent}&id=${studentId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                        body: JSON.stringify(formData)
+                    });
+                    const result = await response.json();
+                    if (result.status) {
+                        showNotification('Étudiant mis à jour avec succès', true);
+                        setTimeout(() => {
+                            window.location.href = 'students.html';
+                        }, 1500);
+                    } else {
+                        throw new Error(result.message || 'Échec de la mise à jour');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    showNotification('Erreur lors de la mise à jour: ' + error.message, false);
+                } finally {
+                    document.getElementById('saveBtn').disabled = false;
+                    document.getElementById('saveSpinner').classList.add('d-none');
+                }
+            }
+
+            async function loadDepartments() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.departments, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const departments = data.data || data;
+                    const departmentSelect = document.getElementById('department');
+                    departmentSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+                    departments.forEach(dep => {
+                        const option = document.createElement('option');
+                        option.value = dep.department_id;
+                        option.textContent = dep.nom;
+                        departmentSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des départements:', error);
+                    showNotification('Erreur lors du chargement des départements: ' + error.message, false);
+                }
+            }
+
+            async function loadFilieres() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.filieres, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const filieres = data.data || [];
+                    const filiereSelect = document.getElementById('filiere');
+                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+                    filieres.forEach(fil => {
+                        const option = document.createElement('option');
+                        option.value = fil.field_id;
+                        option.textContent = fil.nom;
+                        filiereSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des filières:', error);
+                    showNotification('Erreur lors du chargement des filières: ' + error.message, false);
+                }
+            }
+
+            async function loadYears() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.years, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const years = data.data?.data || data.data || [];
+                    const yearSelect = document.getElementById('year');
+                    yearSelect.innerHTML = '<option value="">Sélectionner une année</option>';
+                    years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year.annee_id;
+                        option.textContent = year.annee_id + (year.current_flag == 1 ? ' (actuelle)' : '');
+                        yearSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des années:', error);
+                    showNotification('Erreur lors du chargement des années: ' + error.message, false);
+                }
+            }
+
+            async function loadCycles() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.cycles, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const cycles = data.data || data;
+                    const cycleSelect = document.getElementById('cycle_id');
+                    cycleSelect.innerHTML = '<option value="">Sélectionner un cycle</option>';
+                    cycles.forEach(cyc => {
+                        const option = document.createElement('option');
+                        option.value = cyc.cycle_id;
+                        option.textContent = cyc.nom;
+                        cycleSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des cycles:', error);
+                    showNotification('Erreur lors du chargement des cycles: ' + error.message, false);
+                }
+            }
+
+            async function loadEtapes() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.etapes, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const etapes = data.data || data;
+                    const etapeSelect = document.getElementById('etape_id');
+                    etapeSelect.innerHTML = '<option value="">Sélectionner une étape</option>';
+                    etapes.forEach(etape => {
+                        const option = document.createElement('option');
+                        option.value = etape.etape_id;
+                        option.textContent = etape.nom_etape;
+                        etapeSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des étapes:', error);
+                    showNotification('Erreur lors du chargement des étapes: ' + error.message, false);
+                }
+            }
+
+            async function loadSemesters() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.semesters, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const semesters = data.data || data;
+                    const semesterSelect = document.getElementById('semester_id');
+                    semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                    semesters.forEach(sem => {
+                        const option = document.createElement('option');
+                        option.value = sem.semestre_id;
+                        option.textContent = sem.nom;
+                        semesterSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des semestres:', error);
+                    showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+                }
+            }
+
+            async function loadSections() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.sections, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const sections = data.data || data;
+                    const sectionSelect = document.getElementById('section_id');
+                    sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+                    sections.forEach(sec => {
+                        const option = document.createElement('option');
+                        option.value = sec.section_id;
+                        option.textContent = sec.nom;
+                        sectionSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des sections:', error);
+                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+                }
+            }
+
+            async function loadGroupes() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.groupes, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const groupes = data.data || data;
+                    const groupeSelect = document.getElementById('groupe_id');
+                    groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+                    groupes.forEach(grp => {
+                        const option = document.createElement('option');
+                        option.value = grp.group_id;
+                        option.textContent = grp.nom;
+                        groupeSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des groupes:', error);
+                    showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

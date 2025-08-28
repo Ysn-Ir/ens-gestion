@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Notes Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    .action-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .action-card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-left-color: #3b82f6; animation: spin 1s linear infinite; border-radius: 50%; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; opacity: 0; transform: translateY(20px); }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .table-container { max-height: 400px; overflow-y: auto; }
+    .table-container table { width: 100%; }
+    .table-container th, .table-container td { border: 1px solid #e5e7eb; padding: 8px; }
+    .table-container th { background-color: #f3f4f6; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-100">
+  <!-- Main Content -->
+  <main id="content-area" class="p-6">
+    <h2 class="text-2xl font-semibold mb-6">Notes Management</h2>
+
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+      <h5 class="text-lg font-medium mb-4">Parameters</h5>
+      <div class="flex gap-4 flex-wrap">
+        <input
+          type="number"
+          class="border rounded-lg p-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          id="semestre_id"
+          placeholder="Semestre ID"
+        />
+        <select
+          id="annee_id"
+          class="border rounded-lg p-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="" disabled>Année (YYYY-YYYY)</option>
+        </select>
+        <button
+          id="fetchNotes"
+          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Afficher les Notes
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-4 mb-6">
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="generateEmptyNoteRows">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-file-earmark-plus text-3xl mb-2"></i>
+        <div>Generate Empty Note Rows</div>
+      </div>
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="calculateSemesterNotes">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-calculator text-3xl mb-2"></i>
+        <div>Calculate Semester Notes</div>
+      </div>
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="calculateYearNotes">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-calendar-check text-3xl mb-2"></i>
+        <div>Calculate Year Notes</div>
+      </div>
+      <div class="bg-white action-card text-center p-4 rounded-lg shadow-md w-64" data-action="generateDiplomas">
+        <div class="spinner w-6 h-6 mx-auto mb-2 hidden"></div>
+        <i class="bi bi-award text-3xl mb-2"></i>
+        <div>Generate Diplomas</div>
+      </div>
+    </div>
+
+    <!-- Notes Tables Section -->
+    <div id="notes-section" class="bg-white p-6 rounded-lg shadow-md">
+      <h5 class="text-lg font-medium mb-4">Notes Overview</h5>
+      <div id="loading" class="text-center hidden">
+        <div class="spinner w-8 h-8 mx-auto mb-2"></div>
+        <p>Chargement...</p>
+      </div>
+      <div class="flex flex-wrap gap-6">
+        <!-- Element Notes Table -->
+        <div class="w-full lg:w-1/2">
+          <h6 class="text-md font-medium mb-2">Notes des Éléments</h6>
+          <div class="table-container">
+            <table id="element-notes-table" class="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Étudiant</th>
+                  <th>Élément</th>
+                  <th>Note TP</th>
+                  <th>Note CC</th>
+                  <th>Note Examen</th>
+                  <th>Note Rattrapage</th>
+                  <th>Note Finale</th>
+                  <th>Décision</th>
+                  <th>Décision Rattrapage</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Module Notes Table -->
+        <div class="w-full lg:w-1/2">
+          <h6 class="text-md font-medium mb-2">Notes des Modules</h6>
+          <div class="table-container">
+            <table id="module-notes-table" class="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Étudiant</th>
+                  <th>Module</th>
+                  <th>Note Module</th>
+                  <th>Décision</th>
+                  <th>Statut Rattrapage</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Semester Notes Table -->
+        <div class="w-full lg:w-1/2">
+          <h6 class="text-md font-medium mb-2">Notes des Semestres</h6>
+          <div class="table-container">
+            <table id="semester-notes-table" class="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Étudiant</th>
+                  <th>Semestre</th>
+                  <th>Note Semestre</th>
+                  <th>Décision</th>
+                  <th>Modules NV</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Year Notes Table -->
+        <div class="w-full lg:w-1/2">
+          <h6 class="text-md font-medium mb-2">Notes des Années</h6>
+          <div class="table-container">
+            <table id="year-notes-table" class="min-w-full text-sm">
+              <thead>
+                <tr>
+                  <th>Étudiant</th>
+                  <th>Année</th>
+                  <th>Note Année</th>
+                  <th>Décision</th>
+                  <th>Échecs</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div
+    id="liveToast"
+    class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg flex items-center max-w-sm toast hidden"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+  >
+    <div class="flex-1 text-sm font-medium" id="toastMsg"></div>
+    <button
+      class="ml-4 p-1 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      onclick="document.getElementById('liveToast').classList.remove('show', 'bg-green-500', 'bg-red-500', 'text-white'); document.getElementById('liveToast').classList.add('hidden')"
+      aria-label="Close notification"
+    >
+      <i class="bi bi-x text-lg"></i>
+    </button>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost/ens-gestion/api/adminNote.php";
+    let isLoading = false;
+
+    // Dynamically populate academic year dropdown and select current year
+    function populateAcademicYears() {
+      console.log('Populating academic years');
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      const currentAcademicYearStart = currentMonth >= 7 ? currentYear : currentYear - 1;
+      const currentAcademicYear = `${currentAcademicYearStart}-${currentAcademicYearStart + 1}`;
+      
+      const anneeSelect = document.getElementById("annee_id");
+      for (let year = 2015; year <= currentAcademicYearStart + 5; year++) {
+        const academicYear = `${year}-${year + 1}`;
+        const option = document.createElement("option");
+        option.value = academicYear;
+        option.textContent = academicYear;
+        if (academicYear === currentAcademicYear) {
+          option.selected = true;
+        }
+        anneeSelect.appendChild(option);
+      }
+      console.log('Academic years populated, selected:', anneeSelect.value);
+    }
+
+    function showToast(message, success = true) {
+      console.log('Showing toast:', message, success);
+      const toast = document.getElementById("liveToast");
+      const toastMsg = document.getElementById("toastMsg");
+      toastMsg.textContent = message || (success ? "Action completed successfully" : "An error occurred");
+      toast.classList.remove("hidden", "bg-green-500", "bg-red-500", "text-white");
+      toast.classList.add("show", success ? "bg-green-500" : "bg-red-500", "text-white");
+      setTimeout(() => {
+        toast.classList.remove("show", "bg-green-500", "bg-red-500", "text-white");
+        toast.classList.add("hidden");
+      }, 3000);
+    }
+
+    async function callApi(action) {
+      if (isLoading) {
+        console.log('API call blocked: isLoading=true');
+        return;
+      }
+      const semestre = document.getElementById("semestre_id").value;
+      const annee = document.getElementById("annee_id").value;
+      console.log('callApi:', { action, semestre, annee });
+      let body = {};
+
+      if (action === "generateEmptyNoteRows" || action === "calculateSemesterNotes") {
+        if (!semestre || !annee) {
+          showToast("Semestre et Année requis", false);
+          return;
+        }
+        body = { semestre_id: parseInt(semestre), annee_id: annee };
+      } else if (action === "calculateYearNotes" || action === "generateDiplomas") {
+        if (!annee) {
+          showToast("Année requis", false);
+          return;
+        }
+        body = { annee_id: annee };
+      }
+
+      const card = document.querySelector(`[data-action="${action}"]`);
+      const spinner = card.querySelector(".spinner");
+      spinner.classList.remove("hidden");
+      isLoading = true;
+
+      try {
+        console.log('Sending API request:', `${API_BASE}?action=${action}`, body);
+        const res = await fetch(`${API_BASE}?action=${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        console.log('API response for action:', action, data);
+        showToast(data.message, data.status !== "error");
+        if (data.status !== "error") {
+          await fetchNotes();
+        }
+      } catch (err) {
+        console.error('API call error:', action, err);
+        showToast("Request failed: " + err.message, false);
+      } finally {
+        spinner.classList.add("hidden");
+        isLoading = false;
+      }
+    }
+
+    async function fetchNotes() {
+  console.log('fetchNotes called');
+  if (isLoading) {
+    console.log('fetchNotes blocked: isLoading=true');
+    return;
+  }
+  const semestre = document.getElementById("semestre_id").value;
+  const annee = document.getElementById("annee_id").value;
+  console.log('fetchNotes parameters:', { semestre, annee, parsedSemestre: parseInt(semestre) });
+  if (!annee) {
+    showToast("Année requis", false);
+    return;
+  }
+
+  const loading = document.getElementById("loading");
+  if (!loading) {
+    console.error('Loading element not found');
+    return;
+  }
+  loading.classList.remove("hidden");
+  isLoading = true;
+
+  try {
+    console.log('Fetching notes from API');
+    const [elementRes, moduleRes, semesterRes, yearRes] = await Promise.all([
+      fetch(`${API_BASE}?action=getElementNotes${semestre ? `&semestre_id=${semestre}` : ''}&annee_id=${annee}`),
+      fetch(`${API_BASE}?action=getModuleNotes${semestre ? `&semestre_id=${semestre}` : ''}&annee_id=${annee}`),
+      fetch(`${API_BASE}?action=getSemesterNotes${semestre ? `&semestre_id=${semestre}` : ''}&annee_id=${annee}`),
+      fetch(`${API_BASE}?action=getYearNotes&annee_id=${annee}`)
+    ]);
+
+    const [elementData, moduleData, semesterData, yearData] = await Promise.all([
+      elementRes.json(),
+      moduleRes.json(),
+      semesterRes.json(),
+      yearRes.json()
+    ]);
+
+    console.log('Raw API Responses:', {
+      elementData: JSON.stringify(elementData, null, 2),
+      moduleData: JSON.stringify(moduleData, null, 2),
+      semesterData: JSON.stringify(semesterData, null, 2),
+      yearData: JSON.stringify(yearData, null, 2)
+    });
+
+    function validateResponse(data, action) {
+      console.log(`Validating response for ${action}:`, data);
+      if (!data || typeof data !== 'object') {
+        console.error(`Invalid response for ${action}:`, data);
+        return [];
+      }
+      const actualData = data.data && Array.isArray(data.data.data) ? data.data.data : Array.isArray(data.data) ? data.data : [];
+      if ((data.success !== true && data.data?.status !== 'success') || !Array.isArray(actualData)) {
+        console.warn(`Unexpected response structure for ${action}:`, data);
+        return [];
+      }
+      return actualData;
+    }
+
+    let elementNotes = validateResponse(elementData, 'getElementNotes');
+    console.log('Element Notes before filter:', elementNotes);
+    if (semestre) {
+      const semestreNum = parseInt(semestre);
+      console.log('Filtering elementNotes with semestre_id:', semestreNum);
+      elementNotes = elementNotes.filter(note => note.semestre_id === semestreNum);
+      console.log('Element Notes after filter:', elementNotes);
+    }
+
+    const moduleNotes = validateResponse(moduleData, 'getModuleNotes');
+    const semesterNotes = validateResponse(semesterData, 'getSemesterNotes');
+    const yearNotes = validateResponse(yearData, 'getYearNotes');
+
+    console.log('Processed Notes data:', {
+      elementNotes: elementNotes.length,
+      moduleNotes: moduleNotes.length,
+      semesterNotes: semesterNotes.length,
+      yearNotes: yearNotes.length
+    });
+
+    if (elementNotes.length === 0) showToast("Aucune note d'élément trouvée", false);
+    if (moduleNotes.length === 0) showToast("Aucune note de module trouvée", false);
+    if (semesterNotes.length === 0) showToast("Aucune note de semestre trouvée", false);
+    if (yearNotes.length === 0) showToast("Aucune note d'année trouvée", false);
+
+    populateTable('element-notes-table', elementNotes, [
+      { key: 'student_name', label: 'Étudiant' },
+      { key: 'element_name', label: 'Élément' },
+      { key: 'note_tp', label: 'Note TP', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'note_cc', label: 'Note CC', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'note_exam', label: 'Note Examen', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'note_rattrapage', label: 'Note Rattrapage', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'note_finale', label: 'Note Finale', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'decision', label: 'Décision', format: v => v || '-' },
+      { key: 'decision_ratt', label: 'Décision Rattrapage', format: v => v || '-' }
+    ]);
+
+    populateTable('module-notes-table', moduleNotes, [
+      { key: 'student_name', label: 'Étudiant' },
+      { key: 'module_name', label: 'Module' },
+      { key: 'note_module', label: 'Note Module', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'decision', label: 'Décision', format: v => v || '-' },
+      { key: 'retake_status', label: 'Statut Rattrapage', format: v => v || '-' }
+    ]);
+
+    populateTable('semester-notes-table', semesterNotes, [
+      { key: 'student_name', label: 'Étudiant' },
+      { key: 'semestre_id', label: 'Semestre' },
+      { key: 'note_semestre', label: 'Note Semestre', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'decision', label: 'Décision', format: v => v || '-' },
+      { key: 'nv_module_count', label: 'Modules NV', format: v => v !== null && v !== undefined ? v.toString() : '0' }
+    ]);
+
+    populateTable('year-notes-table', yearNotes, [
+      { key: 'student_name', label: 'Étudiant' },
+      { key: 'annee_id', label: 'Année' },
+      { key: 'note_annee', label: 'Note Année', format: v => v !== null && v !== undefined ? Number(v).toFixed(2) : '-' },
+      { key: 'decision_annee', label: 'Décision', format: v => v || '-' },
+      { key: 'fail_count', label: 'Échecs', format: v => v !== null && v !== undefined ? v.toString() : '0' }
+    ]);
+
+    showToast("Notes chargées avec succès", true);
+  } catch (err) {
+    console.error('fetchNotes error:', err);
+    showToast("Échec du chargement des notes : " + err.message, false);
+  } finally {
+    console.log('Resetting isLoading to false');
+    loading.classList.add("hidden");
+    isLoading = false;
+  }
+}
+
+    function populateTable(tableId, data, columns) {
+      console.log(`populateTable called for ${tableId}, data length:`, data.length);
+      const table = document.getElementById(tableId);
+      if (!table) {
+        console.error(`Table ${tableId} not found`);
+        return;
+      }
+      const tbody = table.querySelector('tbody');
+      if (!tbody) {
+        console.error(`Table body for ${tableId} not found`);     
+        return;
+      }
+      tbody.innerHTML = '';
+
+      if (!Array.isArray(data) || data.length === 0) {
+        console.log(`No data for ${tableId}`);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="${columns.length}" class="text-center py-4">Aucune donnée disponible</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+
+      data.forEach((row, index) => {
+        console.log(`Processing row ${index} for ${tableId}:`, row);
+        const tr = document.createElement('tr');
+        columns.forEach(col => {
+          const td = document.createElement('td');
+          const value = row[col.key];
+          const formattedValue = col.format ? col.format(value) : (value !== null && value !== undefined ? value : '-');
+          td.textContent = formattedValue;
+          console.log(`Column ${col.key}:`, { value, formattedValue });
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Action card clicks
+    document.querySelectorAll(".action-card").forEach(card => {
+      card.addEventListener("click", () => {
+        console.log('Action card clicked:', card.dataset.action);
+        callApi(card.dataset.action);
+      });
+    });
+
+    // Fetch notes button
+    const fetchNotesButton = document.getElementById("fetchNotes");
+    if (fetchNotesButton) {
+      fetchNotesButton.addEventListener("click", () => {
+        console.log('Fetch notes button clicked');
+        
+        fetchNotes();
+      });
+    } else {
+      console.error('Fetch notes button not found');
+    }
+
+    // Initialize the academic year dropdown on page load
+    console.log('Initializing page');
+    populateAcademicYears();
+  </script>
+</body>
+</html>

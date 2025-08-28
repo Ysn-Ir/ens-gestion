@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    $controller = new AdminController();
+    $controller = new AdminStudentController();
     $noteController = new NoteController();
 
     // Get request method and action
@@ -113,11 +113,6 @@ try {
             $controller->getAllEtapes();
             break;
 
-        case 'getAllModules':
-            validateMethod($method, 'GET');
-            $controller->getAllModules();
-            break;
-
         case 'getAllElements':
             validateMethod($method, 'GET');
             $controller->getAllElements();
@@ -128,7 +123,12 @@ try {
             validateMethod($method, 'GET');
             $controller->getFilteredStudents();
             break;
-
+        // In the router switch statement
+        case 'getStudentInfo':
+            validateMethod($method, 'GET');
+            validateRequiredParam($user_id, 'user_id');
+            $controller->getStudentInfo($user_id);
+            break;
         case 'getStudentDetails':
             validateMethod($method, 'GET');
             validateRequiredParam($user_id, 'user_id');
@@ -151,22 +151,6 @@ try {
             validateRequiredParam($id, 'id');
             $controller->deleteStudent($id);
             break;
-
-        case 'getStudentModules':
-            validateMethod($method, 'GET');
-            $controller->getAllModule();
-            break;
-
-        case 'assignModules':
-            validateMethod($method, 'POST');
-            validateRequiredParam($id, 'id');
-            $input = json_decode(file_get_contents('php://input'), true);
-            if (json_last_error() !== JSON_ERROR_NONE || !isset($input['module_ids'])) {
-                throw new Exception('Invalid module data format', 400);
-            }
-            $controller->assignModule($id, $input['module_ids']);
-            break;
-
         case 'importStudents':
             validateMethod($method, 'POST');
             $controller->importStudents();

@@ -37,6 +37,7 @@
       color: #fff;
     }
     .content {
+      margin-left: 220px;
       padding: 20px;
       min-height: 100vh;
       background-color: #fff;
@@ -106,7 +107,18 @@
   </style>
 </head>
 <body>
+  <button id="logoutBtn" class="btn btn-danger logout-btn">Déconnexion</button>
 
+  <div class="sidebar">
+    <h4>Menu</h4>
+    <a href="etudiants.html">Étudiants</a>
+    <a href="professeurs.html">Professeurs</a>
+    <a href="depart.html">Départements</a>
+    <a href="filieres.html">Filières</a>
+    <a href="modules.html">Modules</a>
+    <a href="notes.html">Notes</a>
+    <a href="parametres.html">Paramètres</a>
+  </div>
 
   <div class="content">
     <div class="welcome-message mb-4">
@@ -189,6 +201,13 @@
                   userData = JSON.parse(userData);
                   document.getElementById('usernameDisplay').textContent = userData.username;
                   document.getElementById('userRole').textContent = userData.role;
+
+                  document.getElementById('logoutBtn').addEventListener('click', function () {
+                    localStorage.removeItem('userData');
+                    alert("Déconnecté !");
+                    window.location.reload();
+                  });
+
 
               
 

@@ -1,0 +1,31 @@
+<div>
+  <h2>Filieres</h2>
+  <div id="filieres-container">Loading...</div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost/ens-gestion/api/admin.php";
+
+  async function loadFilieres() {
+    try {
+      const res  = await fetch(`${API_BASE}?action=getFilieres`, { credentials: "include" });
+      const json = await res.json();
+      const filieres = Array.isArray(json.data) ? json.data : [];
+      const container = document.getElementById("filieres-container");
+      const table = document.createElement("table");
+      table.className = "table table-bordered";
+      table.innerHTML = `
+        <thead><tr><th>ID</th><th>Nom</th></tr></thead>
+        <tbody>${filieres.map(f => `
+          <tr><td>${f.field_id}</td><td>${f.nom}</td></tr>
+        `).join("")}</tbody>
+      `;
+      container.innerHTML = "";
+      container.appendChild(table);
+    } catch {
+      container.innerHTML = "Failed to load filieres";
+    }
+  }
+
+  loadFilieres();
+</script>
