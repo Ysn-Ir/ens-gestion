@@ -1,3 +1,4 @@
+
 <?php
 require_once __DIR__ . '/../middlewares/AuthMiddleware.php';
 require_once __DIR__ . '/../middlewares/StudentMiddleware.php';
@@ -65,4 +66,96 @@ class StudentController {
         $notes = $this->model->getAllNotesByEtape($id);
         $this->response->send(200, $notes);
     }
+
+    // Get student by user ID
+    public function getAllNotesByUserIdAndEtapeAndSemester($userId, $etapeId, $semesterId) {
+        $etapeId = isset($_GET['etape_id']) ? $_GET['etape_id'] : null;
+        $notes = $this->model->getAllNotesByEtapeAndSemester($userId, $etapeId, $semesterId);
+        $this->response->send(200, $notes);
+    }
+
+    public function getAnnualNoteAndRanking($userId, $anneeId) {
+        // Validate input parameters
+        if (empty($userId) || empty($anneeId)) {
+            $this->response->send(400, [
+                'status' => 'error',
+                'message' => 'Missing required parameters: userId or anneeId'
+            ]);
+            return;
+        }
+
+        // Call the model function to get annual note and ranking
+        $result = $this->model->getAnnualNoteAndRanking($userId, $anneeId);
+
+        // Handle the response based on the result
+        if ($result['status'] === 'success') {
+            $this->response->send(200, $result);
+        } elseif ($result['status'] === 'incomplete') {
+            $this->response->send(400, [
+                'status' => 'error',
+                'message' => $result['message']
+            ]);
+        } else {
+            $this->response->send(404, [
+                'status' => 'error',
+                'message' => $result['message']
+            ]);
+        }
+    }
+
+    public function getAllEtapes() {
+        try {
+            $etapes = $this->model->getAllEtapes();
+            $this->response->send(200, [
+                'status' => 'success',
+                'data' => $etapes
+            ]);
+        } catch (Exception $e) {
+            $this->response->send(500, [
+                'status' => 'error',
+                'message' => 'Erreur lors de la récupération des étapes: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getSemestresByEtape($etapeId) {
+        if (empty($etapeId)) {
+            $this->response->send(400, [
+                'status' => 'error',
+                'message' => 'Missing etape ID'
+            ]);
+            return;
+        }
+
+        try {
+            $semestres = $this->model->getSemestresByEtape($etapeId);
+            $this->response->send(200, [
+                'status' => 'success',
+                'data' => $semestres
+            ]);
+        } catch (Exception $e) {
+            $this->response->send(500, [
+                'status' => 'error',
+                'message' => 'Erreur lors de la récupération des semestres: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getAllAnnees() {
+        try {
+            $annees = $this->model->getAllAnnees();
+            $this->response->send(200, [
+                'status' => 'success',
+                'data' => $annees
+            ]);
+        } catch (Exception $e) {
+            $this->response->send(500, [
+                'status' => 'error',
+                'message' => 'Erreur lors de la récupération des années académiques: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    
+
 }

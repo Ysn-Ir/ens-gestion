@@ -3,40 +3,605 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Etudiant</title>
+    <title>Dashboard Étudiant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body {
-            padding: 20px;
-            background-color: #f8f9fa;
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
         }
-        .logout-btn {
+
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 280px;
+            background-color: var(--secondary-color);
+            padding-top: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-header .navbar-brand {
+            color: white;
+            font-weight: 700;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-header .navbar-brand i {
+            font-size: 1.75rem;
+            color: var(--primary-color);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 0;
+            border-radius: 0 50px 50px 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar .nav-link i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            font-weight: 500;
+        }
+
+        .sidebar-footer {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            bottom: 0;
+            width: 100%;
+            padding: 1.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h1 {
+            color: var(--dark-color);
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.75rem;
+        }
+
+        .welcome-message {
+            color: var(--dark-color);
+            font-size: 1.1rem;
+        }
+
+        .welcome-message span {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--dark-color);
+            min-width: 120px;
+        }
+
+        .info-value {
+            color: #555;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-logout {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            border-radius: 8px;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+
+        /* Forms */
+        .form-select, .form-control {
+            border-radius: 8px;
+            padding: 0.625rem 1rem;
+            border: 1px solid #ddd;
+            transition: all 0.2s ease;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        /* Tables */
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        /* Badges */
+        .badge-success {
+            background-color: var(--success-color);
+        }
+
+        .badge-warning {
+            background-color: var(--warning-color);
+        }
+
+        .badge-danger {
+            background-color: var(--danger-color);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary-color);
+        }
+
+        /* Error Message */
+        .error-message {
+            display: none;
+            color: var(--danger-color);
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 250px;
+                transform: translateX(-250px);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card-body {
+                padding: 1.25rem;
+            }
+
+            .info-item {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .info-label {
+                min-width: auto;
+            }
+        }
+
+        /* Mobile Toggle Button */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1100;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Mobile Sidebar */
+        @media (max-width: 992px) {
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
         }
     </style>
 </head>
 <body>
-    <button id="logoutBtn" class="btn btn-danger logout-btn">
-        Déconnexion
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
     </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <div class="container mt-5">
-        <h1>Bienvenue <span id="fullname"></span> !</h1>
-        <div class="mt-4">
-            <p><strong>CIN :</strong> <span id="cin"></span></p>
-            <p><strong>CNE :</strong> <span id="cne"></span></p>
-            <p><strong>Date de naissance :</strong> <span id="birthdate"></span></p>
-            <p><strong>Nationalité :</strong> <span id="nationalite"></span></p>
-            <p><strong>Téléphone :</strong> <span id="telephone"></span></p>
-            <p><strong>Adresse :</strong> <span id="adresse"></span></p>
-            <p><strong>Groupe :</strong> <span id="groupId"></span></p>
-            <p><strong>Email :</strong> <span id="email"></span></p>
-            <p><strong>Rôle :</strong> <span id="role"></span></p>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>ENS Gestion</span>
+            </a>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-section="home">
+                    <i class="bi bi-house-door"></i>
+                    <span>Accueil</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="notes">
+                    <i class="bi bi-journal-bookmark"></i>
+                    <span>Notes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="annual">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Résultats Annuels</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="btn btn-logout">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Déconnexion</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content" id="mainContent">
+        <!-- Home Section -->
+        <div id="homeSection" class="section">
+            <div class="page-header">
+                <div>
+                    <h1>Tableau de Bord Étudiant</h1>
+                    <p class="welcome-message">Bienvenue <span id="fullname"></span> !</p>
+                </div>
+            </div>
+            
+            <div class="error-message" id="studentError"></div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Informations Personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <span class="info-label">CIN :</span>
+                        <span class="info-value" id="cin"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">CNE :</span>
+                        <span class="info-value" id="cne"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Date de naissance :</span>
+                        <span class="info-value" id="birthdate"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Nationalité :</span>
+                        <span class="info-value" id="nationalite"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Téléphone :</span>
+                        <span class="info-value" id="telephone"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Adresse :</span>
+                        <span class="info-value" id="adresse"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Groupe :</span>
+                        <span class="info-value" id="groupId"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email :</span>
+                        <span class="info-value" id="email"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div id="notesSection" class="section" style="display: none;">
+            <div class="page-header">
+                <h1><i class="bi bi-journal-bookmark me-2"></i>Notes Académiques</h1>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sélection des Paramètres</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="etapeSelect" class="form-label">Étape</label>
+                            <select id="etapeSelect" class="form-select">
+                                <option value="">Sélectionner une étape</option>
+                            </select>
+                            <div class="error-message mt-2" id="etapeError"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="semesterSelect" class="form-label">Semestre</label>
+                            <select id="semesterSelect" class="form-select">
+                                <option value="">Sélectionner un semestre</option>
+                            <option value="1">Semestre 1</option>
+                                <option value="2">Semestre 2</option>
+                            </select>
+                            <div class="error-message mt-2" id="semesterError"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button id="fetchNotesBtn" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>Afficher les notes
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading-spinner" id="notesSpinner">
+                <div class="spinner-border spinner" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2">Chargement des notes...</p>
+            </div>
+            
+            <div class="error-message" id="notesError"></div>
+            
+            <div id="notesTable" class="mt-4"></div>
+        </div>
+
+        <!-- Annual Note & Ranking Section -->
+        <div id="annualSection" class="section" style="display: none;">
+            <div class="page-header">
+                <h1><i class="bi bi-graph-up me-2"></i>Résultats Annuels</h1>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sélection de l'Année</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="anneeSelect" class="form-label">Année Académique</label>
+                            <select id="anneeSelect" class="form-select">
+                                <option value="">Sélectionner une année</option>
+                            </select>
+                            <div class="error-message mt-2" id="anneeError"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button id="fetchAnnualBtn" class="btn btn-primary">
+                            <i class="bi bi-graph-up me-2"></i>Afficher les résultats
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading-spinner" id="annualSpinner">
+                <div class="spinner-border spinner" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2">Chargement des résultats annuels...</p>
+            </div>
+            
+            <div class="error-message" id="annualError"></div>
+            
+            <div id="annualResult" class="card mt-4" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">Détails des Résultats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">Note Annuelle :</span>
+                                <span class="info-value" id="noteAnnee"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Décision :</span>
+                                <span class="info-value">
+                                    <span id="decisionAnnee" class="badge"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">Classement :</span>
+                                <span class="info-value" id="classement"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Total Étudiants :</span>
+                                <span class="info-value" id="totalStudents"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="rankingChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const user = JSON.parse(localStorage.getItem('userData'));
@@ -46,32 +611,320 @@
                 return;
             }
 
-            // Récupérer les infos détaillées de l'étudiant
+            // Mobile sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+            });
+
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            });
+
+            // Show/hide sections based on nav clicks
+            const sections = document.querySelectorAll('.section');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section') + 'Section';
+                    
+                    // Close sidebar on mobile
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('active');
+                        sidebarOverlay.classList.remove('active');
+                    }
+                    
+                    sections.forEach(section => section.style.display = 'none');
+                    document.getElementById(sectionId).style.display = 'block';
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Fetch and display student info
+            const studentError = document.getElementById('studentError');
             fetch(`http://localhost/ens-gestion/api/student.php?action=me`, {
                 method: 'GET',
                 credentials: 'include'
             })
                 .then(response => response.json())
                 .then(json => {
+                    if (json.status === 'error') throw new Error(json.error);
                     const student = json.data.student;
-
                     document.getElementById('fullname').textContent = `${student.prenom} ${student.nom}`;
-                    document.getElementById('cin').textContent = student.cin;
-                    document.getElementById('cne').textContent = student.cne;
-                    document.getElementById('birthdate').textContent = student.date_naissance;
-                    document.getElementById('nationalite').textContent = student.nationalite;
-                    document.getElementById('telephone').textContent = student.telephone;
-                    document.getElementById('adresse').textContent = student.adresse;
-                    document.getElementById('groupId').textContent = student.group_id;
-                    document.getElementById('email').textContent = student.email;
-                    document.getElementById('role').textContent = user.role;
+                    document.getElementById('cin').textContent = student.cin || 'Non renseigné';
+                    document.getElementById('cne').textContent = student.cne || 'Non renseigné';
+                    document.getElementById('birthdate').textContent = student.date_naissance || 'Non renseigné';
+                    document.getElementById('nationalite').textContent = student.nationalite || 'Non renseigné';
+                    document.getElementById('telephone').textContent = student.telephone || 'Non renseigné';
+                    document.getElementById('adresse').textContent = student.adresse || 'Non renseigné';
+                    document.getElementById('groupId').textContent = student.group_id || 'Non renseigné';
+                    document.getElementById('email').textContent = student.email || 'Non renseigné';
                 })
                 .catch(err => {
                     console.error('Erreur lors de la récupération des infos étudiant:', err);
+                    studentError.textContent = `Erreur: ${err.message}`;
+                    studentError.style.display = 'block';
                     window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
                 });
 
-            // Gestion de la déconnexion
+            // Populate etape dropdown
+            const etapeError = document.getElementById('etapeError');
+            fetch(`http://localhost/ens-gestion/api/student.php?action=getEtapes`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(json => {
+                    if (json.status === 'error') throw new Error(json.error);
+                    const etapes = json.data.data;
+                    if (!Array.isArray(etapes)) throw new Error('Réponse invalide: données des étapes non valides');
+                    const etapeSelect = document.getElementById('etapeSelect');
+                    etapes.forEach(etape => {
+                        const option = document.createElement('option');
+                        option.value = etape.etape_id;
+                        option.textContent = etape.nom_etape;
+                        etapeSelect.appendChild(option);
+                    });
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la récupération des étapes:', err);
+                    etapeError.textContent = `Erreur: ${err.message}`;
+                    etapeError.style.display = 'block';
+                });
+
+            // Populate annee dropdown
+            const anneeError = document.getElementById('anneeError');
+            fetch(`http://localhost/ens-gestion/api/student.php?action=getAnnees`, {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => response.json())
+                .then(json => {
+                    if (json.status === 'error') throw new Error(json.error);
+                    const annees = json.data.data;
+                    if (!Array.isArray(annees)) throw new Error('Réponse invalide: données des années non valides');
+                    const anneeSelect = document.getElementById('anneeSelect');
+                    annees.forEach(annee => {
+                        const option = document.createElement('option');
+                        option.value = annee.annee_id;
+                        option.textContent = annee.annee_id;
+                        anneeSelect.appendChild(option);
+                    });
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la récupération des années académiques:', err);
+                    anneeError.textContent = `Erreur: ${err.message}`;
+                    anneeError.style.display = 'block';
+                });
+
+            // Update semesters when etape changes
+            const semesterError = document.getElementById('semesterError');
+            document.getElementById('etapeSelect').addEventListener('change', function () {
+                const etapeId = this.value;
+                const semesterSelect = document.getElementById('semesterSelect');
+                semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                semesterError.style.display = 'none';
+
+                if (etapeId) {
+                    fetch(`http://localhost/ens-gestion/api/student.php?action=getSemestres&etape_id=${etapeId}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => response.json())
+                        .then(json => {
+                            if (json.status === 'error') throw new Error(json.error);
+                            const semestres = json.data.data;
+                            if (!Array.isArray(semestres)) throw new Error('Réponse invalide: données des semestres non valides');
+                            semestres.forEach(semestre => {
+                                const option = document.createElement('option');
+                                option.value = semestre.semestre_id;
+                                option.textContent = semestre.nom;
+                                semesterSelect.appendChild(option);
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Erreur lors de la récupération des semestres:', err);
+                            semesterError.textContent = `Erreur: ${err.message}`;
+                            semesterError.style.display = 'block';
+                        });
+                }
+            });
+
+            // Fetch notes by etape and semester
+            document.getElementById('fetchNotesBtn').addEventListener('click', function () {
+                const userId = user.user_id;
+                const etapeId = document.getElementById('etapeSelect').value;
+                const semesterId = document.getElementById('semesterSelect').value;
+                const notesSpinner = document.getElementById('notesSpinner');
+                const notesError = document.getElementById('notesError');
+                const notesTable = document.getElementById('notesTable');
+
+                if (!etapeId || !semesterId) {
+                    notesError.textContent = 'Veuillez sélectionner une étape et un semestre.';
+                    notesError.style.display = 'block';
+                    return;
+                }
+
+                notesSpinner.style.display = 'block';
+                notesError.style.display = 'none';
+                notesTable.innerHTML = '';
+
+                fetch(`http://localhost/ens-gestion/api/student.php?action=getAllNotesByUserIdAndEtapeAndSemester&user_id=${userId}&etape_id=${etapeId}&semester_id=${semesterId}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(response => response.json())
+                    .then(json => {
+                        notesSpinner.style.display = 'none';
+                        if (json.status === 'error') throw new Error(json.error);
+                        const notes = json.data;
+                        if (!Array.isArray(notes)) throw new Error('Réponse invalide: données des notes non valides');
+                        if (notes.length === 0) {
+                            notesError.textContent = 'Aucune note trouvée pour cette étape et ce semestre.';
+                            notesError.style.display = 'block';
+                            return;
+                        }
+
+                        const table = document.createElement('table');
+                        table.className = 'table table-hover';
+                        table.innerHTML = `
+                            <thead>
+                                <tr>
+                                    <th>Étape</th>
+                                    <th>Semestre</th>
+                                    <th>Module</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${notes.map(note => `
+                                    <tr>
+                                        <td>${note.nom_etape}</td>
+                                        <td>${note.semestre_name}</td>
+                                        <td>${note.module_name}</td>
+                                        <td><strong>${note.note_module}</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        `;
+                        notesTable.appendChild(table);
+                    })
+                    .catch(err => {
+                        notesSpinner.style.display = 'none';
+                        notesError.textContent = `Erreur: ${err.message}`;
+                        notesError.style.display = 'block';
+                    });
+            });
+
+            // Fetch annual note and ranking
+            let rankingChart = null;
+            document.getElementById('fetchAnnualBtn').addEventListener('click', function () {
+                const userId = user.user_id;
+                const anneeId = document.getElementById('anneeSelect').value;
+                const annualSpinner = document.getElementById('annualSpinner');
+                const annualError = document.getElementById('annualError');
+                const annualResult = document.getElementById('annualResult');
+
+                if (!anneeId) {
+                    annualError.textContent = 'Veuillez sélectionner une année académique.';
+                    annualError.style.display = 'block';
+                    return;
+                }
+
+                annualSpinner.style.display = 'block';
+                annualError.style.display = 'none';
+                annualResult.style.display = 'none';
+
+                fetch(`http://localhost/ens-gestion/api/student.php?action=getAnnualNoteAndRanking&user_id=${userId}&annee_id=${anneeId}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(response => response.json())
+                    .then(json => {
+                        annualSpinner.style.display = 'none';
+                        if (json.status === 'error') throw new Error(json.error);
+                        const data = json.data;
+                        if (!data) throw new Error('Réponse invalide: données absentes');
+
+                        document.getElementById('noteAnnee').textContent = data.note_annee || 'N/A';
+                        const decisionAnnee = document.getElementById('decisionAnnee');
+                        decisionAnnee.textContent = data.decision_annee === 'V' ? 'Validé' : 'Non Validé';
+                        decisionAnnee.className = 'badge ' + (data.decision_annee === 'V' ? 'badge-success' : 'badge-danger');
+                        document.getElementById('classement').textContent = data.classement || 'N/A';
+                        document.getElementById('totalStudents').textContent = data.total_students || 'N/A';
+                        annualResult.style.display = 'block';
+
+                        // Destroy previous chart if it exists
+                        if (rankingChart) {
+                            rankingChart.destroy();
+                        }
+
+                        // Create new chart
+                        const ctx = document.getElementById('rankingChart').getContext('2d');
+                        rankingChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Votre Position', 'Autres Étudiants'],
+                                datasets: [{
+                                    data: [data.classement, data.total_students - data.classement],
+                                    backgroundColor: ['#3498db', '#ecf0f1'],
+                                    borderColor: ['#2980b9', '#bdc3c7'],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return context.dataset.label + ': ' + context.raw + ' étudiant(s)';
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        beginAtZero: true,
+                                        max: data.total_students,
+                                        title: {
+                                            display: true,
+                                            text: 'Nombre d\'étudiants',
+                                            color: '#7f8c8d'
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.05)'
+                                        }
+                                    },
+                                    y: {
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        annualSpinner.style.display = 'none';
+                        annualError.textContent = `Erreur: ${err.message}`;
+                        annualError.style.display = 'block';
+                    });
+            });
+
+            // Handle logout
             document.getElementById('logoutBtn').addEventListener('click', function () {
                 localStorage.removeItem('userData');
                 window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
