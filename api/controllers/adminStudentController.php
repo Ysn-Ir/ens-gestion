@@ -91,7 +91,6 @@ public function getStudentDetail($user_id) {
     $sectionId = filter_input(INPUT_GET, 'section_id', FILTER_VALIDATE_INT);
     $groupId = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
     $anneeId = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
-    $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
     $semestreId = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
     $cycleId  = filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
     $departementId =filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
@@ -123,18 +122,6 @@ public function getStudentDetail($user_id) {
         ]
     ]);
     }
-    public function getFilteredFilieres(){
-        $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-    try {
-        $departementId =filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
-        $filieres = $this->model->getFilierByDepartement($departementId);
-        // Send data directly, don't wrap inside 'status' and 'data' keys
-        $this->response->send(200, $filieres);
-    } catch (Exception $e) {
-        $this->response->send(500, ['message' => 'Erreur lors du chargement des filières', 'error' => $e->getMessage()]);
-    }
-    }
  public function getAllCycles() {
     $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
@@ -150,8 +137,7 @@ public function getAllFilieres(){
     $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
     try {
-        $fields = $this->model->getAllFilieres
-();
+        $fields = $this->model->getAllFilieres();
         $this->response->send(200, $fields);   //  ← send RAW array
 
     } catch (Exception $e) {
@@ -200,61 +186,59 @@ public function getAllSemestres() {
         $this->response->send(200, $sections);   //  ← send RAW array
 
     } catch (Exception $e) {
-        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des Semesters', 'error' => $e->getMessage()]);
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des Semesters', 'error' => $e->getMessage()]);
     }
 }
 
-public function getSectionsByFiliere($fieldId) {
+    public function getFilteredFilieres(){
+        $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $departementId =filter_input(INPUT_GET, var_name: 'department_id', filter: FILTER_VALIDATE_INT);
+        $filieres = $this->model->getFilierByDepartement($departementId);
+        // Send data directly, don't wrap inside 'status' and 'data' keys
+        $this->response->send(200, $filieres);
+    } catch (Exception $e) {
+        $this->response->send(500, ['message' => 'Erreur lors du chargement des filières', 'error' => $e->getMessage()]);
+    }
+    }
+public function getSectionsByFiliere() {
     $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
-
-    if (!is_numeric($fieldId)) {
-        $this->response->send(400, ['status' => 'error', 'message' => 'ID filière invalide']);
-        return;
-    }
-
+       
     try {
-        $sections = $this->model->getSectionsByFiliere($fieldId);
-        $this->response->send(200, $sections);   //  ← send RAW array
-
+        $field_id =filter_input(INPUT_GET, 'field_id', filter: FILTER_VALIDATE_INT);
+       $sections = $this->model->getSectionsByFiliere($field_id);
+        $this->response->send(200, $sections);
     } catch (Exception $e) {
-        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des sections']);
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des sections', 'error' => $e->getMessage()]);
+    }
+   
+}
+
+public function getGroupesBySection() {
+   $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+       
+    try {
+        $section_id =filter_input(INPUT_GET, 'section_id', filter: FILTER_VALIDATE_INT);
+       $groupes = $this->model->getGroupesBySection($section_id);
+        $this->response->send(200, $groupes);
+    } catch (Exception $e) {
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des groupes', 'error' => $e->getMessage()]);
     }
 }
 
-public function getGroupesBySection($sectionId) {
-    $this->authMiddleware->verifySession();
+public function getGroupesByFiliere() {
+   $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
-
-    if (!is_numeric($sectionId)) {
-        $this->response->send(400, ['status' => 'error', 'message' => 'ID section invalide']);
-        return;
-    }
-
+       
     try {
-        $groupes = $this->model->getGroupesBySection($sectionId);
-        $this->response->send(200, $groupes);   //  ← send RAW array
-
+        $fieldId =filter_input(INPUT_GET, 'fieldId', filter: FILTER_VALIDATE_INT);
+       $groupes = $this->model->getGroupesByFiliere($fieldId);
+        $this->response->send(200, $groupes);
     } catch (Exception $e) {
-        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des groupes']);
-    }
-}
-
-public function getGroupesByFiliere($fieldId) {
-    $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-
-    if (!is_numeric($fieldId)) {
-        $this->response->send(400, ['status' => 'error', 'message' => 'ID filière invalide']);
-        return;
-    }
-
-    try {
-        $groupes = $this->model->getGroupesByFiliere($fieldId);
-        $this->response->send(200, $groupes);   //  ← send RAW array
-
-    } catch (Exception $e) {
-        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des groupes']);
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des groupes', 'error' => $e->getMessage()]);
     }
 }
     public function getAllYears() {

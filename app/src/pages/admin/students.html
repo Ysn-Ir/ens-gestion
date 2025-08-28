@@ -637,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_ENDPOINTS = {
         years: `${API_BASE_URL}?action=getAllyears`,
         departments: `${API_BASE_URL}?action=getAllDepartments`,
-        filieres: `${API_BASE_URL}?action=getFilieres`,
+        filieres: `${API_BASE_URL}?action=getFilteredFiliers`,
         cycles: `${API_BASE_URL}?action=getCycles`,
         students: `${API_BASE_URL}?action=getStudents`,
         studentDetails: `${API_BASE_URL}?action=getStudentDetails`,
@@ -647,8 +647,8 @@ document.addEventListener('DOMContentLoaded', () => {
         studentInfo: `${API_BASE_URL}?action=getStudentInfo`,
         semsetres: `${API_BASE_URL}?action=getAllSemesters`,
         etapes: `${API_BASE_URL}?action=getAllEtapes`,
-        groupes: `${API_BASE_URL}?action=getAllGroupes`,
-        sections: `${API_BASE_URL}?action=getAllSections`,
+        groupes: `${API_BASE_URL}?action=getGroupesBySection`,
+        sections: `${API_BASE_URL}?action=getSections`,
         importStudents: `${API_BASE_URL}?action=importStudents`,
         logout:`http://localhost/ens-gestion/api/index.php?action=auth/logout`
     };
@@ -662,11 +662,17 @@ document.addEventListener('DOMContentLoaded', () => {
         updateFilieresDropdown(departmentFilter.value);
         loadStudents(1);
     });
-    filiereFilter.addEventListener('change', () => loadStudents(1));
+    filiereFilter.addEventListener('change', () => {
+        updateSectionsDropdown(filiereFilter.value);
+        loadStudents(1)
+    });
     cycleFilter.addEventListener('change', () => loadStudents(1));
     etapeFilter.addEventListener('change', () => loadStudents(1));
     semesterFilter.addEventListener('change', () => loadStudents(1));
-    sectionFilter.addEventListener('change', () => loadStudents(1));
+    sectionFilter.addEventListener('change', () => {
+        updateGroupesDropdown(sectionFilter.value);
+        loadStudents(1);
+    });
     groupeFilter.addEventListener('change', () => loadStudents(1));
     searchInput.addEventListener('input', debounce(() => loadStudents(1), 300));
     clearSearchBtn.addEventListener('click', () => {
@@ -717,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('usernameDisplay').textContent = userData.username;
         document.getElementById('userRole').textContent = userData.role;
     }
-
+    //update filiere dropdown
     async function updateFilieresDropdown(departmentId) {
         if (!departmentId) {
             filiereFilter.innerHTML = '<option value="">Toutes les filières</option>';
@@ -741,7 +747,54 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Erreur lors du chargement des filières', false);
         }
     }
-
+        //update section dropdown
+    async function updateSectionsDropdown(fieldId) {
+        if (!fieldId) {
+            sectionFilter.innerHTML = '<option value="">Toutes les Sections</option>';
+            return;
+        }
+        try {
+            const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}`, {
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const data = await response.json();
+            const sections = data.data || [];
+            sectionFilter.innerHTML = '<option value="">Toutes les Sections</option>';
+            sections.forEach(fil => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = fil.section_id;
+                optionFilter.textContent = fil.nom;
+                sectionFilter.appendChild(optionFilter);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des filières:', error);
+            showNotification('Erreur lors du chargement des filières', false);
+        }
+    }
+    //update groups dropdown
+    async function updateGroupesDropdown(sectionId) {
+        if (!sectionId) {
+            groupeFilter.innerHTML = '<option value="">Toutes les Groupes</option>';
+            return;
+        }
+        try {
+            const response = await fetch(`${API_ENDPOINTS.groupes}&section_id=${sectionId}`, {
+                headers: { 'X-CSRF-Token': csrfToken }
+            });
+            const data = await response.json();
+            const groupes = data.data || [];
+            groupeFilter.innerHTML = '<option value="">Toutes les Groupes</option>';
+            groupes.forEach(fil => {
+                const optionFilter = document.createElement('option');
+                optionFilter.value = fil.groupe_id;
+                optionFilter.textContent = fil.nom;
+                groupeFilter.appendChild(optionFilter);
+            });
+        } catch (error) {
+            console.error('Erreur lors du chargement des filières:', error);
+            showNotification('Erreur lors du chargement des filières', false);
+        }
+    }
     function resetFilters() {
         yearFilter.value = '';
         departmentFilter.value = '';

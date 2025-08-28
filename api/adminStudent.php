@@ -47,12 +47,12 @@ try {
 
         case 'getFilieres':
             validateMethod($method, 'GET');
-            $controller->getAllFilieres();
+            $controller->getFilteredFilieres();
             break;
 
         case 'getFilteredFiliers':
             validateMethod($method, 'GET');
-            if ($field_id) {
+            if ($department_id) {
                 $controller->getFilteredFilieres();
             } else {
                 $controller->getAllFilieres();
@@ -62,7 +62,7 @@ try {
         case 'getSections':
             validateMethod($method, 'GET');
             if ($field_id) {
-                $controller->getSectionsByFiliere($field_id);
+                $controller->getSectionsByFiliere();
             } else {
                 $controller->getAllSections();
             }
@@ -71,7 +71,7 @@ try {
         case 'getGroupesBySection':
             validateMethod($method, 'GET');
             if ($section_id) {
-                $controller->getGroupesBySection($section_id);
+                $controller->getGroupesBySection();
             } else {
                 $controller->getAllGroups();
             }
@@ -80,7 +80,7 @@ try {
         case 'getGroupesByFiliere':
             validateMethod($method, 'GET');
             validateRequiredParam($field_id, 'field_id');
-            $controller->getGroupesByFiliere($field_id);
+            $controller->getGroupesByFiliere();
             break;
 
         case 'getAllyears':

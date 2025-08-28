@@ -187,8 +187,286 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Le code JavaScript pour gérer le formulaire serait similaire à celui de la page principale
-        // mais adapté pour une page dédiée
+        document.addEventListener('DOMContentLoaded', () => {
+            const studentForm = document.getElementById('studentForm');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
+            
+            const API_BASE_URL = 'http://localhost/ens-gestion/api/admin.php';
+            const API_ENDPOINTS = {
+                createStudent: `${API_BASE_URL}?action=createStudent`,
+                departments: `${API_BASE_URL}?action=getAllDepartments`,
+                filieres: `${API_BASE_URL}?action=getFilieres`,
+                years: `${API_BASE_URL}?action=getAllyears`,
+                cycles: `${API_BASE_URL}?action=getCycles`,
+                etapes: `${API_BASE_URL}?action=getAllEtapes`,
+                semesters: `${API_BASE_URL}?action=getAllSemesters`,
+                sections: `${API_BASE_URL}?action=getAllSections`,
+                groupes: `${API_BASE_URL}?action=getAllGroupes`,
+                logout: `http://localhost/ens-gestion/api/index.php?action=auth/logout`
+            };
+
+            let csrfToken = localStorage.getItem('csrfToken') || '';
+
+            init();
+
+            function init() {
+                const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
+                loadDepartments();
+                loadYears();
+                loadCycles();
+                loadEtapes();
+                loadSemesters();
+                loadSections();
+                loadGroupes();
+                loadFilieres();
+            }
+
+            togglePassword.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                togglePassword.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+            });
+
+            studentForm.addEventListener('submit', handleStudentFormSubmit);
+            
+            function showNotification(message, isSuccess = true) {
+                const toastIcon = document.getElementById('toastIcon');
+                toastIcon.className = isSuccess 
+                    ? 'bi bi-check-circle-fill text-success me-2' 
+                    : 'bi bi-exclamation-triangle-fill text-danger me-2';
+                document.getElementById('toastMessage').textContent = message;
+                notificationToast.show();
+            }
+
+            async function handleStudentFormSubmit(e) {
+                e.preventDefault();
+                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                let isValid = true;
+                document.querySelectorAll('#studentForm [required]').forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                });
+                const email = document.getElementById('email').value.trim();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    document.getElementById('email').classList.add('is-invalid');
+                    isValid = false;
+                }
+                if (!isValid) {
+                    showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
+                    return;
+                }
+                const formData = {
+                    username: document.getElementById('username').value.trim(),
+                    email: email,
+                    cne: document.getElementById('cne').value.trim(),
+                    nom: document.getElementById('lastName').value.trim(),
+                    prenom: document.getElementById('firstName').value.trim(),
+                    telephone: document.getElementById('phone').value.trim() || null,
+                    department_id: document.getElementById('department').value,
+                    field_id: document.getElementById('filiere').value,
+                    annee_id: document.getElementById('year').value,
+                    cycle_id: document.getElementById('cycle_id').value,
+                    etape_id: document.getElementById('etape_id').value,
+                    semestre_id: document.getElementById('semester_id').value,
+                    section_id: document.getElementById('section_id').value,
+                    groupe_id: document.getElementById('groupe_id').value,
+                    cin: document.getElementById('cin').value.trim() || null,
+                    date_naissance: document.getElementById('birthdate').value || "2000-01-01",
+                    nationalite: document.getElementById('nationality').value || 'Marocaine',
+                    adresse: document.getElementById('address').value || null,
+                    password: document.getElementById('password').value
+                };
+                try {
+                    const saveBtn = document.getElementById('saveBtn');
+                    saveBtn.disabled = true;
+                    document.getElementById('saveSpinner').classList.remove('d-none');
+                    const response = await fetch(`${API_ENDPOINTS.createStudent}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                        body: JSON.stringify(formData)
+                    });
+                    const result = await response.json();
+                    if (result.status) {
+                        showNotification('Étudiant créé avec succès', true);
+                        setTimeout(() => {
+                            window.location.href = 'students.html';
+                        }, 1500);
+                    } else {
+                        throw new Error(result.message || 'Échec de la création');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    showNotification('Erreur lors de la création: ' + error.message, false);
+                } finally {
+                    document.getElementById('saveBtn').disabled = false;
+                    document.getElementById('saveSpinner').classList.add('d-none');
+                }
+            }
+
+            async function loadDepartments() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.departments, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const departments = data.data || data;
+                    const departmentSelect = document.getElementById('department');
+                    departmentSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+                    departments.forEach(dep => {
+                        const option = document.createElement('option');
+                        option.value = dep.department_id;
+                        option.textContent = dep.nom;
+                        departmentSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des départements:', error);
+                    showNotification('Erreur lors du chargement des départements: ' + error.message, false);
+                }
+            }
+
+            async function loadFilieres() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.filieres, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const filieres = data.data || [];
+                    const filiereSelect = document.getElementById('filiere');
+                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+                    filieres.forEach(fil => {
+                        const option = document.createElement('option');
+                        option.value = fil.field_id;
+                        option.textContent = fil.nom;
+                        filiereSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des filières:', error);
+                    showNotification('Erreur lors du chargement des filières: ' + error.message, false);
+                }
+            }
+
+            async function loadYears() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.years, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const years = data.data?.data || data.data || [];
+                    const yearSelect = document.getElementById('year');
+                    yearSelect.innerHTML = '<option value="">Sélectionner une année</option>';
+                    years.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year.annee_id;
+                        option.textContent = year.annee_id + (year.current_flag == 1 ? ' (actuelle)' : '');
+                        yearSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des années:', error);
+                    showNotification('Erreur lors du chargement des années: ' + error.message, false);
+                }
+            }
+
+            async function loadCycles() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.cycles, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const cycles = data.data || data;
+                    const cycleSelect = document.getElementById('cycle_id');
+                    cycleSelect.innerHTML = '<option value="">Sélectionner un cycle</option>';
+                    cycles.forEach(cyc => {
+                        const option = document.createElement('option');
+                        option.value = cyc.cycle_id;
+                        option.textContent = cyc.nom;
+                        cycleSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des cycles:', error);
+                    showNotification('Erreur lors du chargement des cycles: ' + error.message, false);
+                }
+            }
+
+            async function loadEtapes() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.etapes, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const etapes = data.data || data;
+                    const etapeSelect = document.getElementById('etape_id');
+                    etapeSelect.innerHTML = '<option value="">Sélectionner une étape</option>';
+                    etapes.forEach(etape => {
+                        const option = document.createElement('option');
+                        option.value = etape.etape_id;
+                        option.textContent = etape.nom_etape;
+                        etapeSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des étapes:', error);
+                    showNotification('Erreur lors du chargement des étapes: ' + error.message, false);
+                }
+            }
+
+            async function loadSemesters() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.semesters, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const semesters = data.data || data;
+                    const semesterSelect = document.getElementById('semester_id');
+                    semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                    semesters.forEach(sem => {
+                        const option = document.createElement('option');
+                        option.value = sem.semestre_id;
+                        option.textContent = sem.nom;
+                        semesterSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des semestres:', error);
+                    showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+                }
+            }
+
+            async function loadSections() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.sections, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const sections = data.data || data;
+                    const sectionSelect = document.getElementById('section_id');
+                    sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+                    sections.forEach(sec => {
+                        const option = document.createElement('option');
+                        option.value = sec.section_id;
+                        option.textContent = sec.nom;
+                        sectionSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des sections:', error);
+                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+                }
+            }
+
+            async function loadGroupes() {
+                try {
+                    const response = await fetch(API_ENDPOINTS.groupes, { headers: { 'X-CSRF-Token': csrfToken } });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const groupes = data.data || data;
+                    const groupeSelect = document.getElementById('groupe_id');
+                    groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+                    groupes.forEach(grp => {
+                        const option = document.createElement('option');
+                        option.value = grp.group_id;
+                        option.textContent = grp.nom;
+                        groupeSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des groupes:', error);
+                    showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
+                }
+            }
+        });
     </script>
 </body>
 </html>

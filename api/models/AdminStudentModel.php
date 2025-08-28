@@ -434,7 +434,12 @@ public function getFilteredStudents(
     }
    
     public function getFilierByDepartement($depId){
-        $stmt=$this->db->prepare( " SELECT field_id , nom FROM filieres WHERE department_id= ? ");
+        if(isset($depId)){
+            $stmt=$this->db->prepare( " SELECT field_id , nom FROM filieres WHERE department_id= ? ");
+        }
+        else {
+            $stmt=$this->db->prepare( " SELECT field_id , nom FROM filieres "); 
+        }
         $stmt->execute([$depId]);
         return $stmt->fetchAll();
     }
