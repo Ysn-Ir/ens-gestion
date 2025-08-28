@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Filières</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      height: 100vh;
+      width: 220px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #343a40;
+      padding-top: 60px;
+      color: #fff;
+    }
+    .sidebar h4 {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #495057;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #adb5bd;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #fff;
+    }
+    .content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+      background-color: #fff;
+    }
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    /* Container général */
+#elementsContainer {
+  background-color: #fafafa;
+  padding: 25px 30px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 0 12px rgba(0,0,0,0.05);
+  display: none;
+  margin-top: 1.5rem;
+}
+
+/* Chaque section dynamique (étape + semestre) */
+.dynamic-section {
+  background-color: #fff;
+  padding: 20px 25px;
+  border: 1px solid #ced4da;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  transition: box-shadow 0.3s ease;
+}
+
+.dynamic-section:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Titre Étape + Semestre */
+.dynamic-section h5 {
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+/* Label plus clair, espacé */
+.dynamic-section label.form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+/* Input compact mais confortable */
+.dynamic-section input.form-control-sm {
+  border-radius: 6px;
+  border: 1px solid #adb5bd;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease-in-out;
+  width: 100%;
+}
+
+/* Focus input */
+.dynamic-section input.form-control-sm:focus {
+  border-color: #66afe9;
+  box-shadow: 0 0 6px rgba(102, 175, 233, 0.6);
+  outline: none;
+}
+
+/* Espacement entre colonnes pour plus d’aération */
+.dynamic-section .row > div {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  margin-bottom: 1rem;
+  margin : 5px;
+}
+
+/* Groupes sections : conteneur plus lisible avec espacement vertical */
+.section-group-input {
+  background-color: #fefefe;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px 15px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Hover group input plus subtil */
+.section-group-input:hover {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+
+  </style>
+</head>
+<body>
+  <button id="logoutBtn" class="btn btn-danger logout-btn">Déconnexion</button>
+
+  <div class="sidebar">
+    <h4>Menu</h4>
+    <a href="etudiants.html">Étudiants</a>
+    <a href="professeurs.html">Professeurs</a>
+    <a href="depart.html">Départements</a>
+    <a href="filieres.html">Filières</a>
+    <a href="modules.html">Modules</a>
+    <a href="notes.html">Notes</a>
+    <a href="parametres.html">Paramètres</a>
+  </div>
+
+  <div class="content">
+    <div class="welcome-message mb-4">
+      Bonjour <span id="usernameDisplay"></span> !
+    </div>
+    <div class="alert alert-info">
+      Vous êtes connecté en tant que: <strong id="userRole"></strong>
+    </div>
+    <div class="d-flex justify-content-between mb-3">
+          
+          <div class="p-2 ">     
+            <button type="button" class="btn btn-dark" onclick="retourner()"> Retourner à la liste des filières</button>
+      </div>
+        </div>
+
+    <div class="container mt-5">
+      <h3 class="mb-4">Ajouter une Nouvelle Filière</h3>
+
+      <form id="filiereForm">
+        <div class="mb-3">
+          <label for="nom" class="form-label">Nom de la filière</label>
+          <input type="text" class="form-control" id="nom" placeholder="ex: Génie Informatique" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="departement" class="form-label">Département</label>
+          <select class="form-select" id="departement" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="professeur" class="form-label">Professeur Responsable</label>
+          <select class="form-select" id="professeur" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="cycle" class="form-label">Cycle</label>
+          <select class="form-select" id="cycle" required>
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+          <div id="elementsContainer"></div>
+          <div id="groupesContainer" ></div>
+
+
+        <button type="submit" class="btn btn-success" >Ajouter la filière</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function retourner() {
+      window.location.href = "filieres.html";
+    }
+    const departmentSelect = document.getElementById('departement');
+    const profSelect = document.getElementById('professeur');
+    const cycleSelect = document.getElementById('cycle');
+    const nom_filiere=document.getElementById('nom');
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Simuler un utilisateur connecté (pour test)
+      let userData = localStorage.getItem("userData");
+      if (!userData) {
+        localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
+        userData = localStorage.getItem("userData");
+      }
+
+      userData = JSON.parse(userData);
+      document.getElementById('usernameDisplay').textContent = userData.username;
+      document.getElementById('userRole').textContent = userData.role;
+
+      document.getElementById('logoutBtn').addEventListener('click', function () {
+        localStorage.removeItem('userData');
+        alert("Déconnecté !");
+        window.location.reload();
+      });
+
+      
+
+      // Helper to convert numeric-keyed objects to arrays, ignoring non-object keys like http_code
+      function objectToArray(obj) {
+        return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+      }
+
+      // Fetch Departments
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllDepartment')
+        .then(res => res.json())
+        .then(data => {
+          const departs = objectToArray(data);
+          departs.forEach(depart => {
+            const option = document.createElement('option');
+            option.value = depart.department_id;
+            option.textContent = depart.nom;
+            departmentSelect.appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des departements"));
+
+      /// Fetch Professors
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
+          .then(res => res.json())
+          .then(data => {
+          const profs = objectToArray(data);
+          profs.forEach(prof => {
+              console.log(prof);
+              const option = document.createElement('option');
+              option.value = prof.user_id;
+              option.textContent = prof.nom + " " + prof.prenom;
+              profSelect.appendChild(option);
+          });
+          })
+          .catch(() => alert("Erreur lors du chargement des professeurs"));
+
+              // Fetch Cycles
+              fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllCycle')
+                .then(res => res.json())
+                .then(data => {
+                  const cycles = objectToArray(data);
+                  cycles.forEach(cycle => {
+                    const option = document.createElement('option');
+                    option.value = cycle.cycle_id;
+                    option.textContent = cycle.nom;
+                    cycleSelect.appendChild(option);
+                  });
+                })
+                .catch(() => alert("Erreur lors du chargement des cycles"));
+});
+
+       
+   function AjouterFiliere() {
+  const depart = departmentSelect.value;
+  const prof = profSelect.value;
+  const cycle = cycleSelect.value;
+  const nom = nom_filiere.value;
+
+  if (!depart || !prof || !cycle || !nom) {
+    alert("Veuillez remplir tous les champs.");
+    return;
+  }
+
+  // Construire dynamiquement les sections et groupes
+  const sections = [];
+
+  const etapeSections = document.querySelectorAll(".dynamic-section");
+  etapeSections.forEach(section => {
+    const idParts = section.id.match(/etape_(\d+)_s_(\d+)/);
+    if (!idParts) return;
+
+    const etape = parseInt(idParts[1]);
+    const semestre = parseInt(idParts[2]);
+
+    const sectionInput = section.querySelector(`#s_${etape}_${semestre}`);
+    const sectionCount = parseInt(sectionInput?.value, 10);
+
+    if (isNaN(sectionCount) || sectionCount <= 0) return;
+
+    const groupes = [];
+
+    for (let s = 1; s <= sectionCount; s++) {
+      const groupInput = section.querySelector(`#maxgrp_${s}_${etape}_${semestre}`);
+      if (groupInput && groupInput.value) {
+        groupes.push({
+          groupe_count: parseInt(groupInput.value),
+          section_num: s,
+        });
+      }
+    }
+
+    sections.push({
+      etape,
+      semestre,
+      section_count: sectionCount,
+      groupes
+    });
+  });
+
+  const data = {
+    nom,
+    depart_id: depart,
+    prof_id: prof,
+    cycle_id: cycle,
+    sections // envoie toute la structure dynamique ici
+  };
+
+  fetch('http://localhost/ens-gestion/api/admin2.php?action=AjouterFiliere', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify(data)
+  })
+    .then(res => res.json())
+    .then(result => {
+      if (result.message === "Filière créée avec succès") {
+        window.location.href = "filieres.html";
+      } else {
+        console.log(result);
+        alert("Erreur : " + result.message);
+      }
+    })
+    .catch(error => {
+      console.error("Erreur:", error);
+      alert("Erreur lors de l'ajout de la filière.");
+    });
+}
+
+function addDiv(etapes) {
+  const elementsContainer = document.getElementById("elementsContainer");
+  const sectionInputs = {};
+
+  for (let etape = 1; etape <= etapes; etape++) {
+    for (let semestre = 1; semestre <= 2; semestre++) {
+      const div = document.createElement("div");
+      div.className = "dynamic-section mb-4";
+      div.id = `etape_${etape}_s_${semestre}`;
+
+      div.innerHTML = `
+        <div class="row align-items-center flex-wrap" id="row_${etape}_${semestre}">
+          <div class="col-12 mb-2">
+            <h5>Étape ${etape} <span class="text-muted">Semestre ${semestre}</span></h5>
+          </div>
+          <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <label for="s_${etape}_${semestre}" class="form-label small">
+              Nombre de sections
+            </label>
+            <input 
+              type="number" 
+              class="form-control form-control-sm" 
+              id="s_${etape}_${semestre}" 
+              name="s_${etape}_${semestre}" 
+              min="1" 
+              placeholder="Ex: 2"
+              required
+            >
+          </div>
+        </div>
+      `;
+
+      elementsContainer.appendChild(div);
+
+      sectionInputs[`s_${etape}_${semestre}`] = div.querySelector(`#s_${etape}_${semestre}`);
+    }
+  }
+
+  return sectionInputs;
+}
+
+
+cycleSelect.addEventListener("change", () => {
+    elementsContainer.style.display = "block";
+
+  const cycle = cycleSelect.value;
+  let etapes;
+
+  if (cycle == 1 || cycle == 3 || cycle == 4) {
+    etapes = 2;
+  } else if (cycle == 2) {
+    etapes = 3;
+  } else {
+    etapes = 0;
+  }
+
+  elementsContainer.innerHTML = ""; // Clear previous content
+
+  if (etapes === 0) return;
+
+  const allInputs = addDiv(etapes);
+
+  for (let etape = 1; etape <= etapes; etape++) {
+    for (let semestre = 1; semestre <= 2; semestre++) {
+      const input = allInputs[`s_${etape}_${semestre}`];
+      const rowDiv = document.getElementById(`row_${etape}_${semestre}`);
+
+      input.addEventListener("input", () => {
+        // Remove old group inputs
+        rowDiv.querySelectorAll('.section-group-input').forEach(el => el.remove());
+
+        const sectionCount = parseInt(input.value, 10);
+        if (isNaN(sectionCount) || sectionCount <= 0) return;
+
+        for (let section = 1; section <= sectionCount; section++) {
+          const groupDiv = document.createElement("div");
+          groupDiv.className = "col-md-2 col-sm-4 col-6 mb-3 section-group-input";
+
+          groupDiv.innerHTML = `
+            <label for="maxgrp_${section}_${etape}_${semestre}" class="form-label small">
+              Nombre de groupes dans section ${section}
+            </label>
+            <input 
+              type="number" 
+              class="form-control form-control-sm" 
+              id="maxgrp_${section}_${etape}_${semestre}" 
+              name="maxgrp_${section}_${etape}_${semestre}"
+              min="1" 
+              required
+            >
+          `;
+
+          rowDiv.appendChild(groupDiv);
+        }
+      });
+    }
+  }
+});
+
+
+document.getElementById("filiereForm").addEventListener("submit", function (e) {
+  e.preventDefault(); // <- empêche le rechargement de page
+
+  AjouterFiliere();
+});
+
+  </script>
+</body>
+</html>
+

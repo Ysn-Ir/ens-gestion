@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Filières</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+    .sidebar {
+      height: 100vh;
+      width: 220px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #343a40;
+      padding-top: 60px;
+      color: #fff;
+    }
+    .sidebar h4 {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #495057;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #adb5bd;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #fff;
+    }
+    .content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+      background-color: #fff;
+    }
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+   
+    .info{
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      border: 1px solid #ced4da;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      background-color: #ffffff;
+    }
+    
+
+    .details{
+
+                display: flex;
+                flex-direction: column;
+
+    }
+
+
+   
+
+
+
+
+#form-section {
+      background-color: #f1f1f1;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #ced4da;
+      
+    }
+
+    .info input , .info input[type="date"]{
+    border-color: rgba(0, 0, 0, 0.071);
+    background-color: rgba(128, 128, 128, 0.11);
+    outline: none;
+    border-radius: 2px;
+}
+.info input[type="date"],.info input[type="text"]{
+    padding: 10px;
+    width: 300px;
+}
+
+#nom{
+  width: 500px;
+  height: 50px;
+        border: 1px solid #ced4da;
+
+}
+  </style>
+</head>
+<body>
+  <button id="logoutBtn" class="btn btn-danger logout-btn">Déconnexion</button>
+
+  <div class="sidebar">
+    <h4>Menu</h4>
+    <a href="etudiants.html">Étudiants</a>
+    <a href="professeurs.html">Professeurs</a>
+    <a href="depart.html">Départements</a>
+    <a href="filieres.html">Filières</a>
+    <a href="modules.html">Modules</a>
+    <a href="notes.html">Notes</a>
+    <a href="parametres.html">Paramètres</a>
+  </div>
+
+  <div class="content">
+    <div class="welcome-message mb-4">
+      Bonjour <span id="usernameDisplay"></span> !
+    </div>
+    <div class="alert alert-info">
+      Vous êtes connecté en tant que: <strong id="userRole"></strong>
+    </div>
+    <div class="d-flex justify-content-between mb-3">
+          
+          <div class="p-2 ">     
+            <button type="button" class="btn btn-dark" onclick="retourner()"> Retourner à la liste des départements</button>
+      </div>
+        </div>
+
+    <div id="form-section" class="container mt-5">
+      <h1 class="mb-4">Ajouter un département</h1>
+
+      <form id="departForm">
+        <div class="mb-3">
+          <label for="nom" class="form-label"><h4>Nom du département</h4></label>
+          <input type="text" class="form-control" id="nom" required>
+        </div>
+
+        <h4 class="mb-3">Chef de département</h4>
+
+        
+        <div class="info">
+            <div class="details">
+                  <label for="professeur"><h6>Nom complet du chef de département</h6></label>
+                  <select class="form-select" id="professeur" name="professeur" required>
+                    <option value="">-- Sélectionnez Prof--</option>
+                  </select>
+            </div>
+           <div class="details">
+                <label for="date_debut"><h6>Date de début d'affectation :</h6></label>
+                <input type="text" placeholder="Date de début" id="date_debut" onfocus="this.type='date'" onblur="this.type='text'">
+          </div>
+          <div class="details">
+                <label for="date_fin"><h6>Date de fin d'affectation:</h6></label>
+                <input type="text" placeholder="Date de fin" id="date_fin" onfocus="this.type='date'" onblur="this.type='text'">
+          </div>
+          
+
+                
+         
+        </div>
+       
+
+       
+
+        
+
+
+
+        
+
+        <button type="submit" class="btn btn-success" >Ajouter le département</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function retourner() {
+        window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/depart.html";
+    }
+        const profSelect = document.getElementById('professeur');
+        const nomDepart=document.getElementById('nom');
+        const date_debut=document.getElementById('date_debut');
+        const date_fin=document.getElementById('date_fin');
+
+        document.addEventListener('DOMContentLoaded', function () {
+                  // Simuler un utilisateur connecté (pour test)
+                  let userData = localStorage.getItem("userData");
+                  if (!userData) {
+                    localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
+                    userData = localStorage.getItem("userData");
+                  }
+
+                  userData = JSON.parse(userData);
+                  document.getElementById('usernameDisplay').textContent = userData.username;
+                  document.getElementById('userRole').textContent = userData.role;
+
+                  document.getElementById('logoutBtn').addEventListener('click', function () {
+                    localStorage.removeItem('userData');
+                    alert("Déconnecté !");
+                    window.location.reload();
+                  });
+
+
+              
+
+              // Helper to convert numeric-keyed objects to arrays, ignoring non-object keys like http_code
+              function objectToArray(obj) {
+                return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+              }
+
+     
+
+      /// Fetch Professors
+      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
+          .then(res => res.json())
+          .then(data => {
+          const profs = objectToArray(data);
+          profs.forEach(prof => {
+              console.log(prof);
+              const option = document.createElement('option');
+              option.value = prof.user_id;
+              option.textContent = prof.nom + " " + prof.prenom;
+              profSelect.appendChild(option);
+          });
+          })
+          .catch(() => alert("Erreur lors du chargement des professeurs"));
+        
+          
+
+        
+        });
+              
+       
+            function AjouterDepart(){
+                const prof = profSelect.value;
+                const nom = nomDepart.value;
+                const  dateD=date_debut.value;
+                const  dateF=date_fin.value;
+                console.log(dateD.split("-")[0],dateF);
+                if ( !prof  || !nom  || !date_debut || !date_fin) {
+                  alert("Veuillez remplir tous les champs.");
+                  return;
+                }
+                
+                if(dateF.split("-")[0] < dateD.split("-")[0] ){
+                  alert("Dates non valides");
+                  return;
+                }else if( dateF.split("-")[0] === dateD.split("-")[0] && dateF.split("-")[1] < dateD.split("-")[1]){
+                  alert("Dates non valides");
+                  return;
+                }else if(dateF.split("-")[0] === dateD.split("-")[0] && dateF.split("-")[1] === dateD.split("-")[1] && dateF.split("-")[2] < dateD.split("-")[2]){
+                  alert("Dates non valides");
+                  return;
+                }
+                fetch(`http://localhost/ens-gestion/api/admin2.php?action=AjouterDepart&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&dateDebut=${dateD}&dateFin=${dateD}`, {
+                  method: 'GET',
+                  credentials: 'include'
+                })
+                  .then(response => response.json())
+                  .then(result => {
+                    console.log(result);
+                    if (result.message === "Département créée avec succès") {
+                          window.location.href = "http://localhost:8080/ens-gestion/app/src/pages/admin/depart.html";
+
+                    } else {
+                      console.log(result);
+                      alert("Erreur : " + result.message);
+                    }
+                  })
+                  .catch(error => {
+                    console.error("Erreur:", error);
+                    alert("Erreur lors de l'ajout du département.");
+                  });
+            }
+
+            document.getElementById("departForm").addEventListener("submit", function (e) {
+              e.preventDefault(); // <- empêche le rechargement de page
+              AjouterDepart();
+            });
+
+  </script>
+</body>
+</html>
+

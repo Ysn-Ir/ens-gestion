@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - modules</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .sidebar {
+      height: 100vh;
+      width: 220px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #343a40;
+      padding-top: 60px;
+      color: #fff;
+    }
+
+    .sidebar h4 {
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #495057;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #adb5bd;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .sidebar a:hover {
+      background-color: #495057;
+      color: #ffffff;
+    }
+
+    .content {
+      margin-left: 220px;
+      padding: 20px;
+      min-height: 100vh;
+      background-color: #ffffff;
+    }
+
+    .logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999;
+    }
+
+    .welcome-message {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .module-group {
+      border-left: 5px solid #6c757d;
+      background-color: #fdfdfd;
+      transition: background-color 0.3s;
+    }
+
+    .module-group:hover {
+      background-color: #f1f1f1;
+    }
+    
+  </style>
+</head>
+<body>
+  <button id="logoutBtn" class="btn btn-danger logout-btn">Déconnexion</button>
+
+  <div class="sidebar">
+    <h4>Menu</h4>
+    <a href="etudiants.html">Étudiants</a>
+    <a href="professeurs.html">Professeurs</a>
+    <a href="depart.html">Départements</a>
+    <a href="filieres.html">Filières</a>
+    <a href="modules.html">Modules</a>
+    <a href="notes.html">Notes</a>
+    <a href="parametres.html">Paramètres</a>
+  </div>
+
+  <div class="content">
+    <div class="welcome-message mb-4">
+      Bonjour <span id="usernameDisplay"></span> !
+    </div>
+    <div class="alert alert-info">
+      Vous êtes connecté en tant que: <strong id="userRole"></strong>
+    </div>
+
+    <div class="d-flex justify-content-between mb-3">
+      <div class="p-2">
+        <h2>Liste des Modules</h2>
+      </div>
+      <div class="p-2">
+        <button type="button" class="btn btn-success" onclick="AjouterModule()"> + Ajouter un module</button>
+      </div>
+    </div>
+
+    <h4>Filterer </h4>
+        <div class="row">
+         
+          
+          <div class="col-md-3 mb-3">
+            <label>Filière</label>
+          <select class="form-select" id="filiere" required>
+              <option disabled selected>Choisissez une filière</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-3">
+             <label>Semestre</label>
+          <select class="form-select" id="semestre" required>
+                          <option disabled selected>Choisissez le semestre</option>
+
+          </select>
+          </div>
+          
+          
+        </div>
+
+    <div class="table-responsive mt-4">
+      <table class="table table-bordered table-striped align-middle text-center">
+        <thead>
+          <tr class="table-secondary">
+            <th colspan="5">Description du module</th>
+            <th colspan="5">Évaluation du module</th>
+            <th colspan="2">Prof associée à l'élément</th>
+            <th colspan="1">Action Sur Element</th>
+            <th colspan="2">Action Sur module</th>
+          </tr>
+          <tr class="table-dark">
+            <th>Code Module</th>
+            <th>Nom Module</th>
+            <th>Année d'accréditation</th>
+            <th>Filière associée</th>
+            <th>Semestre associée</th>
+            <th>Nom Élément</th>
+            <th>Coeff Écrit</th>
+            <th>Coeff CC</th>
+            <th>Coeff TP</th>
+            <th>Coeff Élément</th>
+            
+            <th>Prof Élément</th>
+            <th>Prof TP</th>
+            <th>Supprimer Element</th>
+            <th>Modifier Module</th>
+            <th>Supprimer Module</th>
+          </tr>
+        </thead>
+        <tbody id="moduleTabBody">
+          <tr><td colspan="13" class="text-center">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+          function addDefaultOption(selectElement, label = "Sélectionner", value = "") {
+            const defaultOption = document.createElement("option");
+            defaultOption.value =value;
+            defaultOption.textContent = label;
+            defaultOption.disabled = false;
+            defaultOption.selected = true;
+            selectElement.appendChild(defaultOption);
+          }
+
+
+          const filiereSelect = document.getElementById('filiere');
+          const semestreSelect = document.getElementById("semestre");
+          
+  document.addEventListener('DOMContentLoaded', function () {
+      const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
+      localStorage.setItem("userData", JSON.stringify(userData));
+
+      document.getElementById('usernameDisplay').textContent = userData.username;
+      document.getElementById('userRole').textContent = userData.role;
+
+      document.getElementById('logoutBtn').addEventListener('click', function () {
+        localStorage.removeItem('userData');
+        alert("Déconnecté !");
+        window.location.reload();
+      });
+
+
+          //Charger les modules 
+          fetch('http://localhost/ens-gestion/api/admin2.php?action=infoModules', {
+              method: 'GET',
+              credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                    console.log(data);
+                    loadModuleTable(data);
+      
+            }).catch(error => {
+                    console.error('Erreur de chargement des modules :', error);
+                    document.getElementById('moduleTabBody').innerHTML =
+                      '<tr><td colspan="13" class="text-center text-danger">Erreur lors du chargement</td></tr>';
+                  });
+            
+
+          
+
+          filiereSelect.innerHTML = ''; // Vider avant de remplir
+          addDefaultOption(filiereSelect, "Tous les filières");
+         
+          // Charger les filières
+          fetch('http://localhost/ens-gestion/api/admin2.php?action=getFilieres', {
+                    method: 'GET',
+                    credentials: 'include'
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.status === "success" && Array.isArray(data.data)) {
+                      data.data.forEach(filiere => {
+                        const option = document.createElement('option');
+                        option.value = filiere.field_id;
+                        option.textContent = filiere.nom_filiere ?? filiere.nom ?? "Nom inconnu";
+                        filiereSelect.appendChild(option);
+                      });
+                      const option = document.createElement('option');
+                        option.value = filiere.field_id;
+                        option.textContent = filiere.nom_filiere ?? filiere.nom ?? "Nom inconnu";
+                        filiereSelect.appendChild(option);
+                    } else {
+                      const option = document.createElement('option');
+                      option.textContent = "Aucune filière disponible";
+                      option.disabled = true;
+                      filiereSelect.appendChild(option);
+                    }
+                  })
+                  .catch(error => {
+                    console.error("Erreur lors du chargement des filières :", error);
+                    filiereSelect.innerHTML = '';
+                    const option = document.createElement('option');
+                    option.textContent = "Erreur de chargement";
+                    option.disabled = true;
+                    filiereSelect.appendChild(option);
+                  });
+
+
+                  
+
+    });
+
+
+                       
+
+                        filiereSelect.addEventListener("change", () => {
+                            const filiereId = filiereSelect.value;
+
+                            // Clear old options
+                            semestreSelect.innerHTML = "";
+
+                            // Add default BEFORE loading semestres
+                            addDefaultOption(semestreSelect, "Choisissez un semestre");
+
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
+                              .then(res => res.json())
+                              .then(data => {
+                                if (data.status === "success") {
+                                  const nombreSemestre = data.nombre_semestre;
+                                  for (let i = 1; i <= nombreSemestre; i++) {
+                                    const option = document.createElement("option");
+                                    option.value = i;
+                                    option.textContent = "Semestre " + i;
+                                    semestreSelect.appendChild(option);
+                                  }
+                                }
+                              })
+                              .catch(() => alert("Erreur lors du chargement des semestres"));
+                          });
+
+
+
+                        
+
+                        function modifierModule(module,element) {
+                          localStorage.setItem("moduleToUpdate", JSON.stringify(module));
+                          localStorage.setItem("module_id", module.module_id);
+                          localStorage.setItem("nom_module", module.nom_module);
+                          localStorage.setItem("code_module", module.code_module);
+                          let numberOfElements= 0 ;
+                          element.forEach((el,index)=>{
+                                  localStorage.setItem(`element_id${index}`, el.element_id);
+                                  localStorage.setItem(`nom_element${index}`, el.nom_element);
+                                  localStorage.setItem(`ecrit_${index}`, el.coeff_ecrit);
+                                  localStorage.setItem(`cc_${index}`, el.coeff_cc);
+                                  localStorage.setItem(`tp_${index}`, el.coeff_tp);
+                                  localStorage.setItem(`el_${index}`, el.coeff_element);
+                                  numberOfElements++ ; 
+
+
+                          });
+                          localStorage.setItem("numberOfElements",numberOfElements);
+
+
+
+
+                          window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modifierModule.html";
+                        }
+
+                        function suppModule(id) {
+                          if (confirm("Voulez-vous vraiment supprimer le module ID " + id + " ?")) {
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deletemodule&field_id=${id}`, {
+                              method: 'DELETE',
+                              credentials: 'include'
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                              if (result.success) {
+                                alert("Module supprimé.");
+                                location.reload();
+                              } else {
+                                alert("Erreur lors de la suppression.");
+                              }
+                            })
+                            .catch(error => {
+                              console.error("Erreur:", error);
+                              alert("Erreur de suppression.");
+                            });
+                          }
+                        }
+
+                        function AjouterModule() {
+                          window.location.href = "AjouterModule.html";
+                        }
+
+
+                        function deleteModule(nom,id) {
+                                  console.log(nom, id);
+                          if (confirm("Voulez-vous vraiment supprimer le module  " + nom + " ?")) {
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteModule&module_id=${id}`, {
+                              method: 'DELETE',
+                              credentials: 'include'
+                            })
+                              .then(response => response.json())
+                              .then(result => {
+                                if (result.success) {
+                                  alert("Module supprimée.");
+                                  location.reload();
+                                } else {
+                                  alert("Erreur lors de la suppression.");
+                                }
+                              })
+                              .catch(error => {
+                                console.error("Erreur:", error);
+                                alert("Erreur de suppression.");
+                              });
+                            }
+                          }
+
+                            function deleteElement(nom, id) {
+                          if (confirm("Voulez-vous vraiment supprimer l'élément " + nom + " ?")) {
+                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteElement&element_id=${id}`, {
+                              method: 'DELETE',
+                              credentials: 'include'
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                              if (result.success) {
+                                alert("Élément supprimé.");
+                                loadModules(); 
+                              } else {
+                                alert("Erreur lors de la suppression.");
+                              }
+                            })
+                            .catch(error => {
+                              console.error("Erreur:", error);
+                              alert("Erreur de suppression.");
+                            });
+                          }
+                        }
+
+
+                      // Load modules based on selected filters
+                      function loadModules(anneeId = '', filiereId = '', semestre = '') {
+                        const moduleTabBody = document.getElementById('moduleTabBody');
+                        moduleTabBody.innerHTML = '<tr><td colspan="15" class="text-center">Chargement...</td></tr>';
+
+                        const queryParams = new URLSearchParams();
+                        if (anneeId) queryParams.append('annee', anneeId); // must match admin2.php
+                        if (filiereId) queryParams.append('field_id', filiereId);
+                        if (semestre) queryParams.append('semestre', semestre);
+                        console.log(queryParams.toString());
+                        fetch(`http://localhost/ens-gestion/api/admin2.php?action=getModules&${queryParams.toString()}`, {
+                          method: 'GET',
+                          credentials: 'include'
+                        })
+                          .then(response => response.json())
+                          .then(data => {
+
+                            console.log(data);
+                            loadModuleTable(data);
+                          })
+                          .catch(error => {
+                            console.error('Erreur de chargement des modules :', error);
+                            moduleTabBody.innerHTML = '<tr><td colspan="15" class="text-center text-danger">Erreur lors du chargement</td></tr>';
+                          });
+                      }
+
+                      // Trigger filtering
+                      filiereSelect.addEventListener('change', applyFilters);
+                      semestreSelect.addEventListener('change', applyFilters);
+
+                      function applyFilters() {
+                        const filiere = filiereSelect.value;
+                        const semestre = semestreSelect.value;
+                        loadModules('', filiere, semestre);
+                      }
+
+
+            function   loadModuleTable(data){
+                      const moduleTabBody = document.getElementById('moduleTabBody');
+                      moduleTabBody.innerHTML = '';
+
+                      if (data.status === "success" && Array.isArray(data.data)) {
+                        const groupedModules = {};
+
+                        data.data.forEach(row => {
+                          const key = row.code_module;
+                          if (!groupedModules[key]) {
+                            groupedModules[key] = {
+                              info: row,
+                              elements: []
+                            };
+                          }
+                          groupedModules[key].elements.push(row);
+                        });
+
+                        Object.values(groupedModules).forEach(module => {
+                          const { info, elements } = module;
+                          const rowspan = elements.length;
+
+                          elements.forEach((el, index) => {
+                            const tr = document.createElement('tr');
+                            tr.classList.add('module-group');
+
+                            tr.innerHTML = `
+                              ${index === 0 ? `
+                                <td rowspan="${rowspan}">${info.code_module}</td>
+                                <td rowspan="${rowspan}">${info.nom_module}</td>
+                                <td rowspan="${rowspan}">${info.annee}</td>
+                                <td rowspan="${rowspan}">${info.nom_filiere}</td>
+                                <td rowspan="${rowspan}">${info.semestre}</td>
+                              ` : ''}
+
+                              <td>${el.nom_element || '--'}</td>
+                              <td>${el.coeff_ecrit ?? '--'}</td>
+                              <td>${el.coeff_cc ?? '--'}</td>
+                              <td>${el.coeff_tp ?? '--'}</td>
+                              <td>${el.coeff_element ?? '--'}</td>
+
+                              <td>${el.prof_element || '--'}</td>
+                              <td>${el.prof_tp || '--'}</td>
+
+                            
+                              <td>
+                                <button class="btn btn-sm btn-danger" onclick="deleteElement('${el.nom_element}','${el.element_id}')">
+                                    <i class="bi bi-trash"></i></button>
+                              </td>
+
+                              ${index === 0 ? `
+                                <td rowspan="${rowspan}">
+                                  <button class="btn btn-sm btn-primary " onclick='modifierModule(${JSON.stringify(info)},${JSON.stringify(elements)})'>
+                                                            <i class="bi bi-pencil"></i>
+                                  </button>
+                                </td>
+                                <td rowspan="${rowspan}">
+                                  <button class="btn btn-sm btn-danger" onclick="deleteModule('${info.nom_module}','${info.module_id}')">
+                                      <i class="bi bi-trash"></i>
+                                  </button>
+                                </td>
+                              ` : ''}
+                            `;
+
+                            moduleTabBody.appendChild(tr);
+                          });
+                        });
+                      } else {
+                        moduleTabBody.innerHTML = '<tr><td colspan="15" class="text-center text-danger">Aucun module disponible</td></tr>';
+                      }
+
+            }
+            
+
+
+
+          
+  </script>
+</body>
+</html>
+

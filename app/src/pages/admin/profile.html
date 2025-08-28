@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profil Administrateur</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"/>
+  <style>
+    .profile-card {
+      max-width: 700px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="card profile-card shadow">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Mon Profil</h4>
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#passwordModal">
+          <i class="bi bi-key"></i> Changer le mot de passe
+        </button>
+      </div>
+      <div class="card-body">
+        <dl class="row" id="profileDetails">
+          <!-- Dynamically filled with JS -->
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Change Password -->
+  <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="changePasswordForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="passwordModalLabel">Changer le mot de passe</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="newPassword" class="form-label">Nouveau mot de passe</label>
+            <input type="password" class="form-control" id="newPassword" required minlength="6">
+          </div>
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+            <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Charger les informations du profil
+    fetch('http://localhost/ens-gestion/api/admin3.php?action=get_profile')
+      .then(res => res.json())
+      .then(json => {
+        if (json.status === 200 && json.data.status === 'success') {
+          const d = json.data.data;
+          const details = document.getElementById('profileDetails');
+          details.innerHTML = `
+            <dt class="col-sm-4">Nom</dt><dd class="col-sm-8">${d.nom}</dd>
+            <dt class="col-sm-4">Prénom</dt><dd class="col-sm-8">${d.prenom}</dd>
+            <dt class="col-sm-4">Email</dt><dd class="col-sm-8">${d.email}</dd>
+            <dt class="col-sm-4">Téléphone</dt><dd class="col-sm-8">${d.telephone}</dd>
+            <dt class="col-sm-4">Adresse</dt><dd class="col-sm-8">${d.adresse}</dd>
+            <dt class="col-sm-4">Date de naissance</dt><dd class="col-sm-8">${d.date_naissance}</dd>
+            <dt class="col-sm-4">Nationalité</dt><dd class="col-sm-8">${d.nationalite}</dd>
+            <dt class="col-sm-4">CIN</dt><dd class="col-sm-8">${d.CIN}</dd>
+            <dt class="col-sm-4">Fonction</dt><dd class="col-sm-8">${d.fonction}</dd>
+            <dt class="col-sm-4">Nom d'utilisateur</dt><dd class="col-sm-8">${d.username}</dd>
+            <dt class="col-sm-4">Créé le</dt><dd class="col-sm-8">${d.created_at}</dd>
+            <dt class="col-sm-4">Mis à jour le</dt><dd class="col-sm-8">${d.updated_at}</dd>
+          `;
+        } else {
+          alert("Impossible de charger le profil.");
+        }
+      });
+
+    // Soumission du formulaire de changement de mot de passe
+    document.getElementById("changePasswordForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      fetch('http://localhost/ens-gestion/api/admin3.php?action=change_password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: newPassword, confirm_password: confirmPassword })
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (json.status === 200 && json.data.status === 'success') {
+          alert("✅ Mot de passe changé avec succès !");
+          document.getElementById("changePasswordForm").reset();
+          const modal = bootstrap.Modal.getInstance(document.getElementById('passwordModal'));
+          modal.hide();
+        } else {
+          alert("❌ Erreur : " + (json.data?.message || "Une erreur est survenue"));
+        }
+      })
+      .catch(err => {
+        alert("Erreur de connexion au serveur.");
+        console.error(err);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
