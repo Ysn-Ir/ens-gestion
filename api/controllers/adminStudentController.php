@@ -31,14 +31,21 @@ class AdminStudentController {
     ]);
 }
 public function getStudentDetail($user_id) {
-    $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-    $students = $this->model->getStudentDetail($user_id);
-    $this->response->send(200, [
-        'success' => true,
-        'students'=> $students
-    ]);
-}
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+        $result = $this->model->getStudentDetail($user_id);
+        if ($result['status']) {
+            $this->response->send(200, [
+                'success' => true,
+                'data' => $result['data']
+            ]);
+        } else {
+            $this->response->send(404, [
+                'success' => false,
+                'message' => $result['message']
+            ]);
+        }
+    }
 
     public function createStudent() {
     $this->authMiddleware->verifySession();

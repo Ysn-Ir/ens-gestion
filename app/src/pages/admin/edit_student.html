@@ -12,37 +12,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .sidebar {
-            height: 100vh;
-            width: 220px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #343a40;
-            padding-top: 60px;
-            color: #fff;
-        }
-
-        .sidebar h4 {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #495057;
-        }
-
-        .sidebar a {
-            display: block;
-            padding: 12px 20px;
-            color: #adb5bd;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .sidebar a:hover {
-            background-color: #495057;
-            color: #ffffff;
-        }
-
         .content {
             padding: 20px;
             min-height: 100vh;
@@ -117,21 +86,6 @@
                 <input type="hidden" id="studentId" />
                 <div class="row g-3 mt-2">
                     <div class="col-md-6">
-                        <label for="username" class="form-label required">Nom d'utilisateur</label>
-                        <input type="text" class="form-control" id="username" required  />
-                        <div class="form-text">Le nom d'utilisateur ne peut pas être modifié</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="password" class="form-label">Mot de passe</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="password" placeholder="Laisser vide pour ne pas modifier" />
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <div class="form-text">Minimum 8 caractères (laisser vide pour conserver l'actuel)</div>
-                    </div>
-                    <div class="col-md-6">
                         <label for="cne" class="form-label required">CNE</label>
                         <input type="text" class="form-control" id="cne" required />
                     </div>
@@ -176,8 +130,8 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="etape_id" class="form-label required">Étape</label>
-                        <select class="form-select" id="etape_id" required>
+                        <label for="etape_id" class="form-label">Étape</label>
+                        <select class="form-select" id="etape_id">
                             <option value="">Sélectionner une étape</option>
                         </select>
                     </div>
@@ -194,8 +148,8 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="groupe_id" class="form-label required">Groupe</label>
-                        <select class="form-select" id="groupe_id" required>
+                        <label for="group_id" class="form-label">Groupe</label>
+                        <select class="form-select" id="group_id">
                             <option value="">Sélectionner un groupe</option>
                         </select>
                     </div>
@@ -214,6 +168,16 @@
                     <div class="col-md-6">
                         <label for="address" class="form-label">Adresse</label>
                         <input type="text" class="form-control" id="address" />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Mot de passe</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" placeholder="Laisser vide pour ne pas modifier" />
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">Minimum 8 caractères (laisser vide pour conserver l'actuel)</div>
                     </div>
                 </div>
                 <div class="mt-4">
@@ -251,12 +215,14 @@
             const departmentSelect = document.getElementById('department');
             const filiereSelect = document.getElementById('filiere');
             const sectionSelect = document.getElementById('section_id');
-            const groupeSelect = document.getElementById('groupe_id');
-            
+            const groupSelect = document.getElementById('group_id');
+            const firstNameInput = document.getElementById('firstName');
+            const lastNameInput = document.getElementById('lastName');
+
             // Récupérer l'ID de l'étudiant depuis l'URL
             const urlParams = new URLSearchParams(window.location.search);
             const studentId = urlParams.get('id');
-            
+
             if (!studentId) {
                 showNotification('Aucun étudiant sélectionné', false);
                 setTimeout(() => {
@@ -281,20 +247,14 @@
             };
 
             let csrfToken = localStorage.getItem('csrfToken') || '';
+            let originalStudentData = {};
+            let currentStudent = null;
 
             init();
 
             function init() {
                 const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
                 loadStudentDetails();
-                loadDepartments();
-                loadYears();
-                loadCycles();
-                loadEtapes();
-                loadSemesters();
-                loadSections();
-                loadGroupes();
-                loadFilieres();
             }
 
             togglePassword.addEventListener('click', () => {
@@ -315,8 +275,19 @@
                 updateGroupesDropdown(sectionSelect.value);
             });
 
+            function updateUsername() {
+                const firstName = firstNameInput.value.trim();
+                const lastName = lastNameInput.value.trim();
+                if (firstName && lastName) {
+                    originalStudentData.username = `${firstName}.${lastName}`.toLowerCase().replace(/\s+/g, '');
+                }
+            }
+
+            firstNameInput.addEventListener('input', updateUsername);
+            lastNameInput.addEventListener('input', updateUsername);
+
             studentForm.addEventListener('submit', handleStudentFormSubmit);
-            
+
             logoutBtn.addEventListener('click', async () => {
                 try {
                     const response = await fetch(`${API_ENDPOINTS.logout}`, {
@@ -357,31 +328,57 @@
                         headers: { 'X-CSRF-Token': csrfToken }
                     });
                     const data = await response.json();
-                    if (data.status && data.data) {
-                        const student = data.data.students;
-                        document.getElementById('studentId').value = student.user_id || '';
-                        document.getElementById('cne').value = student.cne || '';
-                        document.getElementById('lastName').value = student.nom || '';
-                        document.getElementById('firstName').value = student.prenom || '';
-                        document.getElementById('email').value = student.email || '';
-                        document.getElementById('phone').value = student.telephone || '';
-                        document.getElementById('department').value = student.department_id || '';
-                        document.getElementById('filiere').value = student.field_id || '';
-                        document.getElementById('year').value = student.annee_id || '';
-                        document.getElementById('cycle_id').value = student.cycle_id || '';
-                        document.getElementById('etape_id').value = student.etape_id || '';
-                        document.getElementById('semester_id').value = student.semestre_id || '';
-                        document.getElementById('section_id').value = student.section_id || '';
-                        document.getElementById('groupe_id').value = student.groupe_id || '';
-                        document.getElementById('cin').value = student.cin || '';
-                        document.getElementById('birthdate').value = student.date_naissance || '';
-                        document.getElementById('nationality').value = student.nationalite || 'Marocaine';
-                        document.getElementById('address').value = student.adresse || '';
-                        document.getElementById('username').value = student.username || '';
-                        // Update dependent dropdowns after setting values
-                        updateFilieresDropdown(student.department_id);
-                        updateSectionsDropdown(student.field_id);
-                        updateGroupesDropdown(student.section_id);
+                    const studentData = data.data?.students || data.data?.data?.students;
+                    if (data.status && studentData) {
+                        currentStudent = studentData;
+                        originalStudentData = {
+                            username: studentData.username || '',
+                            email: studentData.email || '',
+                            cne: studentData.cne || '',
+                            nom: studentData.nom || '',
+                            prenom: studentData.prenom || '',
+                            telephone: studentData.telephone || null,
+                            department_id: studentData.department_id || '',
+                            field_id: studentData.field_id || '',
+                            annee_id: studentData.annee_id || '',
+                            cycle_id: studentData.cycle_id || '',
+                            etape_id: studentData.etape_id || '',
+                            semestre_id: studentData.semestre_id || '',
+                            section_id: studentData.section_id || '',
+                            group_id: studentData.group_id || '',
+                            cin: studentData.cin || null,
+                            date_naissance: studentData.date_naissance || '2000-01-01',
+                            nationalite: studentData.nationalite || 'Marocaine',
+                            adresse: studentData.adresse || null
+                        };
+                        document.getElementById('studentId').value = studentData.user_id || '';
+                        document.getElementById('cne').value = studentData.cne || '';
+                        document.getElementById('lastName').value = studentData.nom || '';
+                        document.getElementById('firstName').value = studentData.prenom || '';
+                        document.getElementById('email').value = studentData.email || '';
+                        document.getElementById('phone').value = studentData.telephone || '';
+                        document.getElementById('cin').value = studentData.cin || '';
+                        document.getElementById('birthdate').value = studentData.date_naissance || '';
+                        document.getElementById('nationality').value = studentData.nationalite || 'Marocaine';
+                        document.getElementById('address').value = studentData.adresse || '';
+                        // Populate dropdowns with student data as fallback
+                        populateDropdown('department', studentData.department_id, studentData.departement_nom);
+                        populateDropdown('filiere', studentData.field_id, studentData.filiere_nom);
+                        populateDropdown('year', studentData.annee_id, studentData.annee_nom);
+                        populateDropdown('cycle_id', studentData.cycle_id, studentData.cycle_nom);
+                        populateDropdown('etape_id', studentData.etape_id, studentData.etape_nom);
+                        populateDropdown('semester_id', studentData.semestre_id, studentData.semestre_nom);
+                        populateDropdown('section_id', studentData.section_id, studentData.section_nom);
+                        populateDropdown('group_id', studentData.group_id, studentData.groupe_nom);
+                        // Load full dropdown data from APIs
+                        loadDepartments();
+                        loadFilieres(studentData.department_id);
+                        loadYears();
+                        loadCycles();
+                        loadEtapes();
+                        loadSemesters();
+                        loadSections(studentData.field_id);
+                        loadGroupes(studentData.section_id);
                     } else {
                         throw new Error(data.message || 'Étudiant introuvable');
                     }
@@ -391,6 +388,18 @@
                 } finally {
                     document.getElementById('saveBtn').disabled = false;
                     document.getElementById('saveSpinner').classList.add('d-none');
+                }
+            }
+
+            function populateDropdown(elementId, value, label) {
+                const select = document.getElementById(elementId);
+                select.innerHTML = '<option value="">Sélectionner une option</option>';
+                if (value && label) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label;
+                    option.selected = true;
+                    select.appendChild(option);
                 }
             }
 
@@ -413,26 +422,25 @@
                     showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
                     return;
                 }
-                const formData = {
-                    username: document.getElementById('username').value.trim(),
-                    email: email,
-                    cne: document.getElementById('cne').value.trim(),
-                    nom: document.getElementById('lastName').value.trim(),
-                    prenom: document.getElementById('firstName').value.trim(),
-                    telephone: document.getElementById('phone').value.trim() || null,
-                    department_id: document.getElementById('department').value,
-                    field_id: document.getElementById('filiere').value,
-                    annee_id: document.getElementById('year').value,
-                    cycle_id: document.getElementById('cycle_id').value,
-                    etape_id: document.getElementById('etape_id').value,
-                    semestre_id: document.getElementById('semester_id').value,
-                    section_id: document.getElementById('section_id').value,
-                    groupe_id: document.getElementById('groupe_id').value,
-                    cin: document.getElementById('cin').value.trim() || null,
-                    date_naissance: document.getElementById('birthdate').value || "2000-01-01",
-                    nationalite: document.getElementById('nationality').value || 'Marocaine',
-                    adresse: document.getElementById('address').value || null
-                };
+                const formData = { ...originalStudentData };
+                formData.email = document.getElementById('email').value.trim() || formData.email;
+                formData.cne = document.getElementById('cne').value.trim() || formData.cne;
+                formData.nom = document.getElementById('lastName').value.trim() || formData.nom;
+                formData.prenom = document.getElementById('firstName').value.trim() || formData.prenom;
+                formData.telephone = document.getElementById('phone').value.trim() || formData.telephone;
+                formData.department_id = document.getElementById('department').value || formData.department_id;
+                formData.field_id = document.getElementById('filiere').value || formData.field_id;
+                formData.annee_id = document.getElementById('year').value || formData.annee_id;
+                formData.cycle_id = document.getElementById('cycle_id').value || formData.cycle_id;
+                formData.etape_id = document.getElementById('etape_id').value || formData.etape_id;
+                formData.semestre_id = document.getElementById('semester_id').value || formData.semestre_id;
+                formData.section_id = document.getElementById('section_id').value || formData.section_id;
+                formData.group_id = document.getElementById('group_id').value || formData.group_id;
+                formData.cin = document.getElementById('cin').value.trim() || formData.cin;
+                formData.date_naissance = document.getElementById('birthdate').value || formData.date_naissance;
+                formData.nationalite = document.getElementById('nationality').value || formData.nationalite;
+                formData.adresse = document.getElementById('address').value || formData.adresse;
+                formData.username = `${formData.prenom}.${formData.nom}`.toLowerCase().replace(/\s+/g, '');
                 const password = document.getElementById('password').value;
                 if (password) {
                     if (password.length < 8) {
@@ -475,20 +483,27 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const departments = data.data || data;
-                    departmentSelect.innerHTML = '<option value="">Sélectionner un département</option>';
+                    const select = document.getElementById('department');
+                    select.innerHTML = '<option value="">Sélectionner un département</option>';
                     departments.forEach(dep => {
                         const option = document.createElement('option');
                         option.value = dep.department_id;
                         option.textContent = dep.nom;
-                        departmentSelect.appendChild(option);
+                        if (currentStudent && dep.department_id == currentStudent.department_id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des départements:', error);
                     showNotification('Erreur lors du chargement des départements: ' + error.message, false);
+                    if (currentStudent && currentStudent.department_id && currentStudent.departement_nom) {
+                        populateDropdown('department', currentStudent.department_id, currentStudent.departement_nom);
+                    }
                 }
             }
 
-            async function updateFilieresDropdown(departmentId) {
+            async function loadFilieres(departmentId) {
                 try {
                     filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
                     if (!departmentId) return;
@@ -498,59 +513,22 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const filieres = data.data || [];
+                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
                     filieres.forEach(fil => {
                         const option = document.createElement('option');
                         option.value = fil.field_id;
                         option.textContent = fil.nom;
+                        if (currentStudent && fil.field_id == currentStudent.field_id) {
+                            option.selected = true;
+                        }
                         filiereSelect.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des filières:', error);
                     showNotification('Erreur lors du chargement des filières: ' + error.message, false);
-                }
-            }
-
-            async function updateSectionsDropdown(fieldId) {
-                try {
-                    sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                    if (!fieldId) return;
-                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}`, {
-                        headers: { 'X-CSRF-Token': csrfToken }
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const sections = data.data || [];
-                    sections.forEach(sec => {
-                        const option = document.createElement('option');
-                        option.value = sec.section_id;
-                        option.textContent = sec.nom;
-                        sectionSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des sections:', error);
-                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
-                }
-            }
-
-            async function updateGroupesDropdown(sectionId) {
-                try {
-                    groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
-                    if (!sectionId) return;
-                    const response = await fetch(`${API_ENDPOINTS.groupes}&section_id=${sectionId}`, {
-                        headers: { 'X-CSRF-Token': csrfToken }
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const groupes = data.data || [];
-                    groupes.forEach(grp => {
-                        const option = document.createElement('option');
-                        option.value = grp.groupe_id;
-                        option.textContent = grp.nom;
-                        groupeSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des groupes:', error);
-                    showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
+                    if (currentStudent && currentStudent.field_id && currentStudent.filiere_nom) {
+                        populateDropdown('filiere', currentStudent.field_id, currentStudent.filiere_nom);
+                    }
                 }
             }
 
@@ -560,17 +538,23 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const years = data.data?.data || data.data || [];
-                    const yearSelect = document.getElementById('year');
-                    yearSelect.innerHTML = '<option value="">Sélectionner une année</option>';
+                    const select = document.getElementById('year');
+                    select.innerHTML = '<option value="">Sélectionner une année</option>';
                     years.forEach(year => {
                         const option = document.createElement('option');
                         option.value = year.annee_id;
                         option.textContent = year.annee_id + (year.current_flag == 1 ? ' (actuelle)' : '');
-                        yearSelect.appendChild(option);
+                        if (currentStudent && year.annee_id == currentStudent.annee_id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des années:', error);
                     showNotification('Erreur lors du chargement des années: ' + error.message, false);
+                    if (currentStudent && currentStudent.annee_id && currentStudent.annee_nom) {
+                        populateDropdown('year', currentStudent.annee_id, currentStudent.annee_nom);
+                    }
                 }
             }
 
@@ -580,17 +564,23 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const cycles = data.data || data;
-                    const cycleSelect = document.getElementById('cycle_id');
-                    cycleSelect.innerHTML = '<option value="">Sélectionner un cycle</option>';
+                    const select = document.getElementById('cycle_id');
+                    select.innerHTML = '<option value="">Sélectionner un cycle</option>';
                     cycles.forEach(cyc => {
                         const option = document.createElement('option');
                         option.value = cyc.cycle_id;
                         option.textContent = cyc.nom;
-                        cycleSelect.appendChild(option);
+                        if (currentStudent && cyc.cycle_id == currentStudent.cycle_id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des cycles:', error);
                     showNotification('Erreur lors du chargement des cycles: ' + error.message, false);
+                    if (currentStudent && currentStudent.cycle_id && currentStudent.cycle_nom) {
+                        populateDropdown('cycle_id', currentStudent.cycle_id, currentStudent.cycle_nom);
+                    }
                 }
             }
 
@@ -600,17 +590,25 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const etapes = data.data || data;
-                    const etapeSelect = document.getElementById('etape_id');
-                    etapeSelect.innerHTML = '<option value="">Sélectionner une étape</option>';
+                    const select = document.getElementById('etape_id');
+                    select.innerHTML = '<option value="">Sélectionner une étape</option>';
                     etapes.forEach(etape => {
                         const option = document.createElement('option');
                         option.value = etape.etape_id;
                         option.textContent = etape.nom_etape;
-                        etapeSelect.appendChild(option);
+                        if (currentStudent && etape.etape_id == currentStudent.etape_id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des étapes:', error);
                     showNotification('Erreur lors du chargement des étapes: ' + error.message, false);
+                    if (currentStudent && currentStudent.etape_id && currentStudent.etape_nom) {
+                        populateDropdown('etape_id', currentStudent.etape_id, currentStudent.etape_nom);
+                    } else {
+                        populateDropdown('etape_id', '', 'Aucune étape');
+                    }
                 }
             }
 
@@ -620,75 +618,119 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const semesters = data.data || data;
-                    const semesterSelect = document.getElementById('semester_id');
-                    semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                    const select = document.getElementById('semester_id');
+                    select.innerHTML = '<option value="">Sélectionner un semestre</option>';
                     semesters.forEach(sem => {
                         const option = document.createElement('option');
                         option.value = sem.semestre_id;
                         option.textContent = sem.nom;
-                        semesterSelect.appendChild(option);
+                        if (currentStudent && sem.semestre_id == currentStudent.semestre_id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des semestres:', error);
                     showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+                    if (currentStudent && currentStudent.semestre_id && currentStudent.semestre_nom) {
+                        populateDropdown('semester_id', currentStudent.semestre_id, currentStudent.semestre_nom);
+                    }
                 }
             }
 
-            async function loadSections() {
+            async function loadSections(fieldId) {
                 try {
-                    const response = await fetch(API_ENDPOINTS.sections, { headers: { 'X-CSRF-Token': csrfToken } });
+                    sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+                    if (!fieldId) return;
+                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const sections = data.data || data;
+                    const sections = data.data || [];
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
                     sections.forEach(sec => {
                         const option = document.createElement('option');
                         option.value = sec.section_id;
                         option.textContent = sec.nom;
+                        if (currentStudent && sec.section_id == currentStudent.section_id) {
+                            option.selected = true;
+                        }
                         sectionSelect.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des sections:', error);
                     showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+                    if (currentStudent && currentStudent.section_id && currentStudent.section_nom) {
+                        populateDropdown('section_id', currentStudent.section_id, currentStudent.section_nom);
+                    }
                 }
             }
 
-            async function loadGroupes() {
+            async function loadGroupes(sectionId) {
                 try {
-                    const response = await fetch(API_ENDPOINTS.groupes, { headers: { 'X-CSRF-Token': csrfToken } });
+                    groupSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+                    if (!sectionId) return;
+                    const response = await fetch(`${API_ENDPOINTS.groupes}&section_id=${sectionId}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const groupes = data.data || data;
-                    groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+                    const groupes = data.data || [];
+                    groupSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
                     groupes.forEach(grp => {
                         const option = document.createElement('option');
-                        option.value = grp.groupe_id;
+                        option.value = grp.group_id;
                         option.textContent = grp.nom;
-                        groupeSelect.appendChild(option);
+                        if (currentStudent && grp.group_id == currentStudent.group_id) {
+                            option.selected = true;
+                        }
+                        groupSelect.appendChild(option);
                     });
                 } catch (error) {
                     console.error('Erreur lors du chargement des groupes:', error);
                     showNotification('Erreur lors du chargement des groupes: ' + error.message, false);
+                    if (currentStudent && currentStudent.group_id && currentStudent.groupe_nom) {
+                        populateDropdown('group_id', currentStudent.group_id, currentStudent.groupe_nom);
+                    } else {
+                        populateDropdown('group_id', '', 'Aucun groupe');
+                    }
                 }
             }
 
-            async function loadFilieres() {
-                try {
-                    const response = await fetch(API_ENDPOINTS.filieres, { headers: { 'X-CSRF-Token': csrfToken } });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const filieres = data.data || [];
-                    filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
-                    filieres.forEach(fil => {
-                        const option = document.createElement('option');
-                        option.value = fil.field_id;
-                        option.textContent = fil.nom;
-                        filiereSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des filières:', error);
-                    showNotification('Erreur lors du chargement des filières: ' + error.message, false);
+            async function updateFilieresDropdown(departmentId) {
+                filiereSelect.innerHTML = '<option value="">Sélectionner une filière</option>';
+                if (!departmentId) {
+                    if (currentStudent && currentStudent.field_id && currentStudent.filiere_nom) {
+                        populateDropdown('filiere', currentStudent.field_id, currentStudent.filiere_nom);
+                    }
+                    return;
                 }
+                await loadFilieres(departmentId);
+            }
+
+            async function updateSectionsDropdown(fieldId) {
+                sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+                if (!fieldId) {
+                    if (currentStudent && currentStudent.section_id && currentStudent.section_nom) {
+                        populateDropdown('section_id', currentStudent.section_id, currentStudent.section_nom);
+                    }
+                    return;
+                }
+                await loadSections(fieldId);
+            }
+
+            async function updateGroupesDropdown(sectionId) {
+                groupSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
+                if (!sectionId) {
+                    if (currentStudent && currentStudent.group_id && currentStudent.groupe_nom) {
+                        populateDropdown('group_id', currentStudent.group_id, currentStudent.groupe_nom);
+                    } else {
+                        populateDropdown('group_id', '', 'Aucun groupe');
+                    }
+                    return;
+                }
+                await loadGroupes(sectionId);
             }
         });
     </script>

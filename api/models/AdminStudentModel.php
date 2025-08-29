@@ -34,23 +34,65 @@ public function getAllStudents()
     ");
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}public function getStudentDetail($user_id)
-{
-    $stmt = $this->db->prepare("
-        SELECT
-            et.*,
-            u.email,
-            d.nom AS departement_nom,
-            f.nom AS filiere_nom
-        FROM etudiants et
-        JOIN utilisateurs u ON u.user_id = et.user_id
-        LEFT JOIN departements d ON d.department_id = et.department_id
-        LEFT JOIN filieres f ON f.field_id = et.field_id
-        WHERE et.user_id = ?
-    ");
-    $stmt->execute([$user_id]);
-    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 }
+public function getStudentDetail($user_id) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT
+                    et.user_id,
+                    et.cne,
+                    et.nom,
+                    et.prenom,
+                    et.telephone,
+                    et.department_id,
+                    et.field_id,
+                    se.annee_id,
+                    et.cycle_id,
+                    e.etape_id,
+                    se.semestre_id,
+                    se.section_id,
+                    et.group_id,
+                    et.cin,
+                    et.date_naissance,
+                    et.nationalite,
+                    et.adresse,
+                    u.email,
+                    u.username,
+                    d.nom AS departement_nom,
+                    f.nom AS filiere_nom,
+                    a.annee_id AS annee_nom,
+                    c.nom AS cycle_nom,
+                    e.nom_etape AS etape_nom,
+                    s.nom AS semestre_nom,
+                    sec.nom AS section_nom,
+                    g.nom AS groupe_nom
+                FROM etudiants et
+                JOIN utilisateurs u ON u.user_id = et.user_id
+                LEFT JOIN departements d ON d.department_id = et.department_id
+                LEFT JOIN student_enrollments se ON se.student_id = et.user_id
+                LEFT JOIN filieres f ON f.field_id = et.field_id
+                LEFT JOIN annees_academiques a ON a.annee_id = se.annee_id
+                LEFT JOIN cycles c ON c.cycle_id = et.cycle_id
+                LEFT JOIN etapes e ON e.etape_id = se.etape_id
+                LEFT JOIN semestres s ON s.semestre_id = se.semestre_id
+                LEFT JOIN sections sec ON sec.section_id = se.section_id
+                LEFT JOIN groupes g ON g.group_id = et.group_id
+                WHERE et.user_id = ?
+                Limit 1
+            ");
+            $stmt->execute([$user_id]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($result) {
+                return ['status' => true, 'data' => ['students' => $result]];
+            } else {
+                return ['status' => false, 'message' => 'Étudiant introuvable'];
+            }
+        } catch (PDOException $e) {
+            // Log the error for debugging (in a production environment, use a proper logging system)
+            error_log('Database error in getStudentDetail: ' . $e->getMessage());
+            return ['status' => false, 'message' => 'Erreur de base de données: ' . $e->getMessage()];
+        }
+    }
 public function createStudent(array $data) {
     $db = $this->db;
     $db->beginTransaction();
@@ -58,118 +100,7 @@ public function createStudent(array $data) {
     try {
         // 1. Validate required fields
         $required = ['username', 'password', 'email', 'cin', 'cne', 'nom', 'prenom', 
-                    'date_naissance', 'department_id', 'field_id', 'cycle_id'];
-        // foreach ($required as $field) {
-        //     if (empty($data[$field])) {
-        //         throw new Exception("Missing required field: $field");
-        //     }
-        // }
-
-        // 2. Validate academic year exists if provided
-        if (isset($data['annee_id'])) {
-            $stmt = $db->prepare("SELECT 1 FROM annees_academiques WHERE annee_id = ?");
-            $stmt->execute([$data['annee_id']]);
-            if (!$stmt->fetch()) {
-                throw new Exception("Invalid academic year specified");
-            }
-        }
-
-        // 3. Validate semester exists if provided
-        if (isset($data['semestre_id'])) {
-            $stmt = $db->prepare("SELECT 1 FROM semestres WHERE semestre_id = ?");
-            $stmt->execute([$data['semestre_id']]);
-            if (!$stmt->fetch()) {
-                throw new Exception("Invalid semester specified");
-            }
-        }
-
-        // 4. Check for existing user
-        $stmt = $db->prepare("SELECT user_id FROM utilisateurs WHERE username = ? OR email = ? LIMIT 1");
-        $stmt->execute([$data['username'], $data['email']]);
-        if ($stmt->fetch()) {
-            throw new Exception("Username or email already exists");
-        }
-
-        // 5. Create user account
-        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
-        $stmt = $db->prepare("INSERT INTO utilisateurs (username, password_hash, email, role) VALUES (?, ?, ?, 'student')");
-        if (!$stmt->execute([$data['username'], $passwordHash, $data['email']])) {
-            throw new Exception("Failed to create user account");
-        }
-        
-        $userId = $db->lastInsertId();
-        if ($userId <= 0) {
-            throw new Exception("Failed to generate valid user ID");
-        }
-
-        // 6. Create student record
-        $stmt = $db->prepare("
-            INSERT INTO etudiants (
-                user_id, cin, cne, nom, prenom, date_naissance,
-                nationalite, telephone, adresse, department_id,
-                field_id, cycle_id, group_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        $studentData = [
-            $userId,
-            $data['cin'],
-            $data['cne'],
-            $data['nom'],
-            $data['prenom'],
-            $data['date_naissance'],
-            $data['nationalite'] ?? null,
-            $data['telephone'] ?? null,
-            $data['adresse'] ?? null,
-            (int)$data['department_id'],
-            (int)$data['field_id'],
-            (int)$data['cycle_id'],
-            $data['group_id'] ?? null
-        ];
-        
-        if (!$stmt->execute($studentData)) {
-            throw new Exception("Failed to create student record");
-        }
-
-        // 7. Create enrollment record only if all required fields exist
-        if (!empty($data['annee_id']) && !empty($data['semestre_id'])) {
-            $stmt = $db->prepare("
-                INSERT INTO student_enrollments 
-                (student_id, annee_id, semestre_id, cycle_id, group_id, section_id, status)
-                VALUES (?, ?, ?, ?, ?, ?, 'active')
-            ");
-            $enrollmentData = [
-                $userId,
-                $data['annee_id'],
-                (int)($data['semestre_id'] ?? 1),
-                (int)($data['cycle_id'] ?? 1),
-                $data['group_id'] ?? null,
-                $data['section_id'] ?? null,
-            ];
-            
-            if (!$stmt->execute($enrollmentData)) {
-                throw new Exception("Failed to create enrollment record");
-            }
-        }
-
-        $db->commit();
-        return ['success' => true, 'user_id' => $userId];
-
-    } catch (Exception $e) {
-        $db->rollBack();
-        error_log("Student creation error: " . $e->getMessage());
-        throw new Exception("Student creation failed: " . $e->getMessage());
-    }
-}
-  public function updateStudent($id, $data)
-{
-    $db = $this->db;
-    $db->beginTransaction();
-
-    try {
-        // 1. Validate required fields
-        $required = ['username', 'email', 'cin', 'cne', 'nom', 'prenom', 
                      'date_naissance', 'department_id', 'field_id', 'cycle_id'];
-
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 throw new Exception("Missing required field: $field");
@@ -194,22 +125,185 @@ public function createStudent(array $data) {
             }
         }
 
-        // 4. Update utilisateurs
+        // 4. Validate department, field, and cycle
+        $stmt = $db->prepare("SELECT 1 FROM departements WHERE department_id = ?");
+        $stmt->execute([(int)$data['department_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid department specified");
+        }
+
+        $stmt = $db->prepare("SELECT 1 FROM filieres WHERE field_id = ?");
+        $stmt->execute([(int)$data['field_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid field specified");
+        }
+
+        $stmt = $db->prepare("SELECT 1 FROM cycles WHERE cycle_id = ?");
+        $stmt->execute([(int)$data['cycle_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid cycle specified");
+        }
+
+        // 5. Check for existing user
+        $stmt = $db->prepare("SELECT user_id FROM utilisateurs WHERE username = ? OR email = ? LIMIT 1");
+        $stmt->execute([$data['username'], $data['email']]);
+        if ($stmt->fetch()) {
+            throw new Exception("Username or email already exists");
+        }
+
+        // 6. Create user account
+        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
+        $stmt = $db->prepare("
+            INSERT INTO utilisateurs (username, password_hash, email, role, actuel)
+            VALUES (?, ?, ?, 'student', 1)
+        ");
+        if (!$stmt->execute([$data['username'], $passwordHash, $data['email']])) {
+            throw new Exception("Failed to create user account");
+        }
+        
+        $userId = $db->lastInsertId();
+        if ($userId <= 0) {
+            throw new Exception("Failed to generate valid user ID");
+        }
+
+        // 7. Create student record
+        $stmt = $db->prepare("
+            INSERT INTO etudiants (
+                user_id, cin, cne, nom, prenom, date_naissance,
+                nationalite, telephone, adresse, department_id,
+                field_id, cycle_id, group_id, actuel
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ");
+        $studentData = [
+            $userId,
+            $data['cin'],
+            $data['cne'],
+            $data['nom'],
+            $data['prenom'],
+            $data['date_naissance'],
+            $data['nationalite'] ?? null,
+            $data['telephone'] ?? null,
+            $data['adresse'] ?? null,
+            (int)$data['department_id'],
+            (int)$data['field_id'],
+            (int)$data['cycle_id'],
+            $data['group_id'] ?? null
+        ];
+        
+        if (!$stmt->execute($studentData)) {
+            throw new Exception("Failed to create student record");
+        }
+
+        // 8. Create enrollment record if provided
+        if (!empty($data['annee_id']) && !empty($data['semestre_id'])) {
+            $stmt = $db->prepare("
+                INSERT INTO student_enrollments 
+                (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, group_id, section_id, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
+            ");
+            $enrollmentData = [
+                $userId,
+                $data['annee_id'],
+                (int)$data['semestre_id'],
+                (int)$data['cycle_id'],
+                (int)$data['field_id'],
+                $data['etape_id'] ?? null,
+                $data['group_id'] ?? null,
+                $data['section_id'] ?? null
+            ];
+            
+            if (!$stmt->execute($enrollmentData)) {
+                throw new Exception("Failed to create enrollment record");
+            }
+        }
+
+       
+
+        $db->commit();
+        return ['success' => true, 'user_id' => $userId];
+
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log("Student creation error: " . $e->getMessage());
+        throw new Exception("Student creation failed: " . $e->getMessage());
+    }
+}
+  public function updateStudent($id, array $data) {
+    $db = $this->db;
+    $db->beginTransaction();
+
+    try {
+        // 1. Validate required fields
+        $required = ['username', 'email', 'password_hash','cin', 'cne', 'nom', 'prenom', 
+                     'date_naissance', 'department_id', 'field_id', 'cycle_id'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                throw new Exception("Missing required field: $field");
+            }
+        }
+
+        // 2. Validate academic year exists if provided
+        if (isset($data['annee_id'])) {
+            $stmt = $db->prepare("SELECT 1 FROM annees_academiques WHERE annee_id = ?");
+            $stmt->execute([$data['annee_id']]);
+            if (!$stmt->fetch()) {
+                throw new Exception("Invalid academic year specified");
+            }
+        }
+
+        // 3. Validate semester exists if provided
+        if (isset($data['semestre_id'])) {
+            $stmt = $db->prepare("SELECT 1 FROM semestres WHERE semestre_id = ?");
+            $stmt->execute([$data['semestre_id']]);
+            if (!$stmt->fetch()) {
+                throw new Exception("Invalid semester specified");
+            }
+        }
+
+        // 4. Validate department, field, and cycle
+        $stmt = $db->prepare("SELECT 1 FROM departements WHERE department_id = ?");
+        $stmt->execute([(int)$data['department_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid department specified");
+        }
+
+        $stmt = $db->prepare("SELECT 1 FROM filieres WHERE field_id = ?");
+        $stmt->execute([(int)$data['field_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid field specified");
+        }
+
+        $stmt = $db->prepare("SELECT 1 FROM cycles WHERE cycle_id = ?");
+        $stmt->execute([(int)$data['cycle_id']]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Invalid cycle specified");
+        }
+
+        // 5. Check if user exists
+        $stmt = $db->prepare("SELECT 1 FROM utilisateurs WHERE user_id = ?");
+        $stmt->execute([$id]);
+        if (!$stmt->fetch()) {
+            throw new Exception("User does not exist");
+        }
+
+        // 6. Update utilisateurs
+        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
         $stmt = $db->prepare("
             UPDATE utilisateurs 
-            SET username = ?, email = ?
+            SET username = ?, email = ?, password_hash =?,actuel = ?
             WHERE user_id = ?
         ");
-        if (!$stmt->execute([$data['username'], $data['email'], $id])) {
+        if (!$stmt->execute([$data['username'], $data['email'],$passwordHash, $data['actuel'] ?? 1, $id])) {
             throw new Exception("Failed to update user account");
         }
 
-        // 5. Update etudiants
+        // 7. Update etudiants           $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
+
         $stmt = $db->prepare("
             UPDATE etudiants SET
                 cin = ?, cne = ?, nom = ?, prenom = ?, date_naissance = ?,
                 nationalite = ?, telephone = ?, adresse = ?, department_id = ?,
-                field_id = ?, cycle_id = ?, group_id = ?
+                field_id = ?, cycle_id = ?, group_id = ?, actuel = ?
             WHERE user_id = ?
         ");
         if (!$stmt->execute([
@@ -225,32 +319,39 @@ public function createStudent(array $data) {
             (int)$data['field_id'],
             (int)$data['cycle_id'],
             $data['group_id'] ?? null,
+            $data['actuel'] ?? 1,
             $id
         ])) {
             throw new Exception("Failed to update student record");
         }
 
-        // 6. Update or Insert enrollment if data is available
+        // 8. Update or Insert enrollment if data is available
         if (!empty($data['annee_id']) && !empty($data['semestre_id'])) {
-            // Check if enrollment already exists
-            $stmt = $db->prepare("SELECT 1 FROM student_enrollments WHERE student_id = ?");
-            $stmt->execute([$id]);
+            // Check if enrollment exists
+            $stmt = $db->prepare("SELECT 1 FROM student_enrollments WHERE student_id = ? AND annee_id = ? AND semestre_id = ?");
+            $stmt->execute([$id, $data['annee_id'], $data['semestre_id']]);
             $enrollmentExists = $stmt->fetch();
 
             if ($enrollmentExists) {
                 // Update existing enrollment
                 $stmt = $db->prepare("
                     UPDATE student_enrollments
-                    SET annee_id = ?, semestre_id = ?, cycle_id = ?, group_id = ?, section_id = ?, status = 'active'
-                    WHERE student_id = ?
+                    SET annee_id = ?, semestre_id = ?, cycle_id = ?, field_id = ?, etape_id = ?, 
+                        group_id = ?, section_id = ?, status = ?
+                    WHERE student_id = ? AND annee_id = ? AND semestre_id = ?
                 ");
                 if (!$stmt->execute([
                     $data['annee_id'],
-                    $data['semestre_id'],
+                    (int)$data['semestre_id'],
                     (int)$data['cycle_id'],
+                    (int)$data['field_id'],
+                    $data['etape_id'] ?? null,
                     $data['group_id'] ?? null,
                     $data['section_id'] ?? null,
-                    $id
+                    $data['status'] ?? 'active',
+                    $id,
+                    $data['annee_id'],
+                    $data['semestre_id']
                 ])) {
                     throw new Exception("Failed to update enrollment record");
                 }
@@ -258,16 +359,19 @@ public function createStudent(array $data) {
                 // Insert new enrollment
                 $stmt = $db->prepare("
                     INSERT INTO student_enrollments 
-                    (student_id, annee_id, semestre_id, cycle_id, group_id, section_id, status)
-                    VALUES (?, ?, ?, ?, ?, ?, 'active')
+                    (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, group_id, section_id, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 if (!$stmt->execute([
                     $id,
                     $data['annee_id'],
-                    $data['semestre_id']?? 1,
-                    $data['cycle_id']?? 1,
+                    (int)$data['semestre_id'],
+                    (int)$data['cycle_id'],
+                    (int)$data['field_id'],
+                    $data['etape_id'] ?? null,
                     $data['group_id'] ?? null,
-                    $data['section_id'] ?? null
+                    $data['section_id'] ?? null,
+                    $data['status'] ?? 'active'
                 ])) {
                     throw new Exception("Failed to insert enrollment record");
                 }
@@ -283,7 +387,6 @@ public function createStudent(array $data) {
         throw new Exception("Student update failed: " . $e->getMessage());
     }
 }
-
 
 
     public function deleteStudent($id)
