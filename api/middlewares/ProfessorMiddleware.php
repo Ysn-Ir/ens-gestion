@@ -22,8 +22,8 @@ class ProfessorMiddleware extends AuthMiddleware {
         parent::verifySession(); // Vérifie l'authentification de la session
 
         // Vérifie si le rôle de l'utilisateur n'est ni 'prof', ni 'chef_dep', ni 'chef_fill'
-        if ($_SESSION['user']['role'] !== 'prof' && 
-            $_SESSION['user']['role'] !== 'chef_dep' && 
+        if ($_SESSION['user']['role'] !== 'prof' &&
+            $_SESSION['user']['role'] !== 'chef_dep' &&
             $_SESSION['user']['role'] !== 'chef_fill') {
             $this->response->send(403, ['error' => 'Privilèges professeur requis']);
             exit; // Termine l'exécution si les privilèges sont insuffisants

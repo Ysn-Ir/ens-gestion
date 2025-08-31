@@ -6,8 +6,8 @@ class Response {
      * @param int $code Code HTTP
      * @param array $data Données à envoyer
      */
-    public function send(int $code, array $data = []) {
-        http_response_code($code);
+    public static function send(int $code, array $data = []) {
+        http_response_code($code );
         header('Content-Type: application/json');
         echo json_encode([
             'status' => $code,
@@ -15,24 +15,24 @@ class Response {
         ]);
         exit;
     }
-    public function sende(int $code, array $data = []) {
-            http_response_code($code);
-            header('Content-Type: application/json');
-            $response = $data;
-            $response['http_code'] = $code;
-            echo json_encode($response);
-            exit;
+
+    public static function sende(int $code, array $data = []) {
+        http_response_code($code );
+        header('Content-Type: application/json');
+        $response = $data;
+        $response['http_code'] = $code;
+        echo json_encode($response );
+        exit;
     }
 
-
     /**
-     * Envoie une réponse d'erreur
+     * Envoie une réponse d\'erreur
      * 
      * @param int $code Code HTTP
-     * @param string $message Message d'erreur
+     * @param string $message Message d\'erreur
      */
-    public function error(int $code, string $message) {
-        $this->send($code, [
+    public static function error(int $code, string $message) {
+        self::send($code, [
             'error' => true,
             'message' => $message
         ]);
@@ -44,15 +44,14 @@ class Response {
      * @param array $data Données à envoyer
      * @param int $code Code HTTP (200 par défaut)
      */
-    public function success(array $data = [], int $code = 200) {
-        $this->send($code, [
+    public static function success(array $data = [], int $code = 200) {
+        self::send($code, [
             'success' => true,
             'data' => $data
         ]);
     }
 
-
-    public function sendSuccess($message, $data = [], $statusCode = 200) {
+    public static function sendSuccess($message, $data = [], $statusCode = 200) {
         header('Content-Type: application/json', true, $statusCode);
         echo json_encode([
             'success' => true,
@@ -67,7 +66,7 @@ class Response {
      * @param string $message Error message
      * @param int $statusCode HTTP status code (default: 400)
      */
-    public function sendError($message, $statusCode = 400) {
+    public static function sendError($message, $statusCode = 400) {
         header('Content-Type: application/json', true, $statusCode);
         echo json_encode([
             'success' => false,

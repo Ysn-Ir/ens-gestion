@@ -26,7 +26,7 @@ class AdminController3 {
     {
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
-        $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING) ?? '';
+        $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS) ?? '';
         try {
             $professors = $this->model->getAllProfessors($search);
             $this->response->send(200, $professors);
@@ -122,7 +122,7 @@ class AdminController3 {
     {
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
-        $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING) ?? '';
+        $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS) ?? '';
         if (empty($yearId)) {
             $this->response->send(400, ['status' => 'error', 'message' => 'Invalid year ID']);
             return;
@@ -229,7 +229,7 @@ class AdminController3 {
     $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
 
-    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING) ?? '';
+    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS) ?? '';
     $anneeId = filter_input(INPUT_GET, 'annee_id', FILTER_VALIDATE_INT);
     $departmentId = filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
     $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;

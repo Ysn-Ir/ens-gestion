@@ -3,222 +3,355 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - Filières</title>
+  <title>Modifier un Département</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">    <script src="../../route.js"></script>
+
   <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-color: #dee2e6;
+      --warning-color: #ffc107;
+      --card-bg: #ffffff;
+      --input-bg: #f8f9fa;
+    }
+    
     body {
       margin: 0;
-      background-color: #f8f9fa;
+      background-color: #f5f7f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
     }
-    .sidebar {
-      height: 100vh;
-      width: 220px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background-color: #343a40;
-      padding-top: 60px;
-      color: #fff;
-    }
-    .sidebar h4 {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid #495057;
-    }
-    .sidebar a {
-      display: block;
-      padding: 12px 20px;
-      color: #adb5bd;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .sidebar a:hover {
-      background-color: #495057;
-      color: #fff;
-    }
-    .content {
+    
+    .dashboard-container {
       padding: 20px;
       min-height: 100vh;
-      background-color: #fff;
     }
-    .logout-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 999;
+    
+    .header-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid var(--warning-color);
     }
+    
     .welcome-message {
-      font-size: 24px;
-      font-weight: bold;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 5px;
+    }
+    
+    .form-container {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      margin-bottom: 30px;
+    }
+    
+    .form-title {
+      color: var(--secondary-color);
+      font-weight: 600;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--warning-color);
+      display: flex;
+      align-items: center;
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .form-label i {
+      margin-right: 8px;
+      color: var(--primary-color);
+    }
+    
+    .form-control, .form-select {
+      border-radius: 6px;
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      background-color: var(--input-bg);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+      background-color: white;
+    }
+    
+    .btn-submit {
+      /* background-color: var(--warning-color); */
+      border: none;
+      padding: 12px 25px;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      /* width: 100%; */
+      margin-top: 10px;
+      color: white;
+    }
+    
+    .btn-submit:hover {
+      /* background-color: #e0a800; */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-back {
+      background-color: var(--secondary-color);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+      color: white;
+    }
+    
+    .btn-back:hover {
+      background-color: #1e2a38;
+      transform: translateY(-2px);
+    }
+    
+    .info-card {
+      background-color: rgba(255, 193, 7, 0.1);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--warning-color);
+    }
+    
+    .info-text {
+      color: var(--secondary-color);
+      font-size: 0.9rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    .info-text i {
+      margin-right: 8px;
+      color: var(--warning-color);
+    }
+    
+    /* Animation for form elements */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-container > * {
+      animation: fadeIn 0.4s ease-out;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 15px;
+      }
+      
+      .header-section, .form-container {
+        padding: 20px;
+      }
+      
+      .welcome-message {
+        font-size: 1.5rem;
+      }
+      
+      .btn-submit, .btn-back {
+        width: 100%;
+      }
+    }
+    
+    .current-value {
+      background-color: rgba(52, 152, 219, 0.1);
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-top: 5px;
+      font-size: 0.9rem;
+      color: var(--primary-color);
     }
   </style>
 </head>
 <body>
-  
 
-  <div class="content">
-    <div class="welcome-message mb-4">
-      Bonjour <span id="usernameDisplay"></span> !
-    </div>
-    <div class="alert alert-info">
-      Vous êtes connecté en tant que: <strong id="userRole"></strong>
-    </div>
-    <div class="d-flex justify-content-between mb-3">
-          
-          <div class="p-2 ">     
-            <button type="button" class="btn btn-dark" onclick="retourner()"> Retourner à la liste des départements</button>
-      </div>
-        </div>
+  <div class="dashboard-container">
+    <!-- Header Section -->
+    
 
-    <div class="container mt-5">
-      <h3 class="mb-4">Modifier un département</h3>
+    <!-- Back Button -->
+    <button type="button" class="btn btn-back text-white" onclick="retourner()">
+      <i class="fas fa-arrow-left me-2"></i>Retour à la liste des départements
+    </button>
 
+    <!-- Form Section -->
+    <div class="form-container">
+      
+      
+      
       <form id="departForm">
-        <div class="mb-3">
-          <label for="nom" class="form-label">Nom du département</label>
-          <input type="text" class="form-control" id="nom" placeholder="ex: Génie Informatique" required>
+        <!-- Department Name -->
+        <div class="mb-4">
+          <label for="nom" class="form-label">
+            <i class="fas fa-signature"></i>Nom du département
+          </label>
+          <input type="text" class="form-control" id="nom" placeholder="Ex: Informatique" required>
         </div>
 
-
-        <div class="mb-3">
-          <label for="professeur" class="form-label">Chef de Département</label>
+        <!-- Chef de Département -->
+        <div class="mb-4">
+          <label for="professeur" class="form-label">
+            <i class="fas fa-user-tie"></i>Chef de Département
+          </label>
           <select class="form-select" id="professeur" required>
-            <option value="">-- Sélectionner --</option>
+            <option value="">Sélectionnez un professeur</option>
           </select>
         </div>
 
-        <div class="mb-3">
-          <label for="annee" class="form-label">Annee accréditation</label>
+        <!-- Année d'accréditation -->
+        <div class="mb-4">
+          <label for="annee" class="form-label">
+            <i class="fas fa-calendar-alt"></i>Année d'accréditation
+          </label>
           <select class="form-select" id="annee" required>
-            <option value="">-- Sélectionner --</option>
+            <option value="">Sélectionnez une année</option>
           </select>
         </div>
 
-
-       
-        
-
-        <button type="submit" class="btn btn-success" >Modifier le département</button>
+        <button type="submit" class="btn btn-submit btn-success">
+          <i class="fas fa-save me-2"></i>Enregistrer les modifications
+        </button>
       </form>
     </div>
   </div>
 
   <script>
     function retourner() {
-      window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/depart.html";
+      window.location.href = "depart.html";
     }
-        const profSelect = document.getElementById('professeur');
-        const nomDepart=document.getElementById('nom');
-        const anneeSelect=document.getElementById('annee');
+    
+    const profSelect = document.getElementById('professeur');
+    const nomDepart = document.getElementById('nom');
+    const anneeSelect = document.getElementById('annee');
+ 
 
-        document.addEventListener('DOMContentLoaded', function () {
-                  // Simuler un utilisateur connecté (pour test)
-                  // let userData = localStorage.getItem("userData");
-                  // if (!userData) {
-                  //   localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
-                  //   userData = localStorage.getItem("userData");
-                  // }
+    document.addEventListener('DOMContentLoaded', function () {
+      // Récupérer les données du localStorage
+      const departToUpdate = JSON.parse(localStorage.getItem("departToUpdate") || "{}");
+      const storedNom = localStorage.getItem("nom_depart");
+      const storedId = localStorage.getItem("id_depart");
+      
+      // Afficher le nom actuel du département
+      
+      // Définir la valeur du champ nom
+      nomDepart.value = storedNom || "";
+      
+      // Helper to convert numeric-keyed objects to arrays
+      function objectToArray(obj) {
+        return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+      }
 
-                  // userData = JSON.parse(userData);
-                  // document.getElementById('usernameDisplay').textContent = userData.username;
-                  // document.getElementById('userRole').textContent = userData.role;
-
-                  // document.getElementById('logoutBtn').addEventListener('click', function () {
-                  //   localStorage.removeItem('userData');
-                  //   alert("Déconnecté !");
-                  //   window.location.reload();
-                  // });
-
-
-              nomDepart.value=localStorage.getItem("nom_depart");
-
-              // Helper to convert numeric-keyed objects to arrays, ignoring non-object keys like http_code
-              function objectToArray(obj) {
-                return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
-              }
-
-     
-
-      /// Fetch Professors
-      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllRegularProffessors')
-          .then(res => res.json())
-          .then(data => {
+      // Fetch Professors
+      fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors')
+        .then(res => res.json())
+        .then(data => {
           const profs = objectToArray(data);
-          profs.forEach(prof => {
-              console.log(prof);
-              const option = document.createElement('option');
-              option.value = prof.user_id;
-              option.textContent = prof.nom + " " + prof.prenom;
-              profSelect.appendChild(option);
-          });
-          })
-          .catch(() => alert("Erreur lors du chargement des professeurs"));
-
-
-                // Fetch Années
-                fetch('http://localhost/ens-gestion/api/admin2.php?action=YEARS')
-                    .then(res => res.json())
-                    .then(data => {
-                    const years = objectToArray(data);
-                    years.forEach(year => {
-                        const option = document.createElement('option');
-                        option.value = year.annee_id;
-                        option.textContent = year.annee_id;
-                        anneeSelect.appendChild(option);
-                    });   
-                    })
-                    .catch(() => alert("Erreur lors du chargement des années"));
-        
           
-
-        
+          
+          
+          profs.forEach(prof => {
+            const option = document.createElement('option');
+            option.value = prof.user_id;
+            option.textContent = `${prof.nom} ${prof.prenom}`;
+            
+            // Sélectionner le chef actuel si disponible
+            if (departToUpdate.chef_departement_id == prof.user_id) {
+              option.selected = true;
+            }
+            
+            profSelect.appendChild(option);
+          });
+        })
+        .catch(() => {
+          alert("Erreur lors du chargement des professeurs");
         });
 
-      
-       
-                        function updateDepart(){
-                            const prof = profSelect.value;
-                            const nom = nomDepart.value;
-                            const annee=anneeSelect.value ;
-
-                            if ( !prof  || !nom || !annee) {
-                            alert("Veuillez remplir tous les champs.");
-                            return;
-                            }
-
-                
-
-                            //Confirm the update 
-                            if (confirm("Voulez-vous vraiment modifier la filière  " + localStorage.getItem("nom_depart") + " ?")) {
-
-                                    //call the function update 
-                                    fetch(`http://localhost/ens-gestion/api/admin2.php?action=updateDepart&depart_id=${localStorage.getItem("id_depart")}&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&annee=${annee}`, {
-                                        method: 'GET',
-                                        credentials: 'include'
-                                    })
-                                    .then(response => response.json())
-                                    .then(result => {
-                                          console.log("Message retourné :", result.message);  // <== debug ici
-                                    if (result.message === "Département modifié avec succès") {
-                                            window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/depart.html";
-
-                                    } else {
-                                        console.log(result);
-                                        alert("Erreur : " + result.message);
-                                    }
-                                    })
-                                    .catch(error => {
-                                    console.error("Erreur:", error);
-                                    alert("Erreur lors de la modification du département.");
-                                    });
-                            }
+      // Fetch Années
+      fetch(adminURL+'/admin2.php?action=YEARS')
+        .then(res => res.json())
+        .then(data => {
+          const years = objectToArray(data);
+          
+          
+          
+          years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year.annee_id;
+            option.textContent = year.annee_id;
+            
+            // Sélectionner l'année actuelle si disponible
+            if (departToUpdate.annee_accreditation == year.annee_id) {
+              option.selected = true;
             }
+            
+            anneeSelect.appendChild(option);
+          });   
+        })
+        .catch(() => alert("Erreur lors du chargement des années"));
+    });
 
-            document.getElementById("departForm").addEventListener("submit", function (e) {
-              e.preventDefault(); // <- empêche le rechargement de page
-              updateDepart();
-            });
+    function updateDepart() {
+      const prof = profSelect.value;
+      const nom = nomDepart.value;
+      const annee = anneeSelect.value;
 
+      if (!prof || !nom || !annee) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+      }
+
+      // Confirmation de la modification
+      if (confirm(`Voulez-vous vraiment modifier le département "${localStorage.getItem("nom_depart")}" ?`)) {
+        // Appel API
+        fetch(adminURL+`/admin2.php?action=updateDepart&depart_id=${localStorage.getItem("id_depart")}&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&annee=${annee}`, {
+          method: 'GET',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(result => {
+          console.log("Message retourné :", result.message);
+          if (result.message === "Département modifié avec succès") {
+            alert("Département modifié avec succès !");
+            window.location.href = "depart.html";
+          } else {
+            alert("Erreur : " + (result.message || "Une erreur s'est produite"));
+          }
+        })
+        .catch(error => {
+          console.error("Erreur:", error);
+          alert("Erreur lors de la modification du département.");
+        });
+      }
+    }
+
+    document.getElementById("departForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      updateDepart();
+    });
   </script>
 </body>
 </html>

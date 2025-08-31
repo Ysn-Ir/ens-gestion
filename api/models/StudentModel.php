@@ -88,14 +88,14 @@ class StudentModel
     }
     public function getStudentByUserId($userId) 
     {
-    $sql = "SELECT e.*, u.username, u.email
-            FROM etudiants e
-            JOIN utilisateurs u ON e.user_id = u.user_id
-            WHERE e.user_id = :userId";
+        $sql = "SELECT e.*, u.username, u.email
+                FROM etudiants e
+                JOIN utilisateurs u ON e.user_id = u.user_id
+                WHERE e.user_id = :userId";
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([':userId' => $userId]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':userId' => $userId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function getAllNotesByEtapeAndSemester($id, $etape_id, $semester_id)
@@ -216,16 +216,25 @@ public function getAllEtapes() {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getSemestresByEtape($etapeId) {
-        $stmt = $this->db->prepare("
-            SELECT semestre_id, nom
-            FROM semestres
-            WHERE etape_id = ?
-            ORDER BY nom
-        ");
-        $stmt->execute([$etapeId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    public function getSemestresByEtapeCycleFiliere($etapeId, $cycleId, $fieldId) {
+    // Prepare the SQL query to fetch semesters based on etape_id, cycle_id, field_id, and current academic year
+    $stmt = $this->db->prepare("
+        SELECT s.semestre_id, s.nom
+        FROM semestres s
+        JOIN annees_academiques aa ON s.annee_id = aa.annee_id
+        WHERE s.etape_id = ?
+          AND s.cycle_id = ?
+          AND s.field_id = ?
+          AND aa.current_flag = 1
+        ORDER BY s.nom
+    ");
+    
+    // Execute the query with the provided parameters
+    $stmt->execute([$etapeId, $cycleId, $fieldId]);
+    
+    // Fetch and return the results as an associative array
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 
     public function getAllAnnees() {
@@ -238,5 +247,63 @@ public function getAllEtapes() {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    
+    public function getYearStudied($student_id) {
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT se.annee_id
+            FROM student_enrollments se
+            WHERE se.student_id = ?
+            ORDER BY se.annee_id DESC
+        ");
+        $stmt->execute([$student_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function changePassword($userId, $newPassword) {
+        // Hash the new password
+        $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+
+        // Update the password in the database
+        $stmt = $this->db->prepare("
+            UPDATE utilisateurs
+            SET password_hash = ?
+            WHERE user_id = ?
+        ");
+        return $stmt->execute([$hashedPassword, $userId]);
+    }
+
+    public function getCycleOfStudent($student_id) {
+        $stmt = $this->db->prepare("
+            select c.cycle_id, c.nom AS cycle_name
+            from cycles c
+            join etudiants e ON c.cycle_id = e.cycle_id
+            where e.user_id = ?
+        ");
+        $stmt->execute([$student_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getSemestresOfStudentByCycle($student_id, $cycle_id) {
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT s.semestre_id, s.nom AS semestre_name
+            FROM semestres s
+            JOIN student_enrollments se ON s.semestre_id = se.semestre_id
+            WHERE se.student_id = ? AND s.cycle_id = ?
+            ORDER BY s.nom
+        ");
+        $stmt->execute([$student_id, $cycle_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getNoteOfStudentBysemestre($student_id, $semestre_id) {
+        $stmt = $this->db->prepare("
+            SELECT m.nom AS module_name, nm.note_module,m.code
+            FROM note_modules nm
+            JOIN modules m ON nm.module_id = m.module_id
+            WHERE nm.student_id = ? AND nm.semestre_id = ?
+        ");
+        $stmt->execute([$student_id, $semestre_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
 }

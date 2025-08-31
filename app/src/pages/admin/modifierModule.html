@@ -3,629 +3,1564 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - Modifier un Module</title>
+  <title>Modification de Module - ENSA</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">    <script src="../../route.js"></script>
+
   <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #34495e;
+      --accent: #3498db;
+      --light: #f8f9fa;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --border: #e0e0e0;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7f9;
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      color: #333;
+      line-height: 1.6;
     }
 
-    .sidebar {
-      height: 100vh;
-      width: 220px;
-      position: fixed;
+    /* Header Styles */
+    .dashboard-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: var(--card-shadow);
+      position: sticky;
       top: 0;
-      left: 0;
-      background-color: #343a40;
-      padding-top: 60px;
-      color: #fff;
+      z-index: 100;
     }
 
-    .sidebar h4 {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid #495057;
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
     }
 
-    .sidebar a {
-      display: block;
-      padding: 12px 20px;
-      color: #adb5bd;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.4rem;
     }
 
-    .sidebar a:hover {
-      background-color: #495057;
-      color: #ffffff;
+    .logo i {
+      margin-right: 10px;
+      font-size: 1.6rem;
     }
 
-    .content {
-      padding: 30px;
-      background-color: #ffffff;
-      min-height: 100vh;
+    /* Main Content */
+    .main-content {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
     }
 
-    .logout-btn {
+    .form-container {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 2rem;
+      border-top: 4px solid var(--accent);
+    }
+
+    .form-title {
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 1.8rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+
+    .form-title i {
+      margin-right: 12px;
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+
+    .btn {
+      border-radius: 6px;
+      font-weight: 600;
+      padding: 0.6rem 1.5rem;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-dark {
+      background: var(--dark);
+    }
+
+    .btn-dark:hover {
+      background: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-success {
+      background: var(--success);
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+    }
+
+    .btn-success:hover {
+      background: #219653;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+    }
+
+    /* Filière Info Card */
+    .info-card {
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--card-shadow);
+    }
+
+    .info-card h5 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-card h5 i {
+      margin-right: 10px;
+      color: var(--accent);
+    }
+
+    .info-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: var(--dark);
+      font-weight: 500;
+    }
+
+    /* Module Container Styles */
+    .module-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .module-card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .module-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .module-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--primary);
+    }
+
+    .module-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .module-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-label {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-label i {
+      margin-right: 8px;
+      color: var(--accent);
+    }
+
+    .has-elements-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 1.2rem 0;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .module-coefficients {
+      background-color: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--success);
+    }
+
+    .coefficient-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .coefficient-title {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .titles {
+      font-weight: 600;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+    }
+
+    .coefficient-title i {
+      margin-right: 8px;
+      color: var(--success);
+    }
+
+    .coefficient-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .coefficient-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .alert-coeff {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .professeurs-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--accent);
+    }
+
+    .horaire-container {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--warning);
+    }
+
+    .horaire-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+    }
+
+    .horaire-title i {
+      margin-right: 8px;
+      color: var(--warning);
+    }
+
+    .elements-main-container {
+      margin-top: 1.5rem;
+    }
+
+    .element-container {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      border-left: 4px solid #6f42c1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .element-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .add-element-btn {
+      margin-top: 1rem;
+    }
+
+    .total-coeff-alert {
+      margin-top: 1rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Toast Alert */
+    .alert-toast {
       position: fixed;
       top: 20px;
       right: 20px;
-      z-index: 999;
+      z-index: 1050;
+      min-width: 300px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
-    .form-section {
-      background-color: #f1f1f1;
-      padding: 20px;
-      border-radius: 10px;
-      border: 1px solid #ced4da;
+    /* Animation for dynamic content */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .dynamic-section {
-      border: 1px solid #ced4da;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      background-color: #ffffff;
+    .module-card, .element-container {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 0 1rem;
+      }
+      
+      .form-container {
+        padding: 1.5rem;
+      }
+      
+      .coefficient-inputs {
+        grid-template-columns: 1fr;
+      }
+      
+      .info-details {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  
-  <div class="content">
-    <div class="welcome-message mb-4">
-      Bonjour <span id="usernameDisplay"></span> !
-    </div>
-    <div class="alert alert-info">
-      Vous êtes connecté en tant que: <strong id="userRole"></strong>
-    </div>
-    <div class="d-flex justify-content-between mb-3">
-          
-          <div class="p-2 ">     
-            <button type="button" class="btn btn-dark" onclick="retourner()"> Retourner à la liste des modules</button>
-      </div>
-        </div>
 
-    <div class="form-section">
-      <h2 class="mb-4">Modifier un Module</h2>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-graduation-cap"></i>
+        <span>ENSA - Modification de Module</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button type="button" class="btn btn-dark" onclick="retourner()">
+        <i class="fas fa-arrow-left me-2"></i>Retourner à la liste des modules
+      </button>
+    </div>
+
+    <div class="form-container">
+      <h3 class="form-title"><i class="fas fa-edit me-2"></i>Modifier un Module</h3>
+      
       <form id="moduleForm">
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="code_module" class="form-label">Code Module</label>
-            <input type="text" class="form-control" id="code_module" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="nom_module" class="form-label">Nom Module</label>
-            <input type="text" class="form-control" id="nom_module" required>
-          </div>
-        </div>
-
-        <h4 class="mt-4">Éléments de Module</h4>
-        <div class="col-md-4 mb-3">
-                <label><h6 class=" mb-3">Le module est-il composé d’éléments ?</h6></label>
-                <select class="form-select  mb-3" id="hasElement" required>
-                    <option value="">-- Sélectionner --</option>
-                    <option value="Non">Non</option>
-                    <option value="Oui">Oui</option>
-                </select>
-        </div>
-
-        
-
-
-
-
-
-        <div id="elementsContainer"></div>
-        <div id="elementControls"></div>
-        <div id="elementList"></div>
-        <!-- <button type="button" class="btn btn-outline-primary mb-3" onclick="addElement()">Ajouter Élément</button> --> 
-
-        <h4 class="mt-4">Filière Associée</h4>
-        <div id="filieresContainer">
-          <div class="row">
-        <div class="col-md-6 mb-3">
-          <label>Filière</label>
-          <select class="form-select" id="filiere" required>
-              <option disabled selected>Choisissez une filière</option>
+        <!-- Sélection de filière et semestre -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label for="filiere" class="form-label fw-bold"><i class="fas fa-list-alt me-2"></i>Sélectionner une Filière</label>
+            <select class="form-select form-select-lg" id="filiere" required>
+              <option value="" disabled selected>Choisissez une filière</option>
             </select>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label>Semestre</label>
-          <select class="form-select" id="semestre" required>
-                          <option disabled selected>Choisissez le semestre</option>
+          </div>
+          <div class="col-md-6">
+            <label for="semestre" class="form-label fw-bold"><i class="fas fa-calendar-alt me-2"></i>Sélectionner un Semestre</label>
+            <select class="form-select form-select-lg" id="semestre" required>
+                          <option value="" selected>Tous les semestres</option>
 
-          </select>
+            </select>
+          </div>
         </div>
-       
-      </div>
+        
+        <!-- Filière Information -->
+        <div id="filiereInfo" class="info-card" style="display: none;">
+          <h5><i class="fas fa-info-circle me-2"></i>Informations de la Filière</h5>
+          <div class="info-details">
+            <div class="info-item">
+              <span class="info-label">Nom de la filière</span>
+              <span class="info-value" id="info-nom">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Cycle</span>
+              <span class="info-value" id="info-cycle">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Département</span>
+              <span class="info-value" id="info-departement">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Responsable</span>
+              <span class="info-value" id="info-responsable">-</span>
+            </div>
+          </div>
         </div>
-        <div >
-        <button type="submit" class="btn btn-dark mb-">Enregistrer les modifications</button>
 
+        <!-- Module Container -->
+        <div id="moduleContainer" class="module-card">
+          <div class="module-card-header">
+            <h5 class="module-card-title"><i class="fas fa-cube me-2"></i>Module à modifier</h5>
+          </div>
+          
+          <div class="module-section">
+            <div class="section-label"><i class="fas fa-info-circle me-2"></i>Informations de base</div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label titles">Code</label>
+                <input type="text" class="form-control module-code" placeholder="Code de module" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label titles">Nom</label>
+                <input type="text" class="form-control module-name" placeholder="Nom du module" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label titles">Chef de module</label>
+                <select class="form-select module-chef prof-select" required>
+                  <option value="">Sélectionner un chef de module</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label titles">Langue d'enseignement</label>
+                <select class="form-select module-langue" required>
+                  <option value="">Sélectionner une langue</option>
+                  <option value="français">Français</option>
+                  <option value="anglais">Anglais</option>
+                  <option value="arabe">Arabe</option>
+                  <option value="espagnol">Espagnol</option>
+                  <option value="allemand">Allemand</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label titles">Type de module</label>
+                <select class="form-select module-type" required>
+                  <option value="">Sélectionner un type</option>
+                  <option value="Soft Skills">Soft Skills</option>
+                  <option value="Module d'éducation">Module d'éducation</option>
+                  <option value="Module de spécialité">Module de spécialité</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="module-section">
+            <div class="has-elements-group">
+              <span class="form-label">Le module est-il composé d'éléments ?</span>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input has-elements-yes" type="radio" name="hasElements" value="yes">
+                <label class="form-check-label">Oui</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input has-elements-no" type="radio" name="hasElements" value="no" checked>
+                <label class="form-check-label">Non</label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Conteneur pour les coefficients du module (affiché quand "Non" est sélectionné) -->
+          <div class="module-coefficients">
+            <div class="coefficient-inputs">
+              <div class="coefficient-item">
+                <label class="form-label titles">Coeff d'Ecrit</label>
+                <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+              </div>
+              <div class="coefficient-item titles">
+                <label class="form-label">Coeff de CC</label>
+                <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+              </div>
+              <div class="coefficient-item">
+                <label class="form-label titles">Coeff de TP</label>
+                <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+              </div>
+              <div class="coefficient-item">
+                <label class="form-label titles">Coeff de TD</label>
+                <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+              </div>
+              
+              <div class="coefficient-item">
+                <label class="form-label titles">Coeff de Projet</label>
+                <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
+              </div>
+            </div>  
+          
+            <div class="professeurs-group">
+              <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+              <div class="row">
+                
+                <div class="col-md-3 mb-3">
+                  <label class="form-label titles">Prof de Cours</label>
+                  <select class="form-select prof-cours prof-select">
+                    <option value="">Aucun prof</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label titles">Prof de TD</label>
+                  <select class="form-select prof-td prof-select">
+                    <option value="">Aucun prof</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label titles">Prof de TP</label>
+                  <select class="form-select prof-tp prof-select">
+                    <option value="">Aucun prof</option>
+                  </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                  <label class="form-label titles">Chef d'élément</label>
+                  <select class="form-select chef-element prof-select">
+                    <option value="">Aucun prof</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="horaire-container">
+              <h6 class="horaire-title">
+                <i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité :
+              </h6>
+              <div class="row">
+                <div class="col-md-2 mb-3">
+                  <label class="form-label titles">TP</label>
+                  <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label titles">TD</label>
+                  <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label titles">Cours</label>
+                  <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label titles">Pratique</label>
+                  <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label titles">Évaluation</label>
+                  <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="horaire-container">
+              <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label titles">En présentiel</label>
+                  <input type="number" class="form-control volume-presentiel" min="0" value="0">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label titles">A distance</label>
+                  <input type="number" class="form-control volume-distance" min="0" value="0">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label class="form-label titles">En alternance</label>
+                  <input type="number" class="form-control volume-alternance" min="0" value="0">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Conteneur principal qui s'affiche seulement si Oui est sélectionné -->
+          <div class="elements-main-container" style="display: none;">
+            <!-- Conteneur pour les éléments ajoutés dynamiquement -->
+            <div class="dynamic-elements-container"></div>
+            
+            <!-- Bouton pour ajouter un nouvel élément -->
+            <div class="mt-3">
+              <button type="button" class="btn btn-primary add-element-btn">
+                <i class="fas fa-plus me-1"></i>Ajouter élément
+              </button>
+            </div>
+            
+            <!-- Alert for total coefficients -->
+            <div class="alert alert-danger mt-3 total-coeff-alert" style="display: none;">
+              <i class="fas fa-exclamation-circle me-2"></i>La somme des coefficients de tous les éléments doit être égale à 1.
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-success btn-lg">
+            <i class="fas fa-save me-2"></i>Enregistrer les modifications
+          </button>
         </div>
       </form>
     </div>
+  </main>
+
+  <!-- Toast Alert -->
+  <div class="toast align-items-center text-white bg-danger border-0 alert-toast" role="alert" aria-live="assertive" aria-atomic="true" id="errorToast">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span id="toastMessage"></span>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
   </div>
 
- <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const filiereSelect = document.getElementById('filiere');
-  const elementsContainer = document.getElementById("elementsContainer");
-  const elementControls = document.getElementById("elementControls");
-  const hasElement = document.getElementById("hasElement");
-
-  let elementIndex = 0;
-  let allProfs = [];
-
-  // Charger les filières
-  fetch('http://localhost/ens-gestion/api/admin2.php?action=getFilieres', {
-    method: 'GET',
-    credentials: 'include'
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === "success" && Array.isArray(data.data)) {
-      data.data.forEach(filiere => {
-        const option = document.createElement('option');
-        option.value = filiere.field_id;
-        option.textContent = filiere.nom_filiere ?? filiere.nom ?? "Nom inconnu";
-        filiereSelect.appendChild(option);
-      });
-    } else {
-      const option = document.createElement('option');
-      option.textContent = "Aucune filière disponible";
-      option.disabled = true;
-      filiereSelect.appendChild(option);
-    }
-  })
-  .catch(error => {
-    console.error("Erreur lors du chargement des filières :", error);
-    filiereSelect.innerHTML = '';
-    const option = document.createElement('option');
-    option.textContent = "Erreur de chargement";
-    option.disabled = true;
-    filiereSelect.appendChild(option);
-  });
-
-  // // Charger les professeurs une seule fois au démarrage
-  // fetch('http://localhost:8080/ens-gestion/api/admin2.php?action=GetAllProffessors')
-  // .then(res => res.json())
-  // .then(data => {
-  //   for (const key in data) {
-  //     if (!isNaN(key)) {
-  //       allProfs.push(data[key]);
-  //     }
-  //   }
-
-  //   loadLocalData();
-  // })
-  // .catch(error => {
-  //   console.error(error);
-  //   alert("Erreur lors du chargement des professeurs");
-  // });
-
-  //Charger Prof
-                      fetch('http://localhost/ens-gestion/api/admin2.php?action=GetAllProffessors')
-                      .then(res => res.json())
-                      .then(data => {
-                        if (data.status === "success") {
-                          allProfs.push(...data.data); // Ajoute tous les professeurs à ton tableau
-                              loadLocalData();
-
-                        } else {
-                          alert("Erreur: " + data.message);
-                        }
-                      })
-                      .catch(error => {
-                        console.error(error);
-                        alert("Erreur lors du chargement des professeurs");
-                      });
-
-
-  // Quand la sélection "hasElement" change
-  hasElement.addEventListener("change", function () {
-    elementsContainer.innerHTML = "";
-    elementControls.innerHTML = "";
-    elementIndex = 0;
-
-    if (hasElement.value === "Oui") {
-      addElement(); // ajoute le premier élément
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-outline-primary mb-3";
-      btn.innerText = "Ajouter Élément";
-      btn.onclick = addElement;
-
-      elementControls.appendChild(btn);
-
-    } else if (hasElement.value === "Non") {
-      // Affiche les coefficients simples + selects prof_element et prof_tp pour le module seul
-      elementsContainer.innerHTML = `
-        <h4>Entrez les coefficients de module</h4>
-        <div class="row">
-          <div class="col-md-2 mb-3">
-            <label>Coeff Écrit</label>
-            <input type="number" class="form-control" min="0" max="1" step="0.01" id="module_ecrit" required>
-          </div>
-          <div class="col-md-2 mb-3">
-            <label>Coeff CC</label>
-            <input type="number" class="form-control" min="0" max="1" step="0.01" id="module_cc" required>
-          </div>
-          <div class="col-md-2 mb-3">
-            <label>Coeff TP</label>
-            <input type="number" class="form-control" min="0" max="1" step="0.01" id="module_tp" required>
-          </div>
-          
-          <div class="col-md-3 mb-3">
-            <label>Prof Élément</label>
-            <select class="form-select" id="prof_element" required>
-              <option disabled selected value="">Choisissez le prof de l'élément</option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label>Prof TP</label>
-            <select class="form-select" id="prof_tp" required>
-              <option value="null" selected>Aucun professeur</option>
-            </select>
-          </div>
-        </div>
-      `;
-
-      // Remplir selects prof_element et prof_tp pour le module seul
-      const profElementSelect = document.getElementById("prof_element");
-      const profTPSelect = document.getElementById("prof_tp");
-
-      allProfs.forEach(prof => {
-        const option1 = document.createElement('option');
-        option1.value = prof.user_id;
-        option1.textContent = `${prof.nom} ${prof.prenom}`;
-        profElementSelect.appendChild(option1);
-
-        const option2 = document.createElement('option');
-        option2.value = prof.user_id;
-        option2.textContent = `${prof.nom} ${prof.prenom}`;
-        profTPSelect.appendChild(option2);
-      });
-
-    } else {
-      elementsContainer.innerHTML = "";
-      elementControls.innerHTML = "";
-    }
-  });
-
-
-  // Chargement données locales + initialisation formulaire
-  function loadLocalData() {
-    // Remplir les champs code_module et nom_module depuis localStorage
-    document.getElementById("code_module").value = localStorage.getItem("code_module") || "";
-    document.getElementById("nom_module").value = localStorage.getItem("nom_module") || "";
-
-    // Gestion des éléments selon hasElement
-    if (localStorage.getItem("nom_element0") !== "null" && localStorage.getItem("nom_element0") !== null) {
-      hasElement.value = "Oui";
-
-      const numberOfElements = parseInt(localStorage.getItem("numberOfElements"), 10) || 0;
-
-      for (let i = 0; i < numberOfElements; i++) {
-        // Récupérer prof_element et prof_tp stockés localement (s'ils existent)
-        const profEl = localStorage.getItem(`prof_element_${i}`) || null;
-        const profTP = localStorage.getItem(`prof_tp_${i}`) || null;
-
-        addElement(profEl, profTP);
-
-        // Remplir les inputs avec les valeurs stockées
-        document.getElementById(`element_nom_${i}`).value = localStorage.getItem(`nom_element${i}`) || "";
-        document.getElementById(`element_cc_${i}`).value = localStorage.getItem(`cc_${i}`) || "";
-        document.getElementById(`element_ecrit_${i}`).value = localStorage.getItem(`ecrit_${i}`) || "";
-        document.getElementById(`element_tp_${i}`).value = localStorage.getItem(`tp_${i}`) || "";
-        document.getElementById(`element_${i}`).value = localStorage.getItem(`el_${i}`) || "";
-      }
-
-      // Ajouter bouton "Ajouter Élément"
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-outline-primary mb-3";
-      btn.innerText = "Ajouter Élément";
-      btn.onclick = () => addElement();
-
-      elementControls.appendChild(btn);
-    }
-  }
-
-  // Ajouter un élément dynamique avec selects de profs remplis
-  function addElement() {
-    const div = document.createElement("div");
-    div.className = "dynamic-section";
-    div.id = `element_div_${elementIndex}`;  // <-- Ajout de l'id ici
-
-    div.innerHTML = `
+  <!-- Template pour un conteneur d'élément -->
+  <template id="elementTemplate">
+    <div class="element-container">
+      <div class="element-header">
+        <h5><i class="fas fa-puzzle-piece me-2"></i>Élément</h5>
+        <button type="button" class="btn-remove" title="Supprimer l'élément">×</button>
+      </div>
       <div class="row">
-        <div class="col-md-6 mb-3">
-          <label>Nom Élément</label>
-          <input type="text" class="form-control" id="element_nom_${elementIndex}" required>
+        <div class="col-md-8 mb-3">
+          <label class="form-label titles">Nom de l'élément</label>
+          <input type="text" class="form-control element-name" placeholder="Nom de l'élément" required>
         </div>
-        <div class="col-md-2 mb-3">
-          <label>Coeff Écrit</label>
-          <input type="number" class="form-control" min="0" max="1" step="0.01" id="element_ecrit_${elementIndex}" required>
-        </div>
-        <div class="col-md-2 mb-3">
-          <label>Coeff CC</label>
-          <input type="number" class="form-control" min="0" max="1" step="0.01" id="element_cc_${elementIndex}" required>
-        </div>
-        <div class="col-md-2 mb-3">
-          <label>Coeff TP</label>
-          <input type="number" class="form-control" min="0" max="1" step="0.01" id="element_tp_${elementIndex}" required>
-        </div>
-        <div class="col-md-2 mb-3">
-          <label>Coeff Élément</label>
-          <input type="number" class="form-control" min="0" max="1" step="0.01" id="element_${elementIndex}" required>
-        </div>
-        <div class="col-md-3 mb-3">
-          <label>Prof Élément</label>
-          <select class="form-select" id="prof_element_${elementIndex}" required>
-            <option disabled selected value="">Choisissez le prof de l'élément</option>
-          </select>
-        </div>
-        <div class="col-md-3 mb-3">
-          <label>Prof TP</label>
-          <select class="form-select" id="prof_tp_${elementIndex}" required>
-            <option value="null" selected>Aucun professeur</option>
-          </select>
-        </div>
-
-
-         <div class="col-md-1 mb-3 d-flex align-items-end">
-          <button class="btn btn-sm btn-danger" onclick="supprimerElement(${elementIndex})">Supprimer</button>
+        <div class="col-md-4 mb-3">
+          <label class="form-label titles">Coefficient de l'élément</label>
+          <input type="number" class="form-control element-coeff" min="0" max="1" step="0.01" required>
         </div>
       </div>
-    `;
+      
+      <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de Projet</label>
+              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div>
+        
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de Cours</label>
+              <select class="form-select prof-cours prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Chef d'élément</label>
+              <select class="form-select chef-element prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      
+      <div class="horaire-container">
+        <h6 class="horaire-title">
+          <i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité :
+        </h6>
+        <div class="row">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
+          </div>
+        </div>
+      </div>
 
-    elementsContainer.appendChild(div);
+      <div class="horaire-container">
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En présentiel</label>
+            <input type="number" class="form-control volume-presentiel" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">A distance</label>
+            <input type="number" class="form-control volume-distance" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En alternance</label>
+            <input type="number" class="form-control volume-alternance" min="0" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
 
-    // Remplir selects prof_element et prof_tp avec la liste allProfs
-    const profElementSelect = document.getElementById(`prof_element_${elementIndex}`);
-    const profTPSelect = document.getElementById(`prof_tp_${elementIndex}`);
-
-    allProfs.forEach(prof => {
-      const option1 = document.createElement('option');
-      option1.value = prof.user_id;
-      option1.textContent = `${prof.nom} ${prof.prenom}`;
-      profElementSelect.appendChild(option1);
-
-      const option2 = document.createElement('option');
-      option2.value = prof.user_id;
-      option2.textContent = `${prof.nom} ${prof.prenom}`;
-      profTPSelect.appendChild(option2);
-    });
-
-    elementIndex++;
-  }
-
-  // Gestion du changement de filière pour charger les semestres
-  filiereSelect.addEventListener("change", () => {
-    const filiereId = filiereSelect.value;
-    fetch(`http://localhost/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          const nombreSemestre = data.nombre_semestre;
-          const semestreSelect = document.getElementById("semestre");
-          semestreSelect.innerHTML = ""; // Clear previous
-          for (let i = 1; i <= nombreSemestre; i++) {
-            const option = document.createElement("option");
-            option.value = i;
-            option.textContent = "Semestre " + i;
-            semestreSelect.appendChild(option);
-          }
-        }
-      })
-      .catch(() => alert("Erreur lors du chargement des semestres"));
-  });
-
-  // Soumission du formulaire
-  document.getElementById("moduleForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    ModifierModule();
-  });
-
-  function ModifierModule() {
-    const code = document.getElementById("code_module").value.trim();
-    const nom = document.getElementById("nom_module").value.trim();
-
-    if (!code || !nom) {
-      alert("Veuillez remplir le code et le nom du module.");
-      return;
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function addDefaultOption(selectElement, label = "Sélectionner", value = "") {
+      const defaultOption = document.createElement("option");
+      defaultOption.value = value;
+      defaultOption.textContent = label;
+      defaultOption.disabled = false;
+      defaultOption.selected = true;
+      selectElement.appendChild(defaultOption);
     }
+        const filiereSelect = document.getElementById('filiere');
+        const semestreSelect = document.getElementById("semestre");
 
-    const filiere = filiereSelect.value || null;
-    const semestre = document.getElementById("semestre").value || null;
+        filiereSelect.addEventListener("change", () => {
+          const filiereId = filiereSelect.value;
 
-    if (hasElement.value === "Non") {
-      // Module sans éléments, récupérer profs selects module seul
-      const profElementMain = document.getElementById("prof_element")?.value || null;
-      let profTPMain = document.getElementById("prof_tp")?.value;
+          // Clear old options
+          semestreSelect.innerHTML = "";
 
-      if (profTPMain === "null") profTPMain = null;
+          // Add default option
+          addDefaultOption(semestreSelect, "Tous les semestres", "");
 
-      const coeff_ecrit = parseFloat(document.getElementById("module_ecrit").value);
-      const coeff_cc = parseFloat(document.getElementById("module_cc").value);
-      const coeff_tp = parseFloat(document.getElementById("module_tp").value);
-      const coeff_element = parseFloat(1);
-
-      if ([coeff_cc, coeff_ecrit, coeff_tp, coeff_element].some(c => isNaN(c) || c < 0 || c > 1)) {
-        alert("Tous les coefficients doivent être des nombres valides entre 0 et 1.");
-        return;
-      }
-
-      const somme = coeff_cc + coeff_ecrit + coeff_tp;
-      if (Math.abs(somme - 1) > 0.0001) {
-        alert("La somme des coefficients (CC + Écrit + TP) doit être égale à 1.");
-        return;
-      }
-
-      if (!filiere || !semestre || !profElementMain) {
-        alert("Tous les champs sont obligatoires !");
-        return;
-      }
-
-      const url = `http://localhost/ens-gestion/api/admin2.php?action=UpdateModuleSansElements` +
-  `&module_id=${localStorage.getItem("module_id")}` +
-  `&nomMod=${encodeURIComponent(nom)}` +
-  `&codeMod=${encodeURIComponent(code)}` +
-  `&coeff_cc=${coeff_cc}` +
-  `&coeff_ecrit=${coeff_ecrit}` +
-  `&coeff_element=${coeff_element}` +
-  `&coeff_tp=${coeff_tp}` +
-  `&filiere=${filiere}` +
-  `&semestre=${semestre}` +
-  `&prof_element=${profElementMain}` +
-  `&prof_tp=${profTPMain !== null ? profTPMain : 'null'}`;
-
-fetch(url, {
-  method: "GET",
-  credentials: "include",
-})
-.then(res => res.text())
-.then(text => {
-  try {
-    const result = JSON.parse(text);
-    if (result.status === "success") {
-      window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modules.html";
-    } else {
-      alert("Erreur : " + result.message);
-    }
-  } catch (e) {
-    console.error("Erreur JSON : ", e);
-    console.error("Contenu brut : ", text);
-    alert("Erreur de réponse serveur : contenu non valide");
-  }
-})
-.catch(err => {
-  console.error(err);
-  alert("Erreur de communication avec le serveur.");
-});
-
-
-    } else {
-      // Module avec éléments
-
-        let elementNoms = [];
-        let sommeElement = 0;
-
-        for (let i = 0; i < elementIndex; i++) {
-          const element_id = localStorage.getItem(`element_id${i}`);
-          const element_nom = document.getElementById(`element_nom_${i}`);
-          const coeff_element = document.getElementById(`element_${i}`);
-          const coeff_cc = document.getElementById(`element_cc_${i}`);
-          const coeff_ecrit = document.getElementById(`element_ecrit_${i}`);
-          const coeff_tp = document.getElementById(`element_tp_${i}`);
-          const prof_element_select = document.getElementById(`prof_element_${i}`);
-          const prof_tp_select = document.getElementById(`prof_tp_${i}`);
-
-          if (!element_nom || !coeff_element || !coeff_cc || !coeff_ecrit || !coeff_tp || !prof_element_select || !prof_tp_select) continue;
-
-          const nomEl = element_nom.value.trim();
-          const coeff = parseFloat(coeff_element.value);
-          const cc = parseFloat(coeff_cc.value);
-          const ecrit = parseFloat(coeff_ecrit.value);
-          const tp = parseFloat(coeff_tp.value);
-          const profElVal = prof_element_select.value;
-          let profTPVal = prof_tp_select.value;
-          if (profTPVal === "null") profTPVal = null;
-
-          // Validations
-          if (!nomEl) {
-            alert(`Le nom de l'élément #${i + 1} est requis.`);
-            return;
+          if (filiereId) {
+            fetch(adminURL+`/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.status === "success") {
+                  const nombreSemestre = data.nombre_semestre;
+                  for (let i = 1; i <= nombreSemestre; i++) {
+                    const option = document.createElement("option");
+                    option.value = i;
+                    option.textContent = "Semestre " + i;
+                    semestreSelect.appendChild(option);
+                  }
+                }
+              })
+              .catch(() => console.error("Erreur lors du chargement des semestres"));
           }
-
-          if ([cc, ecrit, tp, coeff].some(c => isNaN(c) || c < 0 || c > 1)) {
-            alert(`Tous les coefficients de l’élément #${i + 1} doivent être des nombres entre 0 et 1.`);
-            return;
-          }
-
-          const somme = cc + ecrit + tp;
-          if (Math.abs(somme - 1) > 0.0001) {
-            alert(`La somme des coefficients (CC + Écrit + TP) de l’élément #${i + 1} doit être exactement égale à 1.`);
-            return;
-          }
-
-          elementNoms.push({
-            id:element_id,
-            nom: nomEl,
-            coeff_element: coeff,
-            coeff_cc: cc,
-            coeff_ecrit: ecrit,
-            coeff_tp: tp,
-            prof_element: profElVal,
-            prof_tp: profTPVal
-          });
-
-          sommeElement += coeff;
-        }
-
-        if (Math.abs(sommeElement - 1) > 0.0001) {
-          alert("La somme des coefficients des éléments de module doit être exactement égale à 1.");
-          return;
-        }
-
-        if (!filiere || !semestre) {
-          alert("Veuillez sélectionner la filière et le semestre.");
-          return;
-        }
-
-        const fullData = {
-          module_id:localStorage.getItem("module_id"),
-          nomMod: nom,
-          codeMod: code,
-          filiere: filiere,
-          semestre: semestre,
-          elements: elementNoms
-        };
-
-        fetch('http://localhost/ens-gestion/api/admin2.php?action=ModifierModuleAvecElement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fullData)
-        })
-        .then(response => response.json())
+        });
+    // Variables globales
+    let allProfs = [];
+    let elementCounter = 0;
+    let allFilieres = [];
+    let filiereData = null;
+    let moduleData = null;
+    
+    // Charger les professeurs
+    function loadProfs() {
+      fetch(adminURL+'/admin2.php?action=GetAllProffessors')
+        .then(res => res.json())
         .then(data => {
-          if(data.message === "Module avec éléments modifié"){
-            window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modules.html";
+          if (data.status === "success") {
+            allProfs = data.data;
+            populateProfessorDropdowns();
           } else {
-            alert("Erreur : " + data.message);
+            alert("Erreur: " + data.message);
           }
         })
         .catch(error => {
-          console.error('Erreur:', error);
-          alert("Erreur lors de la modification du module.");
+          console.error(error);
+          // Données simulées pour la démonstration en cas d'erreur
+          allProfs = [
+            { user_id: 1, nom: "Dupont", prenom: "Jean" },
+            { user_id: 2, nom: "Martin", prenom: "Marie" },
+            { user_id: 3, nom: "Durand", prenom: "Pierre" },
+            { user_id: 4, nom: "Leroy", prenom: "Sophie" }
+          ];
+          
+          populateProfessorDropdowns();
         });
-
     }
-  }
-});
-
-
-  // Supprimer un élément
-  window.supprimerElement = function(index) {
-    const div = document.getElementById(`element_div_${index}`);
-    if (div) {
-      div.remove();
+    
+    // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
+    function populateProfessorDropdowns() {
+      document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
+        // Garder l'option par défaut "Aucun prof"
+        while (dropdown.options.length > 1) {
+          dropdown.remove(1);
+        }
+        
+        // Ajouter les professeurs
+        allProfs.forEach(prof => {
+          const option = document.createElement('option');
+          option.value = prof.user_id;
+          option.textContent = `${prof.prenom} ${prof.nom}`;
+          dropdown.appendChild(option);
+        });
+      });
     }
+    
+    // Remplir les dropdowns d'un élément spécifique
+    function populateElementDropdowns(elementContainer) {
+      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours, .chef-element');
+      
+      dropdowns.forEach(dropdown => {
+        // Garder l'option par défaut "Aucun prof"
+        while (dropdown.options.length > 1) {
+          dropdown.remove(1);
+        }
+        
+        // Ajouter les professeurs
+        allProfs.forEach(prof => {
+          const option = document.createElement('option');
+          option.value = prof.user_id;
+          option.textContent = `${prof.prenom} ${prof.nom}`;
+          dropdown.appendChild(option);
+        });
+      });
+    }
+      
+    // Vérifier que la somme des coefficients est égale à 1
+    function validateCoefficients(inputs, alertElement) {
+      if (!alertElement) {
+        console.warn("Alert element not found for coefficient validation");
+        return true;
+      }
+      
+      let sum = 0;
+      inputs.forEach(input => {
+        sum += parseFloat(input.value) || 0;
+      });
+      
+      if (Math.abs(sum - 1) > 0.001) {
+        alertElement.style.display = 'block';
+        return false;
+      } else {
+        alertElement.style.display = 'none';
+        return true;
+      }
+    }
+    
+    // Valider les coefficients d'un élément
+    function validateElementCoefficients(elementContainer) {
+      const coeffInputs = elementContainer.querySelectorAll('.coefficient-input');
+      const alertElement = elementContainer.querySelector('.alert-coeff');
+      return validateCoefficients(coeffInputs, alertElement);
+    }
+    
+    // Valider les coefficients du module
+    function validateModuleCoefficients(moduleContainer) {
+      const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+      const alertElement = moduleContainer.querySelector('.alert-coeff');
+      return validateCoefficients(coeffInputs, alertElement);
+    }
+    
+    // Valider la somme des coefficients de tous les éléments
+    function validateTotalElementCoefficients(moduleContainer) {
+      const elementCoeffInputs = moduleContainer.querySelectorAll('.element-coeff');
+      let total = 0;
+      
+      elementCoeffInputs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+      });
+      
+      const totalAlert = moduleContainer.querySelector('.total-coeff-alert');
+      
+      if (!totalAlert) {
+        console.warn("Total alert element not found");
+        return Math.abs(total - 1) <= 0.01;
+      }
+      
+      if (Math.abs(total - 1) > 0.01) {
+        totalAlert.style.display = 'block';
+        return false;
+      } else {
+        totalAlert.style.display = 'none';
+        return true;
+      }
+    }
+    
+    // Afficher une alerte toast
+    function showToast(message) {
+      const toastElement = document.getElementById('errorToast');
+      const toastMessage = document.getElementById('toastMessage');
+      
+      if (!toastElement || !toastMessage) {
+        console.error("Toast elements not found");
+        alert(message);
+        return;
+      }
+      
+      toastMessage.textContent = message;
+      
+      if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+      } else {
+        toastElement.style.display = 'block';
+        setTimeout(() => {
+          toastElement.style.display = 'none';
+        }, 3000);
+      } 
+    }
+    
+    // Fonction pour retourner
+    function retourner() {
+      window.location.href = "modules.html";
+    }
+    
+    // Fonction pour charger les informations de la filière
+    function loadFiliereInfo(filiereId) {
+      const filiere = allFilieres.find(f => f.field_id == filiereId);
+      if (!filiere) return;
+      
+      filiereData = filiere;
+      
+      // Afficher les informations de la filière
+      const filiereInfo = document.getElementById('filiereInfo');
+      
+      if (filiereInfo) {
+        const infoNom = document.getElementById('info-nom');
+        const infoCycle = document.getElementById('info-cycle');
+        const infoDepartement = document.getElementById('info-departement');
+        const infoResponsable = document.getElementById('info-responsable');
+        
+        if (infoNom) infoNom.textContent = filiere.nom_filiere || '-';
+        if (infoCycle) infoCycle.textContent = filiere.nom_cycle || '-';
+        if (infoDepartement) infoDepartement.textContent = filiere.nom_departement || '-';
+        if (infoResponsable) infoResponsable.textContent = filiere.nom_professeur_responsable|| '-';
+        
+        filiereInfo.style.display = 'block';
+      }
+    }
+
+
+    function getSelectNode(name) {
+  // id first, then class
+  return document.getElementById(name) || document.querySelector(`select.${name}`);
+}
+
+function setSelectValue(name, value, { container = document, triggerChange = false } = {}) {
+  // Look by id in the container first, then by class
+  let select = container.querySelector(`#${name}, select.${name}`);
+  if (!select) {
+    console.warn(`No <select> found with "${name}" inside`, container);
+    return null;
   }
 
+  const trySet = () => {
+    const hasOption = Array.from(select.options).some(o => String(o.value) === String(value));
+    if (!hasOption) return false;
 
-  function retourner(){
-      window.location.href="http://localhost/ens-gestion/app/src/pages/admin/modules.html";
+    select.value = String(value);
+
+    if (triggerChange) {
+      select.dispatchEvent(new Event('input',  { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    return true;
+  };
+
+  if (trySet()) return select;
+
+  // Wait for dynamic options
+  const obs = new MutationObserver(() => {
+    if (trySet()) obs.disconnect();
+  });
+  obs.observe(select, { childList: true, subtree: true });
+
+  return select;
+}
+
+
+
+    
+  // Fonction pour charger les données du module depuis le localStorage
+function loadModuleData() {
+  // Récupérer les infos de base du module
+  const nomModule = localStorage.getItem("nom_module");
+  const codeModule = localStorage.getItem("code_module");
+  const chefModule = localStorage.getItem("chef_module");
+  const langueModule = localStorage.getItem("langue_module");
+  const typeModule = localStorage.getItem("type_module");
+  const filiereId = localStorage.getItem("filiere_id");
+  const semestreModule = localStorage.getItem("semestre_module");
+  const anneeModule = localStorage.getItem("annee_module");
+//  localStorage.setItem("module_id", module.module_id);
+//       localStorage.setItem("nom_module", module.nom_module);
+//       localStorage.setItem("code_module", module.code_module);
+//       localStorage.setItem("chef_module", module.id_prof_responsable || "");
+//       localStorage.setItem("langue_module", module.langue || "");
+//       localStorage.setItem("type_module", module.type || "");
+//       localStorage.setItem("filiere_id", module.id_filiere || "");
+//       localStorage.setItem("semestre_module", module.id_semestre || "");
+//       localStorage.setItem("annee_module", module.annee || "");
+       
+
+  // Remplir les champs du formulaire
+  document.querySelector('.module-code').value = codeModule || '';
+  document.querySelector('.module-name').value = nomModule || '';
+  setSelectValue("module-chef", chefModule ?? "");
+  setSelectValue("module-langue", langueModule ?? "");
+  setSelectValue("module-type", typeModule ?? "");
+
+  if (filiereId) {
+  // sets value AND triggers the change (fetches + populates semestres)
+      setSelectValue("filiere", filiereId, { triggerChange: true });
+      loadFiliereInfo(filiereId);
+
+}
+   
+
+// Maintenant tu peux définir le semestre, mais il faut attendre que les options soient peuplées
+setSelectValue("semestre", semestreModule ?? "");
+ 
+
+
+  // Conteneur des éléments
+  const elementsContainer = document.querySelector('.dynamic-elements-container');
+  elementsContainer.innerHTML = '';
+
+  // Vérifier s’il y a des éléments enregistrés
+  if (localStorage.getItem("hasElements") =="yes") {
+    document.querySelector('.has-elements-yes').checked = true;
+    document.querySelector('.has-elements-no').checked = false;
+    document.querySelector('.elements-main-container').style.display = 'block';
+    document.querySelector('.module-coefficients').style.display = 'none';
+
+    const numberOfElements = parseInt(localStorage.getItem("numberOfElements"), 10) || 0;
+
+    for (let i = 0; i < numberOfElements; i++) {
+      const elementData = {
+        element_id: localStorage.getItem(`element_id${i}`),
+        nom: localStorage.getItem(`nom_element${i}`),
+        coeff_element: localStorage.getItem(`coeff_element${i}`) || "1",
+        coeff_ecrit: localStorage.getItem(`ecrit_${i}`) || "0",
+        coeff_cc: localStorage.getItem(`cc_${i}`) || "0",
+        coeff_tp: localStorage.getItem(`tp_${i}`) || "0",
+        coeff_td: localStorage.getItem(`td_${i}`) || "0",
+        coeff_projet: localStorage.getItem(`projet_${i}`) || "0",
+        Ref_prof_cours: localStorage.getItem(`prof_cours_element${i}`) || "",
+        Ref_prof_td: localStorage.getItem(`prof_td_element${i}`) || "",
+        Ref_prof_tp: localStorage.getItem(`prof_tp_element${i}`) || "",
+        Ref_prof_element: localStorage.getItem(`chef_element${i}`) || "",
+        horraire_tp: localStorage.getItem(`volume_tp_element${i}`) || "0",
+        horraire_td: localStorage.getItem(`volume_td_element${i}`) || "0",
+        horraire_cours: localStorage.getItem(`volume_cours_element${i}`) || "0",
+        horraire_activite_pratique: localStorage.getItem(`volume_pratique_element${i}`) || "0",
+        horraire_evaluation: localStorage.getItem(`volume_evaluation_element${i}`) || "0",
+        presentiel: localStorage.getItem(`volume_presentiel_element${i}`) || "0",
+        a_distance: localStorage.getItem(`volume_distance_element${i}`) || "0",
+        en_alternance: localStorage.getItem(`volume_alternance_element${i}`) || "0"
+      };
+
+      addNewElement(null, elementData);
+    }
+
+    
+
+  }  else {
+  // Pas d’éléments
+  document.querySelector('.has-elements-yes').checked = false;
+  document.querySelector('.has-elements-no').checked = true;
+  document.querySelector('.elements-main-container').style.display = 'none';
+  document.querySelector('.module-coefficients').style.display = 'block';
+
+  // Vérifier s'il y a au moins 1 élément enregistré
+  const numberOfElements = parseInt(localStorage.getItem("numberOfElements"), 10) || 0;
+
+  if (numberOfElements > 0) {
+    // Charger les données du premier élément (index 0)
+    const elementData = {
+      coeff_ecrit: localStorage.getItem("ecrit_0") || "0",
+      coeff_cc: localStorage.getItem("cc_0") || "0",
+      coeff_tp: localStorage.getItem("tp_0") || "0",
+      coeff_td: localStorage.getItem("td_0") || "0",
+      coeff_projet: localStorage.getItem("projet_0") || "0",
+      Ref_prof_cours: localStorage.getItem("prof_cours_element0") || "",
+      Ref_prof_td: localStorage.getItem("prof_td_element0") || "",
+      Ref_prof_tp: localStorage.getItem("prof_tp_element0") || "",
+      Ref_prof_element: localStorage.getItem("chef_element0") || "",
+      horraire_tp: localStorage.getItem("volume_tp_element0") || "0",
+      horraire_td: localStorage.getItem("volume_td_element0") || "0",
+      horraire_cours: localStorage.getItem("volume_cours_element0") || "0",
+      horraire_activite_pratique: localStorage.getItem("volume_pratique_element0") || "0",
+      horraire_evaluation: localStorage.getItem("volume_evaluation_element0") || "0",
+      presentiel: localStorage.getItem("volume_presentiel_element0") || "0",
+      a_distance: localStorage.getItem("volume_distance_element0") || "0",
+      en_alternance: localStorage.getItem("volume_alternance_element0") || "0"
+    };
+
+    const moduleContainer = document.querySelector('.module-coefficients');
+
+    // Remplir les inputs (pas de nom ni coeff_element ici)
+    moduleContainer.querySelector('.coeff-ecrit').value = elementData.coeff_ecrit;
+    moduleContainer.querySelector('.coeff-cc').value = elementData.coeff_cc;
+    moduleContainer.querySelector('.coeff-tp').value = elementData.coeff_tp;
+    moduleContainer.querySelector('.coeff-td').value = elementData.coeff_td;
+    moduleContainer.querySelector('.coeff-projet').value = elementData.coeff_projet;
+
+    moduleContainer.querySelector('.volume-tp').value = elementData.horraire_tp;
+    moduleContainer.querySelector('.volume-td').value = elementData.horraire_td;
+    moduleContainer.querySelector('.volume-cours').value = elementData.horraire_cours;
+    moduleContainer.querySelector('.volume-pratique').value = elementData.horraire_activite_pratique;
+    moduleContainer.querySelector('.volume-evaluation').value = elementData.horraire_evaluation;
+    moduleContainer.querySelector('.volume-presentiel').value = elementData.presentiel;
+    moduleContainer.querySelector('.volume-distance').value = elementData.a_distance;
+    moduleContainer.querySelector('.volume-alternance').value = elementData.en_alternance;
+
+    // Gérer les professeurs (mêmes problèmes que dans ton template : options dynamiques)
+    setSelectValue("prof-cours", elementData.Ref_prof_cours, { container: moduleContainer });
+    setSelectValue("prof-td", elementData.Ref_prof_td, { container: moduleContainer });
+    setSelectValue("prof-tp", elementData.Ref_prof_tp, { container: moduleContainer });
+    setSelectValue("chef-element", elementData.Ref_prof_element, { container: moduleContainer });
   }
-</script>
+}
 
+}
 
+    
+    // Valider un module complet
+    function validateModule(moduleContainer) {
+      if (!moduleContainer) return false;
+      
+      const selectedRadio = moduleContainer.querySelector('input[name="hasElements"]:checked');
+      
+      if (!selectedRadio) {
+        console.warn("Radio button not found for module");
+        return false;
+      }
+      
+      const hasElements = selectedRadio.value === 'yes';
+      
+      if (hasElements) {
+        // Valider chaque élément
+        const elementContainers = moduleContainer.querySelectorAll('.element-container');
+        let allElementsValid = true;
+        
+        elementContainers.forEach(container => {
+          if (!validateElementCoefficients(container)) {
+            allElementsValid = false;
+          }
+        });
+        
+        // Valider la somme totale des coefficients d'éléments
+        if (!validateTotalElementCoefficients(moduleContainer)) {
+          showToast("La somme des coefficients de tous les éléments doit être égale à 1.");
+          return false;
+        }
+        
+        if (!allElementsValid) {
+          showToast("Veuillez corriger les coefficients des éléments.");
+          return false;
+        }
+      } else {
+        // Valider les coefficients du module
+        if (!validateModuleCoefficients(moduleContainer)) {
+          showToast("La somme des coefficients du module doit être égale à 1.");
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    // Ajouter un nouvel élément
+    function addNewElement(moduleContainer, elementData = null) {
+      if (!moduleContainer) moduleContainer = document.getElementById('moduleContainer');
+      if (!moduleContainer) return;
+      
+      const template = document.getElementById('elementTemplate');
+      
+      if (!template) {
+        console.error("Element template not found");
+        return;
+      }
+      
+      const newElement = template.content.cloneNode(true);
+      const elementContainer = newElement.querySelector('.element-container');
+      
+            // Ajouter un identifiant unique
+      // Ajouter un identifiant unique ou null si inexistant
+      elementContainer.dataset.elementId = elementData?.element_id ?? null;
+      
+      // Remplir avec les données si fournies
+      if (elementData) {        
+        elementContainer.querySelector('.element-name').value = elementData.nom || '';
+        elementContainer.querySelector('.element-coeff').value = elementData.coeff_element || 0;
+        elementContainer.querySelector('.coeff-ecrit').value = elementData.coeff_ecrit || 0;
+        elementContainer.querySelector('.coeff-cc').value = elementData.coeff_cc || 0;
+        elementContainer.querySelector('.coeff-tp').value = elementData.coeff_tp || 0;
+        elementContainer.querySelector('.coeff-td').value = elementData.coeff_td || 0;
+        elementContainer.querySelector('.coeff-projet').value = elementData.coeff_projet || 0;
+        console.log(elementData.Ref_prof_cours);
+         // Important: scope `setSelectValue` to THIS container
+        setSelectValue("prof-cours", elementData.Ref_prof_cours, { container: elementContainer });
+        setSelectValue("prof-tp", elementData.Ref_prof_tp, { container: elementContainer });
+        setSelectValue("prof-td", elementData.Ref_prof_td, { container: elementContainer });
+        setSelectValue("chef-element", elementData.Ref_prof_element, { container: elementContainer });
+        elementContainer.querySelector('.volume-cours').value = elementData.horraire_cours || 0;
+        elementContainer.querySelector('.volume-td').value = elementData.horraire_td || 0;
+        elementContainer.querySelector('.volume-tp').value = elementData.horraire_tp || 0;
+        elementContainer.querySelector('.volume-evaluation').value = elementData.horraire_evaluation || 0;
+        elementContainer.querySelector('.volume-pratique').value = elementData.horraire_activite_pratique || 0;
+        elementContainer.querySelector('.volume-presentiel').value = elementData.presentiel || 0;
+        elementContainer.querySelector('.volume-distance').value = elementData.a_distance|| 0;
+        elementContainer.querySelector('.volume-alternance').value = elementData.en_alternance || 0;
+      }
+      
+      // Configurer les écouteurs d'événements pour les coefficients
+      const coeffInputs = elementContainer.querySelectorAll('.coefficient-input');
+      coeffInputs.forEach(input => {
+        input.addEventListener('change', () => validateElementCoefficients(elementContainer));
+      });
+      
+      // Configurer l'écouteur pour le coefficient de l'élément
+      const elementCoeffInput = elementContainer.querySelector('.element-coeff');
+      if (elementCoeffInput) {
+        elementCoeffInput.addEventListener('change', () => validateTotalElementCoefficients(moduleContainer));
+      }
+      
+      // Configurer le bouton de suppression
+      const removeBtn = elementContainer.querySelector('.btn-remove');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+          elementContainer.remove();
+          validateTotalElementCoefficients(moduleContainer);
+        });
+      }
+      
+      // Remplir les dropdowns des professeurs
+      populateElementDropdowns(elementContainer);
+      
+      // Ajouter au conteneur
+      const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
+      if (dynamicContainer) {
+        dynamicContainer.appendChild(newElement);
+      }
+      
+      // Valider les coefficients
+      validateElementCoefficients(elementContainer);
+      validateTotalElementCoefficients(moduleContainer);
+    }
+    
+    // Mettre à jour un module
+    function updateModule(e) {
+  e.preventDefault();
+
+  if (!filiereData) {
+    showToast("Veuillez d'abord sélectionner une filière");
+    return;
+  }
+
+  const moduleContainer = document.getElementById('moduleContainer');
+
+  // Valider le module
+  if (!validateModule(moduleContainer)) {
+    showToast("Veuillez corriger les erreurs dans le module avant de continuer.");
+    return;
+  }
+
+  // Récupérer la valeur du bouton radio "hasElements"
+  const selectedRadio = moduleContainer.querySelector('input[name="hasElements"]:checked');
+  const hasElements = selectedRadio?.value === 'yes';
+
+  // Récupérer l'ID du module depuis le localStorage
+  const moduleId = localStorage.getItem("module_id");
+
+  // Construire un objet module
+  const moduleData = {
+    module_id: moduleId,
+    code: moduleContainer.querySelector('.module-code').value,
+    nom: moduleContainer.querySelector('.module-name').value,
+    chef_id: moduleContainer.querySelector('.module-chef').value,
+    langue: moduleContainer.querySelector('.module-langue').value,
+    type: moduleContainer.querySelector('.module-type').value,
+    has_elements: hasElements,
+    filiere_id: document.getElementById('filiere').value,
+    semestre: document.getElementById('semestre').value,
+    volume_tp: moduleContainer.querySelector('.volume-tp').value || 0,
+    volume_td: moduleContainer.querySelector('.volume-td').value || 0,
+    volume_cours: moduleContainer.querySelector('.volume-cours').value || 0,
+    volume_pratique: moduleContainer.querySelector('.volume-pratique').value || 0,
+    volume_evaluation: moduleContainer.querySelector('.volume-evaluation').value || 0,
+    volume_presentiel: moduleContainer.querySelector('.volume-presentiel').value || 0,
+    volume_distance: moduleContainer.querySelector('.volume-distance').value || 0,
+    volume_alternance: moduleContainer.querySelector('.volume-alternance').value || 0,
+    elements: []
+  };
+
+  if (hasElements) {
+    moduleContainer.querySelectorAll('.element-container').forEach(elementContainer => {
+      const elementData = {
+        element_id: elementContainer.dataset.elementId,
+        nom: elementContainer.querySelector('.element-name').value,
+        coeff_element: elementContainer.querySelector('.element-coeff').value || 0,
+        coeff_td: elementContainer.querySelector('.coeff-td').value || 0,
+        coeff_tp: elementContainer.querySelector('.coeff-tp').value || 0,
+        coeff_cc: elementContainer.querySelector('.coeff-cc').value || 0,
+        coeff_projet: elementContainer.querySelector('.coeff-projet').value || 0,
+        coeff_ecrit: elementContainer.querySelector('.coeff-ecrit').value || 0,
+
+        // Professeurs
+        Ref_prof_element: elementContainer.querySelector('.chef-element').value || null,
+        Ref_prof_tp: elementContainer.querySelector('.prof-tp').value || null,
+        Ref_prof_td: elementContainer.querySelector('.prof-td').value || null,
+        Ref_prof_cours: elementContainer.querySelector('.prof-cours').value || null,
+
+        // Volumes
+        horraire_tp: elementContainer.querySelector('.volume-tp').value || 0,
+        horraire_td: elementContainer.querySelector('.volume-td').value || 0,
+        horraire_cours: elementContainer.querySelector('.volume-cours').value || 0,
+        horraire_activite_pratique: elementContainer.querySelector('.volume-pratique').value || 0,
+        horraire_evaluation: elementContainer.querySelector('.volume-evaluation').value || 0,
+        presentiel: elementContainer.querySelector('.volume-presentiel').value || 0,
+        a_distance: elementContainer.querySelector('.volume-distance').value || 0,
+        en_alternance: elementContainer.querySelector('.volume-alternance').value || 0
+      };
+      moduleData.elements.push(elementData);
+    });
+  } else {
+    const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+    moduleData.coeff_tp = coeffInputs[0]?.value || 0;
+    moduleData.coeff_td = coeffInputs[1]?.value || 0;
+    moduleData.coeff_ecrit = coeffInputs[2]?.value || 0;
+    moduleData.coeff_cc = coeffInputs[3]?.value || 0;
+    moduleData.coeff_projet = coeffInputs[4]?.value || 0;
+    moduleData.coeff_element = 1;
+    moduleData.prof_tp = moduleContainer.querySelector('.prof-tp').value || null;
+    moduleData.prof_td = moduleContainer.querySelector('.prof-td').value || null;
+    moduleData.prof_cours = moduleContainer.querySelector('.prof-cours').value || null;
+    moduleData.chef_element = moduleContainer.querySelector('.chef-element').value || null;
+  }
+
+  // 🔑 Encapsuler dans l’objet attendu par le backend
+  const data = {
+    filiere_id: document.getElementById('filiere').value,
+    modules: [moduleData]
+  };
+
+  console.log("Données envoyées:", data);
+
+  fetch(adminURL+'/admin2.php?action=updateModule', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.status === "success") {
+      alert("Module modifié avec succès!");
+      window.location.href="modules.html";
+    } else {
+      console.log(result);
+      alert("Erreur : " + result.message);
+    }
+  })
+  .catch(error => {
+    console.error("Erreur détaillée:", error);
+    alert("Erreur lors de la modification du module: " + error.message);
+  });
+}
+
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      const filiereSelect = document.getElementById('filiere');
+      
+      if (!filiereSelect) {
+        console.error("filiereSelect element not found");
+        return;
+      }
+      
+      // Charger les filières
+      fetch(adminURL+'/admin2.php?action=getFilieres', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success" && Array.isArray(data.data)) {
+          allFilieres = data.data;
+          
+          data.data.forEach(filiere => {
+            const option = document.createElement('option');
+            option.value = filiere.field_id;
+            option.textContent = filiere.nom_filiere || filiere.nom || "Nom inconnu";
+            filiereSelect.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.textContent = "Aucune filière disponible";
+          option.disabled = true;
+          filiereSelect.appendChild(option);
+        }
+      })
+      .catch(error => {
+        console.error("Erreur lors du chargement des filières :", error);
+        filiereSelect.innerHTML = '';
+        const option = document.createElement('option');
+        option.textContent = "Erreur de chargement";
+        option.disabled = true;
+        filiereSelect.appendChild(option);
+      });
+      
+      // Charger les professeurs
+      loadProfs();
+      
+      // Configurer le changement de filière
+      filiereSelect.addEventListener("change", function() {
+        loadFiliereInfo(this.value);
+      });
+      
+      // Charger les données du module
+      loadModuleData();
+      
+      // Configurer le formulaire de modification de module
+      const moduleForm = document.getElementById('moduleForm');
+      if (moduleForm) {
+        moduleForm.addEventListener('submit', updateModule);
+      }
+      
+      // Configurer les radios pour afficher/masquer les éléments
+      const elementRadios = document.querySelectorAll('input[name="hasElements"]');
+      elementRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          const moduleContainer = document.getElementById('moduleContainer');
+          if (!moduleContainer) return;
+          
+          if (this.value === 'yes') {
+            const elementsContainer = moduleContainer.querySelector('.elements-main-container');
+            const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
+            
+            if (elementsContainer) elementsContainer.style.display = 'block';
+            if (coefficientsContainer) coefficientsContainer.style.display = 'none';
+            
+            // Ajouter le premier élément s'il n'y en a pas
+            const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
+            if (dynamicContainer && dynamicContainer.children.length === 0) {
+              addNewElement(moduleContainer);
+            }
+          } else {
+            const elementsContainer = moduleContainer.querySelector('.elements-main-container');
+            const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
+            
+            if (elementsContainer) elementsContainer.style.display = 'none';
+            if (coefficientsContainer) coefficientsContainer.style.display = 'block';
+          }
+        });
+      });
+      
+      // Configurer le bouton d'ajout d'élément
+      const addElementBtn = document.querySelector('.add-element-btn');
+      if (addElementBtn) {
+        addElementBtn.addEventListener('click', function() {
+          const moduleContainer = document.getElementById('moduleContainer');
+          if (moduleContainer) {
+            addNewElement(moduleContainer);
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
-
-

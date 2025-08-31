@@ -97,11 +97,11 @@ public function getStudentDetail($user_id) {
     $fieldId = filter_input(INPUT_GET, 'field_id', FILTER_VALIDATE_INT);
     $sectionId = filter_input(INPUT_GET, 'section_id', FILTER_VALIDATE_INT);
     $groupId = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
-    $anneeId = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+    $anneeId = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
     $semestreId = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
     $cycleId  = filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
     $departementId =filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
-    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
+    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS);
     $students = (new AdminStudentModel())->getFilteredStudents(
     $anneeId,
     $fieldId,

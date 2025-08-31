@@ -5,7 +5,7 @@ require_once __DIR__ . '/controllers/StudentController.php';
 header("Content-Type: application/json");
 
 // Sanitize input parameters
-$action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
 
@@ -15,6 +15,11 @@ try {
     switch ($action) {
         case 'me':
             $controller->getCurrentStudentInfo();
+            break;
+
+        case 'getYearStudied':
+            if (!$id) throw new Exception('Missing student ID', 400);
+            $controller->getYearStudied($id);
             break;
 
         case 'getStudent':
@@ -54,7 +59,7 @@ try {
 
         case 'getAnnualNoteAndRanking':
             $userId = filter_input(INPUT_GET, 'user_id', FILTER_VALIDATE_INT);
-            $anneeId = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+            $anneeId = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
             if (!$userId || !$anneeId) {
                 throw new Exception('Missing user ID or annee ID', 400);
             }
@@ -65,15 +70,40 @@ try {
             $controller->getAllEtapes();
             break;
 
-        case 'getSemestres':
-            $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
-            if (!$etapeId) throw new Exception('Missing etape ID', 400);
-            $controller->getSemestresByEtape($etapeId);
-            break;
-
         case 'getAnnees':
             $controller->getAllAnnees();
             break;
+
+        case 'changePassword':
+            $userId = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
+            $newPassword = filter_input(INPUT_POST, 'new_password', FILTER_SANITIZE_SPECIAL_CHARS);
+            if (!$userId || !$newPassword) {
+                throw new Exception('Missing user ID or new password', 400);
+            }
+            $controller->changePassword($userId,$newPassword);
+            break;
+
+        case 'getCycleOfStudent':
+            if (!$id) throw new Exception('Missing student ID', 400);
+            $controller->getCycleOfStudent($id);
+            break;
+
+        case 'getSemestresOfStudentByCycle':
+            if (!$id) throw new Exception('Missing student ID', 400);
+            $cycleId = filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
+            if (!$cycleId) throw new Exception('Missing cycle ID', 400);
+            $controller->getSemestresOfStudentByCycle($id, $cycleId);
+            break;
+
+        case 'getNoteOfStudentBySemester':
+            if (!$id) throw new Exception('Missing student ID', 400);
+            $semesterId = filter_input(INPUT_GET, 'semester_id', FILTER_VALIDATE_INT);
+            if (!$semesterId) throw new Exception('Missing semester ID', 400);
+            $controller->getNoteOfStudentBysemestre($id, $semesterId);
+            break;
+            
+
+ 
 
         default:
             throw new Exception('Action non reconnue', 404);

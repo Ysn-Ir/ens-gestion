@@ -2,9 +2,32 @@
 require_once __DIR__.'/config/constants.php';
 require_once __DIR__.'/utils/Response.php';
 
-// Mode debug
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+// Mode debug - IMPORTANT: Set display_errors to 0 in production
+ini_set('display_errors', 0); // Change to 0 for production to prevent HTML output
+error_reporting(E_ALL); // Keep E_ALL for logging all errors
+
+// Set a custom error handler to always return JSON for API errors
+set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+    // This will catch warnings and notices as well
+    if (!(error_reporting() & $errno)) {
+        // Error reporting is off for this error type
+        return false;
+    }
+    // Clear any previous output that might have been buffered
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    // Send a JSON error response
+    header("Content-Type: application/json; charset=UTF-8");
+    http_response_code(500); // Internal Server Error
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Une erreur interne du serveur est survenue.',
+        'details' => "Error: [$errno] $errstr in $errfile on line $errline" // For debugging, remove in production
+    ]);
+    exit; // Terminate script execution
+});
+
 
 // Headers CORS
 header("Access-Control-Allow-Origin: *");
@@ -17,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("HTTP/1.1 204 No Content");
     exit;
 }
+
+// Start output buffering to catch any unexpected output
+ob_start();
 
 // Récupération de la requête
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -45,14 +71,10 @@ try {
             (new AuthController())->login();
             break;
 
-       case 'auth/logout':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-             require_once __DIR__.'/controllers/AuthController.php';
+        case $request === 'auth/logout' && $_SERVER['REQUEST_METHOD'] === 'POST':
+            require_once __DIR__.'/controllers/AuthController.php';
             (new AuthController())->logout();
-        } else {
-            $response->send(405, ['status' => 'error', 'message' => 'Method Not Allowed']);
-        }
-        break;
+            break;
 
         case $request === 'auth/me' && $_SERVER['REQUEST_METHOD'] === 'GET':
             require_once __DIR__.'/controllers/AuthController.php';
@@ -151,10 +173,8 @@ try {
             
         // 🔐 Professeur - Obtenir les notes d'un département (pour chef de département)
         case preg_match('/^professor\/department-notes\/(\d+)$/', $request, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET':
-            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
-            (new ProfessorMiddleware())->verifyProfessor();// Vérifie si l'utilisateur est un prof ou chef
             require_once __DIR__.'/controllers/ProfessorController.php';
-            (new ProfessorModel())->getDepartmentNotes($matches[1]);
+            (new ProfessorController())->getDepartmentNotes($matches[1]); 
             break;
 
         // 🔐 Professeur - Obtenir les modules d'un département
@@ -172,16 +192,68 @@ try {
             require_once __DIR__.'/controllers/ProfessorController.php';
             (new ProfessorController())->getFieldsByDepartment($matches[1]);
             break;
+
+        // NOUVELLES ROUTES POUR LES FILTRES (inchangé, mais pertinent pour le contexte)
+        case $request === 'professor/academic-years' && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor();
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getAcademicYears();
+            break;
+
+        case $request === 'professor/semesters' && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor();
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getSemesters();
+            break;
+        
+        // NOUVELLE ROUTE : Obtenir les semestres spécifiques au professeur
+        case $request === 'professor/my-semesters' && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor();
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getProfessorSemesters();
+            break;
+
+        case $request === 'professor/etapes' && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor();
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getEtapes();
+            break;
+
+        case $request === 'professor/filieres' && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor();
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getFilieres();
+            break;
+
         // Route non reconnue
         default:
             (new Response())->send(404, ['error' => 'Endpoint not found']);
     }
 
 } catch (Exception $e) {
+    // This catch block handles exceptions, not parse errors or warnings
+    // The custom error handler above will handle those.
     error_log("API Error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+    // Clear any previous output that might have been buffered
+    if (ob_get_length()) {
+        ob_clean();
+    }
     (new Response())->send(500, [
-        'error' => 'Internal server error',
-        'message' => $e->getMessage()
+        'status' => 'error',
+        'message' => 'Une erreur inattendue est survenue.',
+        'details' => $e->getMessage() // Pour le débogage, à retirer en production
     ]);
+} finally {
+    // Ensure any buffered output is discarded if an error occurred,
+    // otherwise, flush the buffer (if no error was handled by custom handler)
+    if (ob_get_length() > 0 && !headers_sent()) {
+        ob_end_clean(); // Discard buffer if headers haven't been sent (meaning an error occurred)
+    } else if (ob_get_length() > 0) {
+        ob_end_flush(); // Flush if headers were already sent (meaning a successful response was built)
+    }
 }
-

@@ -1,14 +1,19 @@
 <?php
 require_once __DIR__ . '/config/constants.php';
-require_once __DIR__ . '/controllers/AdminController.php';
 require_once __DIR__ . '/controllers/AdminController2.php';
 
-require_once __DIR__ . '/controllers/NoteController.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+ini_set('display_errors', 0); 
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+header('Content-Type: application/json; charset=utf-8');
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 
 // Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -21,39 +26,39 @@ try {
 
     // Get request method and action
     $method = $_SERVER['REQUEST_METHOD'];
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
 
 
 
-//-------------**********************Douaa Parts   
+//-------------**Douaa Parts   
 
 
     // Récupération et nettoyage des paramètres
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
     $fieldId = filter_input(INPUT_GET, 'field_id', FILTER_VALIDATE_INT);
     $sectionId = filter_input(INPUT_GET, 'section_id', FILTER_VALIDATE_INT);
     $groupId = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
     $depart_id=filter_input(INPUT_GET, 'depart_id', FILTER_VALIDATE_INT);
     $prof_id=filter_input(INPUT_GET, 'prof_id', FILTER_VALIDATE_INT);
     $cycle_id=filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
-    $nomFili = filter_input(INPUT_GET, 'nomFili', FILTER_SANITIZE_STRING);
-    $anneeAccreditation=filter_input(INPUT_GET, 'annee', FILTER_SANITIZE_STRING);
-    $nomDepart= filter_input(INPUT_GET, 'nomDepart', FILTER_SANITIZE_STRING);
+    $nomFili = filter_input(INPUT_GET, 'nomFili', FILTER_SANITIZE_SPECIAL_CHARS);
+    $anneeAccreditation=filter_input(INPUT_GET, 'annee', FILTER_SANITIZE_SPECIAL_CHARS);
+    $nomDepart= filter_input(INPUT_GET, 'nomDepart', FILTER_SANITIZE_SPECIAL_CHARS);
 
     $module_id=filter_input(INPUT_GET, 'module_id', FILTER_VALIDATE_INT);
-    $codeMod=filter_input(INPUT_GET, 'codeMod', FILTER_SANITIZE_STRING);
-    $nomMod= filter_input(INPUT_GET, 'nomMod', FILTER_SANITIZE_STRING);
+    $codeMod=filter_input(INPUT_GET, 'codeMod', FILTER_SANITIZE_SPECIAL_CHARS);
+    $nomMod= filter_input(INPUT_GET, 'nomMod', FILTER_SANITIZE_SPECIAL_CHARS);
     $element_id=filter_input(INPUT_GET, 'element_id', FILTER_VALIDATE_INT);
 
     $coeff_cc=filter_input(INPUT_GET, 'coeff_cc', FILTER_VALIDATE_FLOAT);
     $coeff_ecrit=filter_input(INPUT_GET, 'coeff_ecrit', FILTER_VALIDATE_FLOAT);
     $coeff_element=filter_input(INPUT_GET, 'coeff_element', FILTER_VALIDATE_FLOAT);
     $coeff_tp=filter_input(INPUT_GET, 'coeff_tp', FILTER_VALIDATE_FLOAT);
-    $ref_filiere = filter_input(INPUT_GET, 'filiere', FILTER_SANITIZE_STRING);
+    $ref_filiere = filter_input(INPUT_GET, 'filiere', FILTER_SANITIZE_SPECIAL_CHARS);
 
-    $dateDebut=filter_input(INPUT_GET, 'dateDebut', FILTER_SANITIZE_STRING);
-    $dateFin=filter_input(INPUT_GET, 'dateFin', FILTER_SANITIZE_STRING);
-    // $jsonData = filter_input(INPUT_GET, 'data', FILTER_SANITIZE_STRING);
+    $dateDebut=filter_input(INPUT_GET, 'dateDebut', FILTER_SANITIZE_SPECIAL_CHARS);
+    $dateFin=filter_input(INPUT_GET, 'dateFin', FILTER_SANITIZE_SPECIAL_CHARS);
+    // $jsonData = filter_input(INPUT_GET, 'data', FILTER_SANITIZE_SPECIAL_CHARS);
     // $decodedData = json_decode($jsonData, true); // true = associative array
 
     // if (json_last_error() !== JSON_ERROR_NONE) {
@@ -63,15 +68,15 @@ try {
     if ($ref_filiere === 'null') {
         $ref_filiere = null;
     }
-    $ref_semestre = filter_input(INPUT_GET, 'semestre', FILTER_SANITIZE_STRING);
+    $ref_semestre = filter_input(INPUT_GET, 'semestre', FILTER_SANITIZE_SPECIAL_CHARS);
     if ($ref_semestre === 'null') {
         $ref_semestre = null;
     }
-    $ref_prof_element = filter_input(INPUT_GET, 'prof_element', FILTER_SANITIZE_STRING);
+    $ref_prof_element = filter_input(INPUT_GET, 'prof_element', FILTER_SANITIZE_SPECIAL_CHARS);
     if ($ref_prof_element === 'null') {
         $ref_prof_element = null;
     }
-    $ref_prof_tp = filter_input(INPUT_GET, 'prof_tp', FILTER_SANITIZE_STRING);
+    $ref_prof_tp = filter_input(INPUT_GET, 'prof_tp', FILTER_SANITIZE_SPECIAL_CHARS);
     if ($ref_prof_tp === 'null') {
         $ref_prof_tp = null;
     }
@@ -83,9 +88,32 @@ try {
 
     // Route based on action
     switch ($action) {
-        case 'getFilieres':
-            // validateMethod($method, 'GET');
-            $controller->getAllFilieres();
+        // case 'getFilieres':
+        //     // validateMethod($method, 'GET');
+        //     $controller->getAllFilieres();
+        //     break;
+        case "getFilieres":
+                    $cycle_id = (!empty($_GET['cycle_id'])) ? $_GET['cycle_id'] : null;
+                    $diplome_id = (!empty($_GET['diplome_id'])) ? $_GET['diplome_id'] : null;
+                    $departement_id = (!empty($_GET['departement_id'])) ? $_GET['departement_id'] : null;
+                    $status = (!empty($_GET['status'])) ? $_GET['status'] : null;
+
+                    $result = $controller->getFilieres($cycle_id, $diplome_id, $departement_id, $status);
+                    // error_log(print_r($result, true));
+                    // exit;
+
+                    echo json_encode($result);
+                    break;
+
+
+       case 'getFilieresByCycle':
+            if (!$cycle_id) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Paramètre "cycle_id" requis']);
+                exit;
+            }
+            $result = $controller->getFilieresByCycle($cycle_id);
+            echo json_encode($result);
             break;
 
             case 'deleteFili':
@@ -103,28 +131,28 @@ try {
             case 'GetAllDepartment':
                 $controller->GetAllDepartment();
                 break ;
-            case 'AjouterFiliere':
-                $jsonData = file_get_contents('php://input');
-                $decodedData = json_decode($jsonData, true);
+            // case 'AjouterFiliere':
+            //     $jsonData = file_get_contents('php://input');
+            //     $decodedData = json_decode($jsonData, true);
 
-                if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Erreur JSON : ' . json_last_error_msg()]);
-                    exit;
-                }
+            //     if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
+            //         http_response_code(400);
+            //         echo json_encode(['error' => 'Erreur JSON : ' . json_last_error_msg()]);
+            //         exit;
+            //     }
 
-                $nomFili = $decodedData['nom'] ?? null;
-                $depart_id = $decodedData['depart_id'] ?? null;
-                $prof_id = $decodedData['prof_id'] ?? null;
-                $cycle_id = $decodedData['cycle_id'] ?? null;
+            //     $nomFili = $decodedData['nom'] ?? null;
+            //     $depart_id = $decodedData['depart_id'] ?? null;
+            //     $prof_id = $decodedData['prof_id'] ?? null;
+            //     $cycle_id = $decodedData['cycle_id'] ?? null;
 
-                if (!$nomFili || !$depart_id || !$cycle_id || !$prof_id) {
-                    throw new Exception("Champs obligatoires manquants", 400);
-                }
+            //     if (!$nomFili || !$depart_id || !$cycle_id || !$prof_id) {
+            //         throw new Exception("Champs obligatoires manquants", 400);
+            //     }
 
-                // Tu peux aussi envoyer $decodedData['sections'] ici
-                $controller->AjouterFiliere($nomFili, $depart_id, $cycle_id, $prof_id, $decodedData['sections']);
-                break;
+            //     // Tu peux aussi envoyer $decodedData['sections'] ici
+            //     $controller->AjouterFiliere($nomFili, $depart_id, $cycle_id, $prof_id, $decodedData['sections']);
+            //     break;
 
             case 'getFiliereById': 
                 if (!$fieldId) {
@@ -135,6 +163,9 @@ try {
 
             case 'YEARS': 
                 $controller->YEARS();  
+                break; 
+            case 'GetAllDiplome': 
+                $controller->GetAllDiplome();  
                 break; 
              
             
@@ -278,14 +309,57 @@ try {
             // case 'UpdateModuleAvecElements':
             //     $controller->UpdateModuleAvecElements();
             //     break;
-            case 'getFilieresByCycle':
-                if ($cycle_id) {
-                    $result = $controller->getFilieresByCycle($cycle_id);
+            case 'AjouterFiliere':
+                    $jsonData = file_get_contents('php://input');
+                    $decodedData = json_decode($jsonData, true);
+
+                    if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'Erreur JSON : ' . json_last_error_msg()]);
+                        exit;
+                    }
+
+                    $controller->AjouterFiliere1($decodedData);
+                    break;
+            case 'UpdateFiliere':
+                    $jsonData = file_get_contents('php://input');
+                    $decodedData = json_decode($jsonData, true);
+
+                    if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
+                        http_response_code(400);
+                        echo json_encode(['error' => 'Erreur JSON : ' . json_last_error_msg()]);
+                        exit;
+                    }
+
+                    $controller->UpdateFiliere($decodedData);
+                    break;
+            case 'AjouterModules':
+                    $input = json_decode(file_get_contents("php://input"), true);
+                    if (!$input || empty($input['filiere_id']) || !isset($input['modules'])) {
+                        echo json_encode(["status" => "error", "message" => "Paramètres manquants"]);
+                        exit;
+                    }
+                    $controller->AjouterModules($input);
+                    echo json_encode(["status" => "success", "message" => "Modules ajoutés avec succès",
+                        ]);
+                    break;
+
+            case 'updateModule':
+                    $raw = json_decode(file_get_contents("php://input"), true);
+
+                    // Unwrap module object if it's sent inside "modules"
+                    if (!empty($raw['modules']) && is_array($raw['modules'])) {
+                        $data = $raw['modules'][0];
+                        $data['filiere_id'] = $raw['filiere_id']; // merge filiere_id
+                    } else {
+                        $data = $raw;
+                    }
+
+                    $result = $controller->updateModule($data);
                     echo json_encode($result);
-                } else {
-                    echo json_encode(['status' => 'error', 'message' => 'ID du cycle manquant ou invalide']);
-                }
-                break;
+                    break;
+
+
 
 
            

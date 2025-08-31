@@ -36,10 +36,10 @@ class NoteController
             $input = json_decode(file_get_contents('php://input'), true);
             if (is_array($input)) {
                 $semestre_id = isset($input['semestre_id']) ? filter_var($input['semestre_id'], FILTER_VALIDATE_INT) : null;
-                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_STRING) : null;
+                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
             } else {
                 $semestre_id = filter_input(INPUT_POST, 'semestre_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
-                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_STRING) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
             }
 
             // Validate inputs
@@ -102,10 +102,10 @@ class NoteController
             $input = json_decode(file_get_contents('php://input'), true);
             if (is_array($input)) {
                 $semestre_id = isset($input['semestre_id']) ? filter_var($input['semestre_id'], FILTER_VALIDATE_INT) : null;
-                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_STRING) : null;
+                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
             } else {
                 $semestre_id = filter_input(INPUT_POST, 'semestre_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
-                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_STRING) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
             }
 
             // Validate inputs
@@ -167,9 +167,9 @@ class NoteController
             // Get input
             $input = json_decode(file_get_contents('php://input'), true);
             if (is_array($input)) {
-                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_STRING) : null;
+                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
             } else {
-                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_STRING) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
             }
 
             // Validate inputs
@@ -221,9 +221,9 @@ class NoteController
             // Get input
             $input = json_decode(file_get_contents('php://input'), true);
             if (is_array($input)) {
-                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_STRING) : null;
+                $annee_id = isset($input['annee_id']) ? filter_var($input['annee_id'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
             } else {
-                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_STRING) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+                $annee_id = filter_input(INPUT_POST, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS) ?: filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
             }
 
             // Validate inputs
@@ -267,7 +267,7 @@ class NoteController
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
         $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
-        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
         validateRequiredParam($annee_id, 'annee_id');
 
         $result = $this->model->getElementNotes($semestre_id, $annee_id);
@@ -283,7 +283,7 @@ class NoteController
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
         $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
-        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
         validateRequiredParam($annee_id, 'annee_id');
 
         $result = $this->model->getModuleNotes($semestre_id, $annee_id);
@@ -299,7 +299,7 @@ class NoteController
                     $this->authMiddleware->verifySession();
             $this->adminMiddleware->verifyAdmin();
         $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT, ['options' => ['default' => null]]);
-        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
         validateRequiredParam($annee_id, 'annee_id');
 
         $result = $this->model->getSemesterNotes($semestre_id, $annee_id);
@@ -314,7 +314,7 @@ class NoteController
     {
                     $this->authMiddleware->verifySession();
             $this->adminMiddleware->verifyAdmin();
-        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+        $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
         validateRequiredParam($annee_id, 'annee_id');
 
         $result = $this->model->getYearNotes($annee_id);

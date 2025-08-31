@@ -20,7 +20,7 @@ try {
 
     // Get request method and action
     $method = $_SERVER['REQUEST_METHOD'];
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
 
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
     $user_id = filter_input(INPUT_GET, 'user_id', FILTER_VALIDATE_INT);
@@ -29,23 +29,23 @@ try {
     $group_id = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
     $etape_id = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
     $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
-    $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+    $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
     $department_id = filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
     $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;
     $limit = filter_input(INPUT_GET, 'limit', FILTER_VALIDATE_INT) ?: 10;
-    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
+    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS);
 
 
     // Récupération et nettoyage des paramètres
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
     $fieldId = filter_input(INPUT_GET, 'field_id', FILTER_VALIDATE_INT);
     $sectionId = filter_input(INPUT_GET, 'section_id', FILTER_VALIDATE_INT);
     $groupId = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
     $depart_id=filter_input(INPUT_GET, 'depart_id', FILTER_VALIDATE_INT);
     $prof_id=filter_input(INPUT_GET, 'prof_id', FILTER_VALIDATE_INT);
     $cycle_id=filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
-    $nomFili = filter_input(INPUT_GET, 'nomFili', FILTER_SANITIZE_STRING);
-    $anneeAccreditation=filter_input(INPUT_GET, 'annee', FILTER_SANITIZE_STRING);
+    $nomFili = filter_input(INPUT_GET, 'nomFili', FILTER_SANITIZE_SPECIAL_CHARS);
+    $anneeAccreditation=filter_input(INPUT_GET, 'annee', FILTER_SANITIZE_SPECIAL_CHARS);
 
 
   

@@ -118,28 +118,44 @@ class StudentController {
         }
     }
 
-    public function getSemestresByEtape($etapeId) {
-        if (empty($etapeId)) {
-            $this->response->send(400, [
+    
+
+    public function getSemestresByEtapeCycleFiliere($etapeId, $cycleId, $fieldId) {
+    // Validate input parameters
+    if (empty($etapeId) || empty($cycleId) || empty($fieldId)) {
+        $this->response->send(400, [
+            'status' => 'error',
+            'message' => 'Missing required parameters: etape_id, cycle_id, or field_id'
+        ]);
+        return;
+    }
+
+    try {
+        // Call the model method to fetch semesters
+        $semestres = $this->model->getSemestresByEtapeCycleFiliere($etapeId, $cycleId, $fieldId);
+        
+        // Check if any semesters were found
+        if (empty($semestres)) {
+            $this->response->send(404, [
                 'status' => 'error',
-                'message' => 'Missing etape ID'
+                'message' => 'No semesters found for the provided etape, cycle, and filiere'
             ]);
             return;
         }
 
-        try {
-            $semestres = $this->model->getSemestresByEtape($etapeId);
-            $this->response->send(200, [
-                'status' => 'success',
-                'data' => $semestres
-            ]);
-        } catch (Exception $e) {
-            $this->response->send(500, [
-                'status' => 'error',
-                'message' => 'Erreur lors de la récupération des semestres: ' . $e->getMessage()
-            ]);
-        }
+        // Return success response with semesters
+        $this->response->send(200, [
+            'status' => 'success',
+            'data' => $semestres
+        ]);
+    } catch (Exception $e) {
+        // Handle any errors during database query
+        $this->response->send(500, [
+            'status' => 'error',
+            'message' => 'Erreur lors de la récupération des semestres: ' . $e->getMessage()
+        ]);
     }
+}
 
     public function getAllAnnees() {
         try {
@@ -156,6 +172,55 @@ class StudentController {
         }
     }
 
-    
+    public function getYearStudied($student_id) {
+        $stmt = $this->model->getYearStudied($student_id);
+        $this->response->send(200, $stmt);
+    }
 
+    public function changePassword($userId, $newPassword) {
+        if (empty($userId) || empty($newPassword)) {
+            $this->response->send(400, [
+                'status' => 'error',
+                'message' => 'Missing required parameters'
+            ]);
+            return;
+        }
+
+        try {
+            // Le model retourne true ou false
+            $result = $this->model->changePassword($userId, $newPassword);
+
+            if ($result === true) {
+                $this->response->send(200, [
+                    'status' => 'success',
+                    'message' => 'Password updated successfully'
+                ]);
+            } else {
+                $this->response->send(400, [
+                    'status' => 'error',
+                    'message' => 'Failed to update password'
+                ]);
+            }
+        } catch (Exception $e) {
+            $this->response->send(500, [
+                'status' => 'error',
+                'message' => 'Error changing password: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getCycleOfStudent($student_id) {
+        $stmt = $this->model->getCycleOfStudent($student_id);
+        $this->response->send(200, $stmt);
+    }
+
+    public function getSemestresOfStudentByCycle($student_id, $cycle_id) {
+        $stmt = $this->model->getSemestresOfStudentByCycle($student_id, $cycle_id);
+        $this->response->send(200, $stmt);
+    }
+
+    public function getNoteOfStudentBysemestre($student_id, $semester_id) {
+        $stmt = $this->model->getNoteOfStudentBysemestre($student_id, $semester_id);
+        $this->response->send(200, $stmt);
+    }
 }

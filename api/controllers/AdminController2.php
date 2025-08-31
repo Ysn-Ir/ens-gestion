@@ -44,8 +44,6 @@ class AdminController2 {
     // }
 
     public function getAllFilieres(){
-                    $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
             $filieres = $this->model->getFilieres();
             $this->response->sende(200, [
                 'status' => 'success',
@@ -53,8 +51,6 @@ class AdminController2 {
             ]);
     }
     public function AjouterFiliere($nom, $depart_id, $cycle_id, $prof_id, $sections = []) {
-                    $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
                     try {
                         $result = $this->model->AjouterFiliere($nom, $depart_id, $cycle_id, $prof_id, $sections);
 
@@ -72,8 +68,6 @@ class AdminController2 {
     
 
    public function deleteFiliere($fieldId){
-                $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
     error_log("🔧 deleteFiliere called with ID = $fieldId");
 
     $this->model = new AdminModel2();
@@ -88,8 +82,7 @@ class AdminController2 {
     }
 }
 public function getNombreSemestresByFiliere($filiere_id)
-{            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+{
     $this->model = new AdminModel2();
 
     if (!$filiere_id || !is_numeric($filiere_id)) {
@@ -116,8 +109,7 @@ public function getNombreSemestresByFiliere($filiere_id)
 public function AjouterModuleM1(
     $codeMod, $nomMod, $coeff_cc, $coeff_ecrit, $coeff_element, $coeff_tp,
     $ref_filiere, $ref_semestre, $ref_prof_element, $ref_prof_tp
-) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+) {
     require_once __DIR__ . '/../models/AdminModel2.php';
     $model = new AdminModel2();
 
@@ -156,8 +148,7 @@ public function AjouterModuleM1(
     }
 }
 // 
-public function ModifierModuleAvecElement($data) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+public function ModifierModuleAvecElement($data) {
     // Vérification des données essentielles
     if (
         !isset($data['module_id'], $data['nomMod'], $data['codeMod'],
@@ -207,15 +198,13 @@ public function ModifierModuleAvecElement($data) {            $this->authMiddlew
         ]);
     }
 }
-public function getFilieresByCycle($cycle_id) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
-    return $this->model->getFilieresByCycle($cycle_id);
-}
+            public function getFilieresByCycle($cycle_id) {
+                return $this->model->getFilieresByCycle($cycle_id);
+            }
 
 
 public function AjouterModuleAvecElements($data)
-{            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+{
     // Validation des champs obligatoires
     if (
         empty($data['nomMod']) || empty($data['codeMod']) ||
@@ -266,8 +255,7 @@ public function AjouterModuleAvecElements($data)
 
 
 public function GetAllProffessors()
-{            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+{
     $this->model = new AdminModel2();
     $profs = $this->model->GetAllProffessors();
 
@@ -287,8 +275,7 @@ public function GetAllProffessors()
 
 
 
-public function deleteModule($module_id) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+public function deleteModule($module_id) {
     $result = $this->model->deleteModule($module_id);
     
     if ($result) {
@@ -301,8 +288,7 @@ public function deleteModule($module_id) {            $this->authMiddleware->ver
 
 
 
-public function deleteElement($element_id) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+public function deleteElement($element_id) {
     $result = $this->model->deleteElement($element_id);
 
     if ($result) {
@@ -313,37 +299,37 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
     }
 }
 
-    public function GetAllRegularProffessors(){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function GetAllRegularProffessors(){
         $professeurs = $this->model->GetAllRegularProffessors();
         $this->response->sende(200, $professeurs);
     }
 
-    public function GetAllDepartment(){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function GetAllDepartment(){
         $departments = $this->model->GetAllDepartment();
         $this->response->sende(200, $departments);
     }
 
-    public function GetAllCycle(){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function GetAllCycle(){
         $cycles = $this->model->GetAllCycle();
         $this->response->sende(200, $cycles);
     }
 
-    public function YEARS(){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function YEARS(){
         $years = $this->model->YEARS();
         $this->response->sende(200, $years);
     }
+    
 
-    public function getFiliereById($fieldId) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+     public function GetAllDiplome(){
+        $diplomes = $this->model->GetAllDiplome();
+        $this->response->sende(200, $diplomes);
+    }
+
+    public function getFiliereById($fieldId) {
         return $this->model->getFiliereById($fieldId);
     }
 
-    public function getAllDepart(){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function getAllDepart(){
         $departments = $this->model->getAllDepart();
         $this->response->sende(200, [
             'status' => 'success',
@@ -351,8 +337,7 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
         ]);
     }
 
-    public function deleteDepart($depart_id){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function deleteDepart($depart_id){
         $this->model = new AdminModel2();
         $result = $this->model->deleteDepart($depart_id);
 
@@ -363,8 +348,7 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
         }
     }
 
-    public function AjouterDepart($nom,$profId,$dateDebut,$dateFin) {            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function AjouterDepart($nom,$profId,$dateDebut,$dateFin) {
                     if (empty($dateDebut) || empty($dateFin) || empty($nom) || !is_numeric($profId)) {
                         $this->response->sende(400, ['message' => $dateDebut.$dateFin.'Données invalides']);
                         return;
@@ -379,8 +363,7 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
                     }
                             }
 
-    public function updateDepart($departementId ,$nom,$profId,$anneeAccreditation ){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function updateDepart($departementId ,$nom,$profId,$anneeAccreditation ){
         $result = $this->model->updateDepart(
             $departementId,
             $nom,
@@ -395,8 +378,7 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
         }
     }
 
-    public function infoModules(){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function infoModules(){
         $modules = $this->model->infoModules();
         $this->response->sende(200, [
             'status' => 'success',
@@ -406,8 +388,7 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
 
     
 
-    public function getModules($annee = null, $fieldId = null, $semestreId = null){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function getModules($annee = null, $fieldId = null, $semestreId = null){
         $modules = $this->model->getModules($annee, $fieldId, $semestreId);
         $this->response->sende(200, [
             'status' => 'success',
@@ -415,8 +396,7 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
         ]);
     }
 
-    public function getFilieresByYear($anneeAccreditation){            $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
+    public function getFilieresByYear($anneeAccreditation){
         $filieres = $this->model->getFilieresByYear($anneeAccreditation);
 
         if ($filieres && count($filieres) > 0) {
@@ -434,6 +414,91 @@ public function deleteElement($element_id) {            $this->authMiddleware->v
     }
 
 
+
+   public function AjouterFiliere1($data) {
+    // Vérifier les champs obligatoires
+    $required = ['nom','depart_id','prof_id','cycle_id','diplome',
+                 'date_debut_affectation','date_fin_affectation',
+                 'annee_debut_accreditation','annee_fin_accreditation','statut'];
+
+    foreach ($required as $field) {
+        if (empty($data[$field])) {
+            http_response_code(400);
+            echo json_encode(['status'=>'error','message'=>"Champ manquant : $field"]);
+            return;
+        }
+    }
+
+    try {
+        $success = $this->model->AjouterFiliere1($data);
+
+        if ($success) {
+            http_response_code(200);
+            echo json_encode(['status'=>'success','message'=>'Filière créée avec succès']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['status'=>'error','message'=>'Erreur lors de la création']);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['status'=>'error','message'=>'Erreur BD : '.$e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['status'=>'error','message'=>'Erreur : '.$e->getMessage()]);
+    }
 }
+
+public function UpdateFiliere($data) {
+    // Vérifier les champs obligatoires
+    $required = ['fieldId','nom','depart_id','prof_id','cycle_id','diplome',
+                 'date_debut_affectation','date_fin_affectation',
+                 'annee_debut_accreditation','annee_fin_accreditation','statut'];
+
+    foreach ($required as $field) {
+        if (empty($data[$field])) {
+            http_response_code(400);
+            echo json_encode(['status'=>'error','message'=>"Champ manquant : $field"]);
+            return;
+        }
+    }
+
+    try {
+        $success = $this->model->UpdateFiliere($data);
+
+        if ($success) {
+            http_response_code(200);
+            echo json_encode(['status'=>'success','message'=>'Filière modifié avec succès']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['status'=>'error','message'=>'Erreur lors de la modification']);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['status'=>'error','message'=>'Erreur BD : '.$e->getMessage()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['status'=>'error','message'=>'Erreur : '.$e->getMessage()]);
+    }
+}
+
+
+public function getFilieres($cycle_id = null, $diplome_id = null, $departement_id = null, $status = null) {
+    return $this->model->getFilieres($cycle_id, $diplome_id, $departement_id, $status);
+}
+
+ public function AjouterModules($data) {
+        return $this->model->AjouterModules($data);
+    }
+    public function updateModule($data) {
+        return $this->model->updateModule($data);
+    }
+
+    
+
+
+}
+
+
+
 
 ?>

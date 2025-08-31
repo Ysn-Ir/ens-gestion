@@ -3,475 +3,1023 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - modules</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <title> Gestion des Modules</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />    <script src="../../route.js"></script>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
+    :root {
+      --primary: #2c3e50;
+      --primary-light: #3a516e;
+      --secondary: #34495e;
+      --accent: #3498db;
+      --accent-light: #5dade2;
+      --light: #f8f9fa;
+      --light-gray: #e9ecef;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --success-light: #2ecc71;
+      --warning: #f39c12;
+      --warning-light: #f4d03f;
+      --danger: #e74c3c;
+      --danger-light: #ec7063;
+      --border: #e0e0e0;
+      --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      --transition: all 0.3s ease;
+        --primary-color: #4e73df;
+      --secondary-color: #6f42c1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      margin: 0;
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .sidebar {
-      height: 100vh;
-      width: 220px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background-color: #343a40;
-      padding-top: 60px;
-      color: #fff;
-    }
-
-    .sidebar h4 {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid #495057;
-    }
-
-    .sidebar a {
-      display: block;
-      padding: 12px 20px;
-      color: #adb5bd;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
-    }
-
-    .sidebar a:hover {
-      background-color: #495057;
-      color: #ffffff;
-    }
-
-    .content {
-      padding: 20px;
-      min-height: 100vh;
-      background-color: #ffffff;
-    }
-
-    .logout-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 999;
-    }
-
-    .welcome-message {
-      font-size: 24px;
-      font-weight: bold;
+      background-color: #f5f7fa;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       color: #333;
+      line-height: 1.6;
+    }
+    :root {
+      --primary: #2c3e50;
+      --secondary: #34495e;
+      --accent: #3498db;
+      --light: #f8f9fa;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --border: #e0e0e0;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    /* Header Styles */
+    .dashboard-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+
+    .logo i {
+      margin-right: 12px;
+      font-size: 1.8rem;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    /* Main Content */
+    .main-content {
+      padding: 0 2rem 2rem;
+    }
+
+    .page-title {
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      position: relative;
+      display: inline-block;
+    }
+
+    .page-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .card {
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      border: none;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      box-shadow: var(--hover-shadow);
+      transform: translateY(-3px);
+    }
+
+    .card-header {
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      color: var(--primary);
+      border-radius: 12px 12px 0 0 !important;
+      padding: 1rem 1.5rem;
+    }
+     
+    .filter-section {
+      padding: 1.5rem;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .filter-section:hover {
+      box-shadow: var(--hover-shadow);
+    }
+
+    .filter-title {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      font-size: 1.1rem;
+    }
+
+    .filter-title i {
+      margin-right: 10px;
+      color: var(--accent);
+      background: rgba(52, 152, 219, 0.1);
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-select {
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ddd;
+      transition: var(--transition);
+    }
+
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+
+    .btn {
+      border-radius: 8px;
+      font-weight: 600;
+      padding: 0.6rem 1.5rem;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  
+
+    .btn-success {
+      background: var(--success);
+      border: none;
+      box-shadow: 0 4px 6px rgba(39, 174, 96, 0.2);
+    }
+
+    .btn-success:hover {
+      background: #219653;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border: none;
+      box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      border: none;
+      box-shadow: 0 4px 6px rgba(231, 76, 60, 0.2);
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(231, 76, 60, 0.3);
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    /* Table Styles */
+    .table-container {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      transition: var(--transition);
+    }
+
+    .table-container:hover {
+      box-shadow: var(--hover-shadow);
+    }
+
+    .table {
+      margin-bottom: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .table th {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 600;
+      padding: 1rem;
+      text-align: center;
+      vertical-align: middle;
+      position: relative;
+    }
+
+    .table th:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 60%;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .table td {
+      padding: 1rem;
+      vertical-align: middle;
+      border: none;
+      border-bottom: 1px solid #f1f1f1;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .table-hover tbody tr:hover {
+      background-color: rgba(52, 152, 219, 0.08);
     }
 
     .module-group {
-      border-left: 5px solid #6c757d;
-      background-color: #fdfdfd;
-      transition: background-color 0.3s;
+      transition: var(--transition);
     }
 
     .module-group:hover {
-      background-color: #f1f1f1;
+      background-color: rgba(52, 152, 219, 0.05) !important;
+      transform: translateY(1px);
     }
-    
+
+    .section-header {
+      background-color: #5a6c7d !important;
+      color: white;
+      font-size: 1.05rem;
+    }
+
+    .loading-row {
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      padding: 2rem;
+    }
+
+    .error-row {
+      text-align: center;
+      color: var(--danger);
+      font-weight: 500;
+      padding: 2rem;
+    }
+
+    .empty-row {
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      padding: 2rem;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .table {
+        min-width: 1100px;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .main-content {
+        padding: 0 1rem 1rem;
+      }
+      
+      .dashboard-header {
+        padding: 1rem;
+      }
+      
+      .logo {
+        font-size: 1.3rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .filter-section .row > div {
+        margin-bottom: 1rem;
+      }
+      
+      .btn-responsive {
+        width: 100%;
+        margin-top: 0.5rem;
+      }
+      
+      .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+      
+      .logo {
+        justify-content: center;
+      }
+      
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* Animation for loading */
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .loading-row {
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Custom scrollbar for table */
+    .table-responsive::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+     /* Filière Info Card */
+    .info-card {
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--card-shadow);
+    }
+
+    .info-card h5 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-card h5 i {
+      margin-right: 10px;
+      color: var(--accent);
+    }
+
+    .info-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: var(--dark);
+      font-weight: 500;
+    }
   </style>
+   
 </head>
 <body>
 
-
-  <div class="content">
-    <div class="welcome-message mb-4">
-      Bonjour <span id="usernameDisplay"></span> !
-    </div>
-    <div class="alert alert-info">
-      Vous êtes connecté en tant que: <strong id="userRole"></strong>
-    </div>
-
-    <div class="d-flex justify-content-between mb-3">
-      <div class="p-2">
-        <h2>Liste des Modules</h2>
-      </div>
-      <div class="p-2">
-        <button type="button" class="btn btn-success" onclick="AjouterModule()"> + Ajouter un module</button>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="bi bi-mortarboard-fill"></i>
+        <span>Gestion des Modules</span>
       </div>
     </div>
+  </header>
 
-    <h4>Filterer </h4>
-        <div class="row">
-         
-          
-          <div class="col-md-3 mb-3">
-            <label>Filière</label>
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <h5 class="filter-title"><i class="bi bi-funnel me-2"></i>Filtres</h5>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label fw-semibold">Filière</label>
           <select class="form-select" id="filiere" required>
-              <option disabled selected>Choisissez une filière</option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-3">
-             <label>Semestre</label>
-          <select class="form-select" id="semestre" required>
-                          <option disabled selected>Choisissez le semestre</option>
-
+            <option value="" selected>Toutes les filières</option>
           </select>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label fw-semibold">Semestre</label>
+          <select class="form-select" id="semestre" required>
+            <option value="" selected>Tous les semestres</option>
+          </select>
+        </div>
+        
+      </div>
+    </div>
+    <div class="d-flex justify-content-between mb-3 flex-wrap">
+          <div class="p-2">     
+            <h1 class="page-title"><i class="bi bi-list-task me-2"></i>Liste des Modules</h1>
+      </div>
+          <div class="p-2"> 
+             <button type="button" class="btn btn-success" onclick="AjouterModule()">
+            <i class="bi bi-plus-circle me-2"></i>Ajouter un module
+          </button>
           </div>
-          
-          
         </div>
 
-    <div class="table-responsive mt-4">
-      <table class="table table-bordered table-striped align-middle text-center">
-        <thead>
-          <tr class="table-secondary">
-            <th colspan="5">Description du module</th>
-            <th colspan="5">Évaluation du module</th>
-            <th colspan="2">Prof associée à l'élément</th>
-            <th colspan="1">Action Sur Element</th>
-            <th colspan="2">Action Sur module</th>
-          </tr>
-          <tr class="table-dark">
-            <th>Code Module</th>
-            <th>Nom Module</th>
-            <th>Année d'accréditation</th>
-            <th>Filière associée</th>
-            <th>Semestre associée</th>
-            <th>Nom Élément</th>
-            <th>Coeff Écrit</th>
-            <th>Coeff CC</th>
-            <th>Coeff TP</th>
-            <th>Coeff Élément</th>
-            
-            <th>Prof Élément</th>
-            <th>Prof TP</th>
-            <th>Supprimer Element</th>
-            <th>Modifier Module</th>
-            <th>Supprimer Module</th>
-          </tr>
-        </thead>
-        <tbody id="moduleTabBody">
-          <tr><td colspan="13" class="text-center">Chargement...</td></tr>
-        </tbody>
-      </table>
+    <!-- Table Section -->
+    <div class="table-container">
+      <div class="table-responsive">
+        <table class="table table-striped  table-hover table-bordered align-middle text-center">
+          <thead>
+            <tr>
+              <th colspan="6" class="section-header">Description du module</th>
+              <th colspan="3" class="section-header">Élement du module</th>
+              <th colspan="1" class="section-header">Action sur l'élément</th>
+              <th colspan="1" class="section-header">Action sur le module</th>
+            </tr>
+            <tr class="table-dark">
+              <th>Code Module</th>
+              <th>Nom Module</th>
+              <th>Chef de Module</th>
+              <th>Filière associée</th>
+              <th>Semestre associé</th>
+              <th>Type</th>
+              <th>Nom Élément</th>
+              <th>Chef de l'élement</th> 
+              <th>Coeff Élément</th>
+              <th>Supprimer élement</th>
+              <th>Actions</th>
+              
+            </tr>
+          </thead>
+          <tbody id="moduleTabBody">
+            <tr class="loading-row">
+              <td colspan="15">Chargement des données en cours...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <style>
+     #moduleDetailsContent table #first{
+      background-color: transparent;
+            border-radius: 20px;
+
+      
+    }
+    #moduleDetailsContent table #first th {
+      background-color: #5A6C7D;
+
+    }
+     #moduleDetailsContent tbody {
+        font-weight: 100px;
+
+    }
+
+  </style>
+  <!-- Modal Détails Module -->
+  <div class="modal fade" id="moduleDetailsModal" tabindex="-1" aria-labelledby="moduleDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header  text-dark">
+          <h5 class="modal-title" id="moduleDetailsLabel"><i class="bi bi-info-square-fill"></i> Descirption Complète du Module</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Ici sera injecté le contenu dynamique -->
+          <div id="moduleDetailsContent"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-          function addDefaultOption(selectElement, label = "Sélectionner", value = "") {
-            const defaultOption = document.createElement("option");
-            defaultOption.value =value;
-            defaultOption.textContent = label;
-            defaultOption.disabled = false;
-            defaultOption.selected = true;
-            selectElement.appendChild(defaultOption);
-          }
+    function addDefaultOption(selectElement, label = "Sélectionner", value = "") {
+      const defaultOption = document.createElement("option");
+      defaultOption.value = value;
+      defaultOption.textContent = label;
+      defaultOption.disabled = false;
+      defaultOption.selected = true;
+      selectElement.appendChild(defaultOption);
+    }
 
+    const filiereSelect = document.getElementById('filiere');
+    const semestreSelect = document.getElementById("semestre");
 
-          const filiereSelect = document.getElementById('filiere');
-          const semestreSelect = document.getElementById("semestre");
+    document.addEventListener('DOMContentLoaded', function () {
+      // Charger les modules 
+      fetch(adminURL+'/admin2.php?action=infoModules', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        window.lastModulesData = data; // <= garde toutes les données globalement
+
+        loadModuleTable(data);
+      }).catch(error => {
+        console.error('Erreur de chargement des modules :', error);
+        document.getElementById('moduleTabBody').innerHTML = 
+          '<tr class="error-row"><td colspan="15">Erreur lors du chargement des données</td></tr>';
+      });
+
+      // Charger les filières
+      fetch(adminURL+'/admin2.php?action=getFilieres', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success" && Array.isArray(data.data)) {
+          // Ajouter l'option par défaut
+          addDefaultOption(filiereSelect, "Toutes les filières", "");
           
-  document.addEventListener('DOMContentLoaded', function () {
-      const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
-      localStorage.setItem("userData", JSON.stringify(userData));
+          data.data.forEach(filiere => {
+            const option = document.createElement('option');
+            option.value = filiere.field_id;
+            option.textContent = filiere.nom_filiere ?? filiere.nom ?? "Nom inconnu";
+            filiereSelect.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.textContent = "Aucune filière disponible";
+          option.disabled = true;
+          filiereSelect.appendChild(option);
+        }
+      })
+      .catch(error => {
+        console.error("Erreur lors du chargement des filières :", error);
+        const option = document.createElement('option');
+        option.textContent = "Erreur de chargement";
+        option.disabled = true;
+        filiereSelect.appendChild(option);
+      });
+    });
 
-      document.getElementById('usernameDisplay').textContent = userData.username;
-      document.getElementById('userRole').textContent = userData.role;
+    filiereSelect.addEventListener("change", () => {
+      const filiereId = filiereSelect.value;
 
-    
+      // Clear old options
+      semestreSelect.innerHTML = "";
 
+      // Add default option
+      addDefaultOption(semestreSelect, "Tous les semestres", "");
 
-          //Charger les modules 
-          fetch('http://localhost/ens-gestion/api/admin2.php?action=infoModules', {
-              method: 'GET',
-              credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                    console.log(data);
-                    loadModuleTable(data);
-      
-            }).catch(error => {
-                    console.error('Erreur de chargement des modules :', error);
-                    document.getElementById('moduleTabBody').innerHTML =
-                      '<tr><td colspan="13" class="text-center text-danger">Erreur lors du chargement</td></tr>';
-                  });
-            
-
-          
-
-          filiereSelect.innerHTML = ''; // Vider avant de remplir
-          addDefaultOption(filiereSelect, "Tous les filières");
-         
-          // Charger les filières
-          fetch('http://localhost/ens-gestion/api/admin2.php?action=getFilieres', {
-                    method: 'GET',
-                    credentials: 'include'
-                  })
-                  .then(res => res.json())
-                  .then(data => {
-                    if (data.status === "success" && Array.isArray(data.data)) {
-                      data.data.forEach(filiere => {
-                        const option = document.createElement('option');
-                        option.value = filiere.field_id;
-                        option.textContent = filiere.nom_filiere ?? filiere.nom ?? "Nom inconnu";
-                        filiereSelect.appendChild(option);
-                      });
-                      const option = document.createElement('option');
-                        option.value = filiere.field_id;
-                        option.textContent = filiere.nom_filiere ?? filiere.nom ?? "Nom inconnu";
-                        filiereSelect.appendChild(option);
-                    } else {
-                      const option = document.createElement('option');
-                      option.textContent = "Aucune filière disponible";
-                      option.disabled = true;
-                      filiereSelect.appendChild(option);
-                    }
-                  })
-                  .catch(error => {
-                    console.error("Erreur lors du chargement des filières :", error);
-                    filiereSelect.innerHTML = '';
-                    const option = document.createElement('option');
-                    option.textContent = "Erreur de chargement";
-                    option.disabled = true;
-                    filiereSelect.appendChild(option);
-                  });
-                });
-
-                        filiereSelect.addEventListener("change", () => {
-                            const filiereId = filiereSelect.value;
-
-                            // Clear old options
-                            semestreSelect.innerHTML = "";
-
-                            // Add default BEFORE loading semestres
-                            addDefaultOption(semestreSelect, "Choisissez un semestre");
-
-                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
-                              .then(res => res.json())
-                              .then(data => {
-                                if (data.status === "success") {
-                                  const nombreSemestre = data.nombre_semestre;
-                                  for (let i = 1; i <= nombreSemestre; i++) {
-                                    const option = document.createElement("option");
-                                    option.value = i;
-                                    option.textContent = "Semestre " + i;
-                                    semestreSelect.appendChild(option);
-                                  }
-                                }
-                              })
-                              .catch(() => alert("Erreur lors du chargement des semestres"));
-                          });
-
-                        function modifierModule(module,element) {
-                          localStorage.setItem("moduleToUpdate", JSON.stringify(module));
-                          localStorage.setItem("module_id", module.module_id);
-                          localStorage.setItem("nom_module", module.nom_module);
-                          localStorage.setItem("code_module", module.code_module);
-                          let numberOfElements= 0 ;
-                          element.forEach((el,index)=>{
-                                  localStorage.setItem(`element_id${index}`, el.element_id);
-                                  localStorage.setItem(`nom_element${index}`, el.nom_element);
-                                  localStorage.setItem(`ecrit_${index}`, el.coeff_ecrit);
-                                  localStorage.setItem(`cc_${index}`, el.coeff_cc);
-                                  localStorage.setItem(`tp_${index}`, el.coeff_tp);
-                                  localStorage.setItem(`el_${index}`, el.coeff_element);
-                                  numberOfElements++ ; 
-
-
-                          });
-                          localStorage.setItem("numberOfElements",numberOfElements);
-
-
-
-
-                          window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/modifierModule.html";
-                        }
-
-                        function suppModule(id) {
-                          if (confirm("Voulez-vous vraiment supprimer le module ID " + id + " ?")) {
-                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deletemodule&field_id=${id}`, {
-                              method: 'DELETE',
-                              credentials: 'include'
-                            })
-                            .then(response => response.json())
-                            .then(result => {
-                              if (result.success) {
-                                alert("Module supprimé.");
-                                location.reload();
-                              } else {
-                                alert("Erreur lors de la suppression.");
-                              }
-                            })
-                            .catch(error => {
-                              console.error("Erreur:", error);
-                              alert("Erreur de suppression.");
-                            });
-                          }
-                        }
-
-                        function AjouterModule() {
-                          window.location.href = "AjouterModule.html";
-                        }
-
-
-                        function deleteModule(nom,id) {
-                                  console.log(nom, id);
-                          if (confirm("Voulez-vous vraiment supprimer le module  " + nom + " ?")) {
-                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteModule&module_id=${id}`, {
-                              method: 'DELETE',
-                              credentials: 'include'
-                            })
-                              .then(response => response.json())
-                              .then(result => {
-                                if (result.success) {
-                                  alert("Module supprimée.");
-                                  location.reload();
-                                } else {
-                                  alert("Erreur lors de la suppression.");
-                                }
-                              })
-                              .catch(error => {
-                                console.error("Erreur:", error);
-                                alert("Erreur de suppression.");
-                              });
-                            }
-                          }
-
-                            function deleteElement(nom, id) {
-                          if (confirm("Voulez-vous vraiment supprimer l'élément " + nom + " ?")) {
-                            fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteElement&element_id=${id}`, {
-                              method: 'DELETE',
-                              credentials: 'include'
-                            })
-                            .then(response => response.json())
-                            .then(result => {
-                              if (result.success) {
-                                alert("Élément supprimé.");
-                                loadModules(); 
-                              } else {
-                                alert("Erreur lors de la suppression.");
-                              }
-                            })
-                            .catch(error => {
-                              console.error("Erreur:", error);
-                              alert("Erreur de suppression.");
-                            });
-                          }
-                        }
-
-
-                      // Load modules based on selected filters
-                      function loadModules(anneeId = '', filiereId = '', semestre = '') {
-                        const moduleTabBody = document.getElementById('moduleTabBody');
-                        moduleTabBody.innerHTML = '<tr><td colspan="15" class="text-center">Chargement...</td></tr>';
-
-                        const queryParams = new URLSearchParams();
-                        if (anneeId) queryParams.append('annee', anneeId); // must match admin2.php
-                        if (filiereId) queryParams.append('field_id', filiereId);
-                        if (semestre) queryParams.append('semestre', semestre);
-                        console.log(queryParams.toString());
-                        fetch(`http://localhost/ens-gestion/api/admin2.php?action=getModules&${queryParams.toString()}`, {
-                          method: 'GET',
-                          credentials: 'include'
-                        })
-                          .then(response => response.json())
-                          .then(data => {
-
-                            console.log(data);
-                            loadModuleTable(data);
-                          })
-                          .catch(error => {
-                            console.error('Erreur de chargement des modules :', error);
-                            moduleTabBody.innerHTML = '<tr><td colspan="15" class="text-center text-danger">Erreur lors du chargement</td></tr>';
-                          });
-                      }
-
-                      // Trigger filtering
-                      filiereSelect.addEventListener('change', applyFilters);
-                      semestreSelect.addEventListener('change', applyFilters);
-
-                      function applyFilters() {
-                        const filiere = filiereSelect.value;
-                        const semestre = semestreSelect.value;
-                        loadModules('', filiere, semestre);
-                      }
-
-
-            function   loadModuleTable(data){
-                      const moduleTabBody = document.getElementById('moduleTabBody');
-                      moduleTabBody.innerHTML = '';
-
-                      if (data.status === "success" && Array.isArray(data.data)) {
-                        const groupedModules = {};
-
-                        data.data.forEach(row => {
-                          const key = row.code_module;
-                          if (!groupedModules[key]) {
-                            groupedModules[key] = {
-                              info: row,
-                              elements: []
-                            };
-                          }
-                          groupedModules[key].elements.push(row);
-                        });
-
-                        Object.values(groupedModules).forEach(module => {
-                          const { info, elements } = module;
-                          const rowspan = elements.length;
-
-                          elements.forEach((el, index) => {
-                            const tr = document.createElement('tr');
-                            tr.classList.add('module-group');
-
-                            tr.innerHTML = `
-                              ${index === 0 ? `
-                                <td rowspan="${rowspan}">${info.code_module}</td>
-                                <td rowspan="${rowspan}">${info.nom_module}</td>
-                                <td rowspan="${rowspan}">${info.annee}</td>
-                                <td rowspan="${rowspan}">${info.nom_filiere}</td>
-                                <td rowspan="${rowspan}">${info.semestre}</td>
-                              ` : ''}
-
-                              <td>${el.nom_element || '--'}</td>
-                              <td>${el.coeff_ecrit ?? '--'}</td>
-                              <td>${el.coeff_cc ?? '--'}</td>
-                              <td>${el.coeff_tp ?? '--'}</td>
-                              <td>${el.coeff_element ?? '--'}</td>
-
-                              <td>${el.prof_element || '--'}</td>
-                              <td>${el.prof_tp || '--'}</td>
-
-                            
-                              <td>
-                                <button class="btn btn-sm btn-danger" onclick="deleteElement('${el.nom_element}','${el.element_id}')">
-                                    <i class="bi bi-trash"></i></button>
-                              </td>
-
-                              ${index === 0 ? `
-                                <td rowspan="${rowspan}">
-                                  <button class="btn btn-sm btn-primary " onclick='modifierModule(${JSON.stringify(info)},${JSON.stringify(elements)})'>
-                                                            <i class="bi bi-pencil"></i>
-                                  </button>
-                                </td>
-                                <td rowspan="${rowspan}">
-                                  <button class="btn btn-sm btn-danger" onclick="deleteModule('${info.nom_module}','${info.module_id}')">
-                                      <i class="bi bi-trash"></i>
-                                  </button>
-                                </td>
-                              ` : ''}
-                            `;
-
-                            moduleTabBody.appendChild(tr);
-                          });
-                        });
-                      } else {
-                        moduleTabBody.innerHTML = '<tr><td colspan="15" class="text-center text-danger">Aucun module disponible</td></tr>';
-                      }
-
+      if (filiereId) {
+        fetch(adminURL+`/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "success") {
+              const nombreSemestre = data.nombre_semestre;
+              for (let i = 1; i <= nombreSemestre; i++) {
+                const option = document.createElement("option");
+                option.value = i;
+                option.textContent = "Semestre " + i;
+                semestreSelect.appendChild(option);
+              }
             }
-            
+          })
+          .catch(() => console.error("Erreur lors du chargement des semestres"));
+      }
+    });
+
+   
 
 
+    function suppModule(id) {
+      if (confirm("Voulez-vous vraiment supprimer le module ID " + id + " ?")) {
+        fetch(adminURL+`/admin2.php?action=deletemodule&field_id=${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.success) {
+            alert("Module supprimé avec succès.");
+            location.reload();
+          } else {
+            alert("Erreur lors de la suppression.");
+          }
+        })
+        .catch(error => {
+          console.error("Erreur:", error);
+          alert("Erreur de suppression.");
+        });
+      }
+    }
 
-          
+    function AjouterModule() {
+      window.location.href = "AjouterModule.html";
+    }
+
+    function deleteModule(nom, id) {
+      if (confirm(`Voulez-vous vraiment supprimer le module "${nom}" ?`)) {
+        fetch(adminURL+`/admin2.php?action=deleteModule&module_id=${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.success) {
+            alert("Module supprimé avec succès.");
+            location.reload();
+          } else {
+            alert("Erreur lors de la suppression.");
+          }
+        })
+        .catch(error => {
+          console.error("Erreur:", error);
+          alert("Erreur de suppression.");
+        });
+      }
+    }
+
+    function deleteElement(nom, id) {
+      if (confirm(`Voulez-vous vraiment supprimer l'élément "${nom}" ?`)) {
+        fetch(adminURL+`/admin2.php?action=deleteElement&element_id=${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.success) {
+            alert("Élément supprimé avec succès.");
+            loadModules();
+          } else {
+            alert("Erreur lors de la suppression.");
+          }
+        })
+        .catch(error => {
+          console.error("Erreur:", error);
+          alert("Erreur de suppression.");
+        });
+      }
+    }
+
+    // Load modules based on selected filters
+    function loadModules(anneeId = '', filiereId = '', semestre = '') {
+      const moduleTabBody = document.getElementById('moduleTabBody');
+      moduleTabBody.innerHTML = '<tr class="loading-row"><td colspan="15">Chargement...</td></tr>';
+
+      const queryParams = new URLSearchParams();
+      if (anneeId) queryParams.append('annee', anneeId);
+      if (filiereId) queryParams.append('field_id', filiereId);
+      if (semestre) queryParams.append('semestre', semestre);
+      
+      fetch(adminURL+`/admin2.php?action=getModules&${queryParams.toString()}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        loadModuleTable(data);
+      })
+      .catch(error => {
+        console.error('Erreur de chargement des modules :', error);
+        moduleTabBody.innerHTML = '<tr class="error-row"><td colspan="15">Erreur lors du chargement</td></tr>';
+      });
+    }
+
+    // Trigger filtering
+    filiereSelect.addEventListener('change', applyFilters);
+    semestreSelect.addEventListener('change', applyFilters);
+
+    function applyFilters() {
+      const filiere = filiereSelect.value;
+      const semestre = semestreSelect.value;
+      loadModules('', filiere, semestre);
+    }
+
+    function loadModuleTable(data) {
+      const moduleTabBody = document.getElementById('moduleTabBody');
+      moduleTabBody.innerHTML = '';
+
+      if (data.status === "success" && Array.isArray(data.data) && data.data.length > 0) {
+        const groupedModules = {};
+
+        data.data.forEach(row => {
+          const key = row.code_module;
+          if (!groupedModules[key]) {
+            groupedModules[key] = {
+              info: row,
+              elements: []
+            };
+          }
+          groupedModules[key].elements.push(row);
+        });
+
+        Object.values(groupedModules).forEach(module => {
+          const { info, elements } = module;
+          const rowspan = elements.length;
+
+          elements.forEach((el, index) => {
+            const tr = document.createElement('tr');
+            tr.classList.add('module-group');
+
+            tr.innerHTML = `
+              ${index === 0 ? `
+                <td rowspan="${rowspan}">${info.code_module}</td>
+                <td rowspan="${rowspan}">${info.nom_module}</td>
+                <td rowspan="${rowspan}">${info.prof_responsable}</td>
+                <td rowspan="${rowspan}">${info.nom_filiere}</td>
+                <td rowspan="${rowspan}">${info.semestre}</td>
+                <td rowspan="${rowspan}">${info.type}</td>
+              ` : ''}
+
+                <td>${el.nom_element || '--'}</td>
+                <td>${el.prof_element ?? '--'}</td>
+                <td>${el.coeff_element ?? '--'}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteElement('${el.nom_element}', '${el.element_id}')" title="Supprimer l'élément">
+<i class="bi bi-x-circle"></i>
+                    </button>
+                </td>
+
+              ${index === 0 ? `
+                
+                <td rowspan="${rowspan}" class="text-center align-middle">
+                    <div class="d-flex justify-content-center gap-2">
+                      
+                      <button class="btn btn-sm btn-primary" onclick="modifierModule('${info.nom_module}', '${info.module_id}')" title="Modifier le module">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+
+                      <button class="btn btn-sm btn-danger" onclick="deleteModule('${info.nom_module}', '${info.module_id}')" title="Supprimer le module">
+                                    <i class="bi bi-x-lg"></i>
+                        </button>
+
+                      <button class="btn btn-sm btn-warning" onclick="showDetails('${info.nom_module}', '${info.module_id}')" title="Détails du module">
+                        <i class="bi bi-card-heading"></i>
+                      </button>
+                    </div>
+                  </td>
+
+              ` : ''}
+            `;
+
+            moduleTabBody.appendChild(tr);
+          });
+        });
+      } else {
+        moduleTabBody.innerHTML = '<tr class="empty-row"><td colspan="15">Aucun module disponible</td></tr>';
+      }
+    }
+ 
+
   </script>
+  <script>
+     function modifierModule(nomModule, moduleId) {
+      const allData = window.lastModulesData || [];
+      const moduleRows = allData.data.filter(row => row.module_id == moduleId);
+
+      if (!moduleRows.length) return;
+
+      const module = moduleRows[0];
+      const elements = moduleRows;
+      // Stocker les informations de base du module
+      localStorage.setItem("moduleToUpdate", JSON.stringify(module));
+      console.log(JSON.stringify(elements));
+      localStorage.setItem("module_id", module.module_id);
+      localStorage.setItem("nom_module", module.nom_module);
+      localStorage.setItem("code_module", module.code_module);
+      localStorage.setItem("chef_module", module.id_prof_responsable || "");
+      localStorage.setItem("langue_module", module.langue || "");
+      localStorage.setItem("type_module", module.type || "");
+      localStorage.setItem("filiere_id", module.id_filiere || "");
+      localStorage.setItem("semestre_module", module.id_semestre || "");
+      localStorage.setItem("annee_module", module.annee || "");
+      
+        // Stocker les éléments normalement
+        elements.forEach((el, index) => {
+          localStorage.setItem(`element_id${index}`, el.element_id);
+          localStorage.setItem(`nom_element${index}`, el.nom_element);
+          localStorage.setItem(`coeff_element${index}`, el.coeff_element);
+          localStorage.setItem(`ecrit_${index}`, el.coeff_ecrit);
+          localStorage.setItem(`cc_${index}`, el.coeff_cc);
+          localStorage.setItem(`tp_${index}`, el.coeff_tp);
+          localStorage.setItem(`td_${index}`, el.coeff_td);
+          localStorage.setItem(`projet_${index}`, el.coeff_projet);
+
+          // Professeurs des éléments
+          // Professeurs des éléments
+          localStorage.setItem(`prof_cours_element${index}`, el.id_prof_cours || "");
+          localStorage.setItem(`prof_td_element${index}`, el.id_prof_td || "");
+          localStorage.setItem(`prof_tp_element${index}`, el.id_prof_tp || "");
+          localStorage.setItem(`chef_element${index}`, el.id_prof_element || "");
+
+
+          // Volumes horaires des éléments
+          localStorage.setItem(`volume_tp_element${index}`, el.horraire_tp || "0");
+          localStorage.setItem(`volume_td_element${index}`, el.horraire_td || "0");
+          localStorage.setItem(`volume_cours_element${index}`, el.horraire_cours || "0");
+          localStorage.setItem(`volume_pratique_element${index}`, el.horraire_activite_pratique || "0");
+          localStorage.setItem(`volume_evaluation_element${index}`, el.horraire_evaluation || "0");
+          localStorage.setItem(`volume_presentiel_element${index}`, el.presentiel || "0");
+          localStorage.setItem(`volume_distance_element${index}`, el.a_distance || "0");
+          localStorage.setItem(`volume_alternance_element${index}`, el.en_alternance || "0");
+
+        });
+      
+
+      localStorage.setItem("numberOfElements", elements.length);
+      localStorage.setItem("hasElements", elements.length > 1 ? "yes" : "no");
+      console.log(localStorage.getItem("hasElements"));  
+      console.log(elements.length);
+
+  // Rediriger vers la page de modification
+  window.location.href = "modifierModule.html";
+}
+function showDetails(nomModule, moduleId) {
+  const allData = window.lastModulesData || [];
+  const moduleRows = allData.data.filter(row => row.module_id == moduleId);
+
+  if (!moduleRows.length) return;
+
+  const moduleInfo = moduleRows[0];
+  const elements = moduleRows;
+
+  // Informations de base card (unchanged)
+  let html = `
+    <div id="filiereInfo" class="info-card p-3 mb-4 bg-light rounded shadow-sm">
+      <h5><i class="bi bi-info-circle-fill"></i>Informations de base : </h5>
+      <div class="info-details">
+        <div class="info-item"><strong>Code module</strong> ${moduleInfo.code_module}</div>
+        <div class="info-item"><strong>Nom du module</strong> ${moduleInfo.nom_module}</div>
+        <div class="info-item"><strong>Chef de module</strong> ${moduleInfo.prof_responsable}</div>
+        <div class="info-item"><strong>Coefficient</strong> ${moduleInfo.coeff_module ?? '--'}</div>
+        <div class="info-item"><strong>Filière</strong> ${moduleInfo.nom_filiere}</div>
+        <div class="info-item"><strong>Semestre</strong> ${moduleInfo.semestre}</div>
+        <div class="info-item"><strong>Type</strong> ${moduleInfo.type}</div>
+        <div class="info-item"><strong>Langue d'enseignement</strong> ${moduleInfo.langue}</div>
+      </div>
+    </div>
+  `;
+
+  // Elements table with enhanced styling
+  html += `
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle text-center">
+        <thead>
+          <tr id="first">
+            <th colspan="1">Nom Élément</th>
+            <th colspan="6">Coefficients</th>
+            <th colspan="4">Profs associés</th>
+            <th colspan="5">Volume horaire par activité</th>
+            <th colspan="3">Volume horaire par mode d'enseignement</th>
+          </tr>
+          <tr id="second">
+            <th>Nom Élément</th>
+            <th>Coeff Élément</th>
+            <th>Écrit</th>
+            <th>TD</th>
+            <th>TP</th>
+            <th>CC</th>
+            <th>Projet</th>
+            <th>Prof Cours</th>
+            <th>Prof TD</th>
+            <th>Prof TP</th>
+            <th>Chef Élément</th>
+            <th>Cours</th>
+            <th>TD</th>
+            <th>TP</th>
+            <th>Activité Pratique</th>
+            <th>Évaluation</th>
+            <th>Présentiel</th>
+            <th>À distance</th>
+            <th>Alternance</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  elements.forEach((el, index) => {
+    html += `
+      <tr>
+        <td>${el.nom_element ?? '--'}</td>
+        <td>${el.coeff_element ?? '--'}</td>
+        <td>${el.coeff_ecrit ?? '--'}</td>
+        <td>${el.coeff_td ?? '--'}</td>
+        <td>${el.coeff_tp ?? '--'}</td>
+        <td>${el.coeff_cc ?? '--'}</td>
+        <td>${el.coeff_projet ?? '--'}</td>
+        <td>${el.prof_cours ?? '--'}</td>
+        <td>${el.prof_td ?? '--'}</td>
+        <td>${el.prof_tp ?? '--'}</td>
+        <td>${el.prof_element ?? '--'}</td>
+        <td>${el.horraire_cours ?? '--'}</td>
+        <td>${el.horraire_td ?? '--'}</td>
+        <td>${el.horraire_tp ?? '--'}</td>
+        <td>${el.horraire_activite_pratique ?? '--'}</td>
+        <td>${el.horraire_evaluation ?? '--'}</td>
+        <td>${el.presentiel ?? '--'}</td>
+        <td>${el.a_distance ?? '--'}</td>
+        <td>${el.en_alternance ?? '--'}</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table></div>`;
+
+  // Inject into modal
+  document.getElementById('moduleDetailsContent').innerHTML = html;
+
+  // Show modal
+  const modal = new bootstrap.Modal(document.getElementById('moduleDetailsModal'));
+  modal.show();
+}
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
-

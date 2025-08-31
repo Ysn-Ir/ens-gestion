@@ -3,99 +3,234 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - Départements</title>
+  <title>Gestion des Départements</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <script src="../../route.js"></script>
+
   <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-color: #dee2e6;
+      --success-color: #28a745;
+    }
+    
     body {
       margin: 0;
-      background-color: #f8f9fa;
+      background-color: #f5f7f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
     }
-    .sidebar {
-      height: 100vh;
-      width: 220px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background-color: #343a40;
-      padding-top: 60px;
-      color: #fff;
-    }
-    .sidebar h4 {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid #495057;
-    }
-    .sidebar a {
-      display: block;
-      padding: 12px 20px;
-      color: #adb5bd;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .sidebar a:hover {
-      background-color: #495057;
-      color: #fff;
-    }
-    .content {
+    
+    .dashboard-container {
       padding: 20px;
       min-height: 100vh;
-      background-color: #fff;
     }
-    .logout-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 999;
+    
+    .header-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid var(--primary-color);
     }
+    
     .welcome-message {
-      font-size: 24px;
-      font-weight: bold;
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 5px;
+    }
+    
+    .user-role-badge {
+      background-color: var(--light-color);
+      color: var(--secondary-color);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: inline-block;
+    }
+    
+    .content-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      margin-bottom: 25px;
+    }
+    
+    .section-title {
+      color: var(--secondary-color);
+      font-weight: 600;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-responsive {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .table thead {
+      background-color: var(--secondary-color);
+      color: white;
+    }
+    
+    .table th {
+      font-weight: 500;
+      padding: 15px;
+    }
+    
+    .table td {
+      padding: 15px;
+      vertical-align: middle;
+    }
+    
+    .btn-action {
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    
+    .btn-add {
+      background-color: var(--success-color);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-add:hover {
+      background-color: #218838;
+      transform: translateY(-2px);
+    }
+    
+    .filiere-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .filiere-list li {
+      padding: 3px 0;
+      position: relative;
+      padding-left: 15px;
+    }
+    
+    .filiere-list li:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--primary-color);
+    }
+    
+    .status-badge {
+      padding: 5px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .badge-active {
+      background-color: rgba(40, 167, 69, 0.15);
+      color: var(--success-color);
+    }
+    
+    .badge-inactive {
+      background-color: rgba(108, 117, 125, 0.15);
+      color: #6c757d;
+    }
+    
+    /* Animation for table rows */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .table tbody tr {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Hover effects */
+    .table tbody tr:hover {
+      background-color: rgba(52, 152, 219, 0.05);
+      transition: background-color 0.2s ease;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 15px;
+      }
+      
+      .header-section, .content-card {
+        padding: 15px;
+      }
+      
+      .welcome-message {
+        font-size: 1.5rem;
+      }
+      
+      .table-responsive {
+        overflow-x: auto;
+      }
+      
+      .table th, .table td {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      
+      .btn-add {
+        width: 100%;
+        margin-top: 10px;
+      }
     }
   </style>
 </head>
 <body>
 
-
-  <div class="content">
-    <div class="welcome-message mb-4">
-      Bonjour <span id="usernameDisplay"></span> !
-    </div>
-    <div class="alert alert-info">
-      Vous êtes connecté en tant que: <strong id="userRole"></strong>
-    </div>
-
+  <div class="dashboard-container">
+    <!-- Header Section -->
     
 
-    <!-- TABLEAU FILIÈRES -->
-      <div class="d-flex justify-content-between mb-3">
-          <div class="p-2 ">     
-            <h2>Liste des Départements</h2>
+    <!-- Content Section -->
+    <div class="content-card">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2 class="section-title mb-3 mb-md-0">Liste des Départements</h2>
+        <button type="button" class="btn btn-add text-white" onclick="AjouterDepart()">
+          <i class="bi bi-plus-circle me-2"></i>Ajouter un département
+        </button>
       </div>
-          <div class="p-2 ">     
-            <button type="button" class="btn btn-success" onclick="AjouterDepart()"> + Ajouter un département</button>
-      </div>
-        </div>
-   
-      <div class="table-responsive mt-4">
-        <table class="table table-bordered table-striped">
-          <thead class="table-dark">
+      
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class=" table-dark">
             <tr>
-              <th>ID Département</th>
-              <th>Nom Département</th>
-              <th>Chef de Département</th>
-              <th>Date début d'affectation</th>
-              <th>Date fin d'affectation</th>
-              <th>Filières associé</th>
+              <th>ID</th>
+              <th>Nom</th>
+              <th>Chef de département</th>
+              <th>Début affectation</th>
+              <th>Fin affectation</th>
+              <th>Filières associées</th>
               <th>Année d'accréditation</th>
-              <th>Modifier</th>
-              <th>Supprimer</th>
-
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody id="departTableBody">
-            <tr><td colspan="7" class="text-center">Chargement...</td></tr>
+            <tr>
+              <td colspan="8" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Chargement...</span>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -104,122 +239,143 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-                // Simuler un utilisateur connecté (pour test)
-                let userData = localStorage.getItem("userData");
-                if (!userData) {
-                    localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
-                    userData = localStorage.getItem("userData");
-                }
+      // Simuler un utilisateur connecté (pour test)
+      // let userData = localStorage.getItem("userData");
+      // if (!userData) {
+      //   localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
+      //   userData = localStorage.getItem("userData");
+      // }
 
-                userData = JSON.parse(userData);
-                document.getElementById('usernameDisplay').textContent = userData.username;
-                document.getElementById('userRole').textContent = userData.role;
+      // userData = JSON.parse(userData);
+      // document.getElementById('usernameDisplay').textContent = userData.username;
+      // document.getElementById('userRole').textContent = userData.role;
 
+      // Charger les départements
+      fetch(adminURL+'/admin2.php?action=getAllDepart', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('DEBUG getAllDepart response:', data);
+        const departTableBody = document.getElementById('departTableBody');
+        departTableBody.innerHTML = '';
 
-
-                // Charger les départements
-                fetch('http://localhost/ens-gestion/api/admin2.php?action=getAllDepart', {
-                method: 'GET',
-                credentials: 'include'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('DEBUG getAllDepart response:', data);
-                    const isArray = Array.isArray(data.data);
-                    console.log('isArray(data.data)?', isArray);
-                const departTableBody = document.getElementById('departTableBody');
-                departTableBody.innerHTML = '';
-                
-
-                    if (data.status === "success" && Array.isArray(data.data)) {
-                            data.data.sort((a, b) => (a.annee_accreditation ?? "").localeCompare(b.annee_accreditation ?? ""));
-                            
-                            data.data.forEach(depart => {
-                        const row = document.createElement('tr');
-
-                        // Convertir les filières en tableau
-                        const filieres_associees = (depart.filieres_associees ?? "").split(',').filter(f => f.trim() !== "");
-
-                        // Générer la liste <ul> des filières
-                        let filieresList = "<ul>";
-                        filieres_associees.forEach(filiere => {
-                            filieresList += `<li>${filiere.trim()}</li>`;
-                        });
-                        filieresList += "</ul>";
-
-                        // Construire la ligne du tableau avec toutes les colonnes
-                        row.innerHTML = `
-                            <td>${depart.department_id ?? ""}</td>
-                            <td>${depart.nom_departement ?? ""}</td>
-                            <td>${depart.nom_chef_departement?? ""}</td>
-                            <td>${depart.date_debut?? ""}</td>
-                            <td>${depart.date_fin ?? ""}</td>
-                            <td>${filieresList}</td>
-                            <td>${depart.annee_accreditation ?? ""}</td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-primary me-2" onclick='modifierDepart(${JSON.stringify(depart)})'><i class="bi bi-pencil-square"></i></button>
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-danger" onclick="suppDepart('${depart.department_id}')">
-                                                          <i class="bi bi-trash"></i>
-</button>
-                            </td>
-                        `;
-
-                        departTableBody.appendChild(row);
-                    });
-                    } 
-                    else {
-                    departTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Aucun departement disponible</td></tr>';
-                    }
-                    }).catch(error => {
-                    console.error('Erreur de chargement des Départements :', error);
-                    document.getElementById('departTableBody').innerHTML =
-                        '<tr><td colspan="7" class="text-center text-danger">Erreur lors du chargement</td></tr>';
-                    });
-
-                });
-
-    
-            function modifierDepart(depart) {
-                // Store the whole filière object in localStorage
-                localStorage.setItem("departToUpdate", JSON.stringify(depart));
-                localStorage.setItem("nom_depart", depart.nom_departement);
-                localStorage.setItem("id_depart", depart.department_id);
-                localStorage.setItem("date_debut", depart.date_debut);
-                localStorage.setItem("date_fin", depart.date_fin);
-
-                window.location.href = "http://localhost/ens-gestion/app/src/pages/admin/updateDepart.html";
+        if (data.status === "success" && Array.isArray(data.data)) {
+          data.data.sort((a, b) => (a.annee_accreditation ?? "").localeCompare(b.annee_accreditation ?? ""));
+          
+          if (data.data.length === 0) {
+            departTableBody.innerHTML = `
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox me-2"></i>Aucun département enregistré
+                </td>
+              </tr>
+            `;
+            return;
+          }
+          
+          data.data.forEach(depart => {
+            const row = document.createElement('tr');
+            
+            // Convertir les filières en tableau
+            const filieres_associees = (depart.filieres_associees ?? "").split(',').filter(f => f.trim() !== "");
+            
+            // Générer la liste des filières
+            let filieresList = "<ul class='filiere-list'>";
+            if (filieres_associees.length > 0) {
+              filieres_associees.forEach(filiere => {
+                filieresList += `<li>${filiere.trim()}</li>`;
+              });
+            } else {
+              filieresList += "<li class='text-muted'>Aucune filière</li>";
             }
+            filieresList += "</ul>";
+            
+            // Construire la ligne du tableau
+            row.innerHTML = `
+              <td class="fw-semibold">${depart.department_id ?? "-"}</td>
+              <td>${depart.nom_departement ?? "-"}</td>
+              <td>${depart.nom_chef_departement ?? "-"}</td>
+              <td>${depart.date_debut ? new Date(depart.date_debut).toLocaleDateString('fr-FR') : "-"}</td>
+              <td>${depart.date_fin ? new Date(depart.date_fin).toLocaleDateString('fr-FR') : "-"}</td>
+              <td>${filieresList}</td>
+              <td>${depart.annee_accreditation ?? "-"}</td>
+              <td class="text-center">
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="btn btn-sm btn-outline-primary btn-action" 
+                          onclick='modifierDepart(${JSON.stringify(depart)})' 
+                          title="Modifier">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger btn-action" 
+                          onclick="suppDepart('${depart.department_id}', '${depart.nom_departement}')" 
+                          title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            `;
+            
+            departTableBody.appendChild(row);
+          });
+        } else {
+          departTableBody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center py-4 text-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>Aucun département disponible
+              </td>
+            </tr>
+          `;
+        }
+      }).catch(error => {
+        console.error('Erreur de chargement des Départements :', error);
+        document.getElementById('departTableBody').innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-4 text-danger">
+              <i class="bi bi-x-circle me-2"></i>Erreur lors du chargement des données
+            </td>
+          </tr>
+        `;
+      });
+    });
 
-      
- 
+    function modifierDepart(depart) {
+      // Stocker l'objet département dans localStorage
+      localStorage.setItem("departToUpdate", JSON.stringify(depart));
+      localStorage.setItem("nom_depart", depart.nom_departement);
+      localStorage.setItem("id_depart", depart.department_id);
+      localStorage.setItem("date_debut", depart.date_debut);
+      localStorage.setItem("date_fin", depart.date_fin);
 
-            function suppDepart(id) {
-                    if (confirm("Voulez-vous vraiment supprimer la département ID " + id + " ?")) {
-                        fetch(`http://localhost/ens-gestion/api/admin2.php?action=deleteDepart&depart_id=${id}`, {
-                        method: 'DELETE',
-                        credentials: 'include'
-                        })
-                        .then(response => response.json())
-                        .then(result => {
-                            if (result.success) {
-                            alert("Département supprimée.");
-                            location.reload();
-                            } else {
-                            alert("Erreur lors de la suppression.");
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Erreur:", error);
-                            alert("Erreur de suppression.");
-                        });
-                    }
-            }
+      window.location.href = "updateDepart.html";
+    }
 
-            function AjouterDepart(id) {
-                window.location.href="http://localhost/ens-gestion/app/src/pages/admin/AjouterDepart.html";
-            }
+    function suppDepart(id, nom) {
+      if (confirm(`Voulez-vous vraiment supprimer le département "${nom}" (ID: ${id}) ?`)) {
+        fetch(adminURL+`/admin2.php?action=deleteDepart&depart_id=${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.success) {
+            alert("Département supprimé avec succès.");
+            location.reload();
+          } else {
+            alert("Erreur lors de la suppression : " + (result.message || "Veuillez réessayer."));
+          }
+        })
+        .catch(error => {
+          console.error("Erreur:", error);
+          alert("Erreur de connexion lors de la suppression.");
+        });
+      }
+    }
+
+    function AjouterDepart() {
+      window.location.href = "AjouterDepart.html";
+    }
   </script>
 </body>
 </html>

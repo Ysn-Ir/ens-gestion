@@ -21,7 +21,7 @@ try {
 
     // Get request method and action
     $method = $_SERVER['REQUEST_METHOD'];
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
 
     // Input validation for common parameters
     $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -31,11 +31,11 @@ try {
     $group_id = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
     $etape_id = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
     $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
-    $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_STRING);
+    $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
     $department_id = filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
     $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;
     $limit = filter_input(INPUT_GET, 'limit', FILTER_VALIDATE_INT) ?: 10;
-    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_STRING);
+    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS);
 
     // Route based on action
     switch ($action) {

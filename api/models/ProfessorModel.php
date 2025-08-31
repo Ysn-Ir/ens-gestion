@@ -88,26 +88,55 @@ class ProfessorModel {
 
     /**
      * Récupère les éléments directement enseignés par un professeur spécifique,
-     * incluant les IDs des professeurs principaux et de TP pour chaque élément.
+     * incluant les IDs des professeurs principaux et de TP pour chaque élément,
+     * avec options de filtrage par semestre, étape et filière.
      * @param int $userId L'ID de l'utilisateur (professeur).
+     * @param int|null $semestreId Optionnel: ID du semestre pour filtrer.
+     * @param int|null $etapeId Optionnel: ID de l'étape pour filtrer.
+     * @param int|null $fieldId Optionnel: ID de la filière pour filtrer (pertinent pour les chefs).
      * @return array Les éléments enseignés avec les rôles associés.
      */
-    public function getProfessorElements($userId) {
+    public function getProfessorElements($userId, $semestreId = null, $etapeId = null, $fieldId = null) {
         try {
-            $stmt = $this->db->prepare("
+            $sql = "
                 SELECT
                     e.element_id,
                     e.nom,
                     m.code AS module_code,
                     m.nom AS module_name,
-                    e.Ref_prof_element, -- Professeur principal de l'élément
-                    e.Ref_prof_tp       -- Professeur de TP de l'élément
+                    s.nom AS semestre_nom,
+                    aa.annee_id AS annee_academique,
+                    f.nom AS filiere_nom,
+                    eta.nom_etape AS etape_nom, -- Ajout du nom de l'étape
+                    e.Ref_prof_element,
+                    e.Ref_prof_tp
                 FROM elements e
                 JOIN modules m ON e.module_id = m.module_id
-                WHERE e.Ref_prof_element = ? OR e.Ref_prof_tp = ?
-                ORDER BY m.nom, e.nom
-            ");
-            $stmt->execute([$userId, $userId]);
+                LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
+                LEFT JOIN annees_academiques aa ON m.annee_id = aa.annee_id
+                LEFT JOIN filieres f ON m.field_id = f.field_id
+                LEFT JOIN etapes eta ON s.etape_id = eta.etape_id -- Jointure avec la table etapes
+                WHERE (e.Ref_prof_element = :userId OR e.Ref_prof_tp = :userId)
+            ";
+            $params = [':userId' => $userId];
+
+            if ($semestreId !== null && $semestreId !== '') {
+                $sql .= " AND m.semestre_id = :semestreId";
+                $params[':semestreId'] = $semestreId;
+            }
+            if ($etapeId !== null && $etapeId !== '') { // Filtrage par étape
+                $sql .= " AND s.etape_id = :etapeId";
+                $params[':etapeId'] = $etapeId;
+            }
+            if ($fieldId !== null && $fieldId !== '') {
+                $sql .= " AND m.field_id = :fieldId";
+                $params[':fieldId'] = $fieldId;
+            }
+
+            $sql .= " ORDER BY m.nom, e.nom";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Database error in getProfessorElements: " . $e->getMessage());
@@ -171,22 +200,55 @@ class ProfessorModel {
     }
 
     /**
-     * Récupère les notes pour un élément donné.
+     * Récupère les notes pour un élément donné, avec options de filtrage par semestre et étape académique.
      * Jointures sur `notes` et `etudiants`.
      * @param int $elementId L'ID de l'élément.
+     * @param int|null $semestreId Optionnel: ID du semestre pour filtrer.
+     * @param int|null $etapeId Optionnel: ID de l'étape pour filtrer.
      * @return array Les notes des étudiants pour cet élément.
      */
-    public function getElementNotes($elementId) {
+    public function getElementNotes($elementId, $semestreId = null, $etapeId = null) {
         try {
-            $stmt = $this->db->prepare("
-                SELECT n.note_id, n.student_id, e.nom, e.prenom,
-                       n.note_tp, n.note_td, n.note_cc, n.note_exam, n.note_rattrapage, n.note_finale
+            $sql = "
+                SELECT
+                    n.note_id,
+                    n.student_id,
+                    e.nom AS student_nom,
+                    e.prenom AS student_prenom,
+                    n.note_tp,
+                    n.note_td,
+                    n.note_cc,
+                    n.note_exam,
+                    n.note_rattrapage,
+                    n.note_finale,
+                    sm.nom AS semestre_nom,
+                    aa.annee_id AS annee_academique_nom,
+                    modu.nom AS module_name,
+                    el.nom AS element_name,
+                    eta.nom_etape AS etape_nom -- Ajout du nom de l'étape
                 FROM notes n
                 JOIN etudiants e ON n.student_id = e.user_id
-                WHERE n.element_id = ?
-            ");
-            $stmt->execute([$elementId]);
-            return $stmt->fetchAll();
+                JOIN elements el ON n.element_id = el.element_id
+                JOIN modules modu ON el.module_id = modu.module_id
+                LEFT JOIN semestres sm ON modu.semestre_id = sm.semestre_id
+                LEFT JOIN annees_academiques aa ON modu.annee_id = aa.annee_id
+                LEFT JOIN etapes eta ON sm.etape_id = eta.etape_id -- Jointure avec la table etapes
+                WHERE n.element_id = :elementId
+            ";
+            $params = [':elementId' => $elementId];
+
+            if ($semestreId !== null && $semestreId !== '') {
+                $sql .= " AND modu.semestre_id = :semestreId";
+                $params[':semestreId'] = $semestreId;
+            }
+            if ($etapeId !== null && $etapeId !== '') { // Filtrage par étape
+                $sql .= " AND sm.etape_id = :etapeId";
+                $params[':etapeId'] = $etapeId;
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Database error in getElementNotes: " . $e->getMessage());
             return [];
@@ -326,14 +388,17 @@ class ProfessorModel {
     }
 
     /**
-     * Récupère les notes pour une filière (pour les chefs de filière/département).
+     * Récupère les notes pour une filière (pour les chefs de filière/département),
+     * avec options de filtrage par semestre et étape académique.
      * Jointures sur `notes`, `etudiants`, `elements`, `modules`.
      * @param int $fieldId L'ID de la filière.
+     * @param int|null $semestreId Optionnel: ID du semestre pour filtrer.
+     * @param int|null $etapeId Optionnel: ID de l'étape pour filtrer.
      * @return array Les notes des étudiants pour cette filière.
      */
-    public function getFieldNotes($fieldId) {
+    public function getFieldNotes($fieldId, $semestreId = null, $etapeId = null) {
         try {
-            $stmt = $this->db->prepare("
+            $sql = "
                 SELECT
                     n.note_id,
                     et.nom AS student_nom,
@@ -345,15 +410,35 @@ class ProfessorModel {
                     n.note_cc,
                     n.note_exam,
                     n.note_rattrapage,
-                    n.note_finale
+                    n.note_finale,
+                    -- CORRECTION : Ajout des jointures et sélection des noms
+                    s.nom AS semestre_nom,
+                    f.nom AS filiere_nom,
+                    eta.nom_etape AS etape_nom
                 FROM notes n
                 JOIN etudiants et ON n.student_id = et.user_id
                 JOIN elements el ON n.element_id = el.element_id
                 JOIN modules m ON el.module_id = m.module_id
-                WHERE m.field_id = ?
-                ORDER BY student_nom, student_prenom, module_name, element_name
-            ");
-            $stmt->execute([$fieldId]);
+                JOIN filieres f ON m.field_id = f.field_id
+                LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
+                LEFT JOIN etapes eta ON s.etape_id = eta.etape_id
+                WHERE m.field_id = :fieldId
+            ";
+            $params = [':fieldId' => $fieldId];
+
+            if ($semestreId !== null && $semestreId !== '') {
+                $sql .= " AND m.semestre_id = :semestreId";
+                $params[':semestreId'] = $semestreId;
+            }
+            if ($etapeId !== null && $etapeId !== '') { // Filtrage par étape
+                $sql .= " AND s.etape_id = :etapeId";
+                $params[':etapeId'] = $etapeId;
+            }
+
+            $sql .= " ORDER BY student_nom, student_prenom, module_name, element_name";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Database error in getFieldNotes: " . $e->getMessage());
@@ -403,11 +488,18 @@ class ProfessorModel {
                     n.note_cc,
                     n.note_exam,
                     n.note_rattrapage,
-                    n.note_finale
+                    n.note_finale,
+                    -- CORRECTION : Ajout des informations contextuelles
+                    s.nom AS semestre_nom,
+                    f.nom AS filiere_nom,
+                    eta.nom_etape AS etape_nom
                 FROM notes n
                 JOIN etudiants et ON n.student_id = et.user_id
                 JOIN elements el ON n.element_id = el.element_id
                 JOIN modules m ON el.module_id = m.module_id
+                JOIN filieres f ON m.field_id = f.field_id
+                LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
+                LEFT JOIN etapes eta ON s.etape_id = eta.etape_id
                 WHERE m.module_id = ?
                 ORDER BY student_nom, student_prenom, element_name
             ");
@@ -420,38 +512,65 @@ class ProfessorModel {
     }
 
     /**
-     * Récupère toutes les notes d'étudiants pour un département donné.
+     * Récupère toutes les notes d'étudiants pour un département donné,
+     * avec options de filtrage par semestre, étape académique et filière.
      * Jointures complexes sur `notes`, `etudiants`, `elements`, `modules`, `filieres`, `departements`.
      * @param int $departmentId L'ID du département.
+     * @param int|null $semestreId Optionnel: ID du semestre pour filtrer.
+     * @param int|null $etapeId Optionnel: ID de l'étape pour filtrer.
+     * @param int|null $fieldId Optionnel: ID de la filière pour filtrer.
      * @return array Les notes des étudiants pour ce département.
      */
-    public function getDepartmentNotes($departmentId) {
+    public function getDepartmentNotes($departmentId, $semestreId = null, $etapeId = null, $fieldId = null) {
         try {
-            $stmt = $this->db->prepare("
+            $sql = "
                 SELECT
                     n.note_id,
                     et.nom AS student_nom,
                     et.prenom AS student_prenom,
                     el.nom AS element_name,
                     m.nom AS module_name,
-                    f.nom AS field_name, -- Ajouter le nom de la filière
+                    f.nom AS filiere_name, -- Ajouter le nom de la filière
                     d.nom AS department_name, -- Ajouter le nom du département
                     n.note_tp,
                     n.note_td,
                     n.note_cc,
                     n.note_exam,
                     n.note_rattrapage,
-                    n.note_finale
+                    n.note_finale,
+                    s.nom AS semestre_nom,
+                    aa.annee_id AS annee_academique_nom,
+                    eta.nom_etape AS etape_nom -- Ajout du nom de l'étape
                 FROM notes n
                 JOIN etudiants et ON n.student_id = et.user_id
                 JOIN elements el ON n.element_id = el.element_id
                 JOIN modules m ON el.module_id = m.module_id
+                LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
+                LEFT JOIN annees_academiques aa ON m.annee_id = aa.annee_id
                 JOIN filieres f ON m.field_id = f.field_id
                 JOIN departements d ON f.department_id = d.department_id
-                WHERE d.department_id = ?
-                ORDER BY student_nom, student_prenom, department_name, field_name, module_name, element_name
-            ");
-            $stmt->execute([$departmentId]);
+                LEFT JOIN etapes eta ON s.etape_id = eta.etape_id -- Jointure avec la table etapes
+                WHERE d.department_id = :departmentId
+            ";
+            $params = [':departmentId' => $departmentId];
+
+            if ($semestreId !== null && $semestreId !== '') {
+                $sql .= " AND m.semestre_id = :semestreId";
+                $params[':semestreId'] = $semestreId;
+            }
+            if ($etapeId !== null && $etapeId !== '') { // Filtrage par étape
+                $sql .= " AND s.etape_id = :etapeId";
+                $params[':etapeId'] = $etapeId;
+            }
+            if ($fieldId !== null && $fieldId !== '') {
+                $sql .= " AND m.field_id = :fieldId";
+                $params[':fieldId'] = $fieldId;
+            }
+
+            $sql .= " ORDER BY student_nom, student_prenom, department_name, filiere_name, module_name, element_name";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Database error in getDepartmentNotes: " . $e->getMessage());
@@ -744,4 +863,116 @@ class ProfessorModel {
             return false;
         }
     }
+
+    /**
+     * Récupère toutes les années académiques disponibles.
+     * @return array Liste des années académiques.
+     */
+    public function getAllAcademicYears() {
+        try {
+            $stmt = $this->db->prepare("SELECT annee_id FROM annees_academiques ORDER BY annee_id DESC");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getAllAcademicYears: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère tous les semestres disponibles.
+     * @return array Liste des semestres.
+     */
+    public function getAllSemesters() {
+        try {
+            $stmt = $this->db->prepare("SELECT semestre_id, nom FROM semestres ORDER BY nom ASC");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getAllSemesters: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les semestres associés aux modules ou éléments enseignés par un professeur.
+     * @param int $userId L'ID du professeur.
+     * @return array Liste des semestres pertinents pour le professeur.
+     */
+    public function getProfessorSemesters($userId) {
+        try {
+            $sql = "
+                SELECT DISTINCT s.semestre_id, s.nom
+                FROM semestres s
+                JOIN modules m ON s.semestre_id = m.semestre_id
+                JOIN elements e ON m.module_id = e.module_id
+                WHERE e.Ref_prof_element = :userId OR e.Ref_prof_tp = :userId
+                ORDER BY s.nom ASC
+            ";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':userId' => $userId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getProfessorSemesters: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère toutes les étapes (années d'étude) disponibles.
+     * @return array Liste des étapes.
+     */
+    public function getAllEtapes() {
+        try {
+            $stmt = $this->db->prepare("SELECT etape_id, nom_etape FROM etapes ORDER BY etape_id ASC");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getAllEtapes: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère toutes les filières.
+     * @return array Liste des filières.
+     */
+    public function getAllFilieres() {
+        try {
+            $stmt = $this->db->prepare("SELECT field_id, nom FROM filieres ORDER BY nom ASC");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getAllFilieres: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les filières gérées par un chef de département.
+     * @param int $departmentId L'ID du département.
+     * @return array Liste des filières du département.
+     */
+    public function getFilieresByDepartment($departmentId) {
+        try {
+            $stmt = $this->db->prepare("SELECT field_id, nom FROM filieres WHERE department_id = ? ORDER BY nom ASC");
+            $stmt->execute([$departmentId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getFilieresByDepartment: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // Dans ProfessorModel.php
+public function getAllCycles() {
+    try {
+        $stmt = $this->db->prepare("SELECT cycle_id, nom FROM cycles ORDER BY nom ASC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Database error in getAllCycles: " . $e->getMessage());
+        return [];
+    }
+}
 }

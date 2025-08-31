@@ -17,7 +17,7 @@ try {
     $controller = new settingController();
 
     $method = $_SERVER['REQUEST_METHOD'];
-    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING);
+    $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
 
     switch ($action) {
         case 'getAllSettings':

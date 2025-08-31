@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestion des Étudiants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />    <script src="../../route.js"></script>
+
     <style>
         body {
             margin: 0;
@@ -633,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let studentToDelete = null;
     let currentStudentId = null;
     
-    const API_BASE_URL = 'http://localhost/ens-gestion/api/adminStudent.php';
+    const API_BASE_URL =adminURL+'/adminStudent.php';
     const API_ENDPOINTS = {
         years: `${API_BASE_URL}?action=getAllyears`,
         departments: `${API_BASE_URL}?action=getAllDepartments`,
@@ -650,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
         groupes: `${API_BASE_URL}?action=getGroupesBySection`,
         sections: `${API_BASE_URL}?action=getSections`,
         importStudents: `${API_BASE_URL}?action=importStudents`,
-        logout:`http://localhost/ens-gestion/api/index.php?action=auth/logout`
+        logout:logoutURL
     };
 
     let csrfToken = localStorage.getItem('csrfToken') || '';
@@ -696,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('csrfToken');
             showNotification('Déconnexion réussie !', true);
             setTimeout(() => {
-                window.location.href = 'http://localhost/ens-gestion/app/src/pages/auth/login.html';
+                window.location.href = loginPage;
             }, 100);
         } else {
             throw new Error(result.message || 'Échec de la déconnexion');
