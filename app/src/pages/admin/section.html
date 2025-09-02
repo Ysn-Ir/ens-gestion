@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Sections et Groupes</title>
+    <script src="../../route.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #fff; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        th { background-color: #333; color: #fff; }
+        .button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .add-button { background-color: #28a745; color: #fff; border: none; }
+        .edit-button { background-color: #ffc107; color: #000; border: none; }
+        .delete-button { background-color: #dc3545; color: #fff; border: none; }
+        .form-container { display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: #fff; padding: 20px; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .form-container input, .form-container select { width: 100%; margin-bottom: 10px; padding: 8px; }
+        .form-container button { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Liste des Sections</h2>
+    <button class="button add-button" onclick="showAddSectionForm()">Ajouter une section</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Filière</th>
+                <th>Étape</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="sectionTableBody"></tbody>
+    </table>
+    <h2>Liste des Groupes</h2>
+    <button class="button add-button" onclick="showAddGroupForm()">Ajouter un groupe</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Filière</th>
+                <th>Section</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="groupTableBody"></tbody>
+    </table>
+    <div id="addSectionForm" class="form-container">
+        <h3>Ajouter une section</h3>
+        <form id="addSectionFormInner">
+            <input name="nom" placeholder="Nom de la section" required />
+            <select name="field_id">
+                <option value="">Aucune filière</option>
+            </select>
+            <select name="etape_id" required>
+            </select>
+            <button type="submit" class="button add-button">Ajouter</button>
+            <button type="button" class="button" onclick="hideForm('addSectionForm')">Annuler</button>
+        </form>
+    </div>
+    <div id="editSectionForm" class="form-container">
+        <h3>Modifier une section</h3>
+        <form id="editSectionFormInner">
+            <input type="hidden" name="section_id" />
+            <input name="nom" placeholder="Nom de la section" required />
+            <select name="field_id">
+                <option value="">Aucune filière</option>
+            </select>
+            <select name="etape_id" required>
+            </select>
+            <button type="submit" class="button edit-button">Modifier</button>
+            <button type="button" class="button" onclick="hideForm('editSectionForm')">Annuler</button>
+        </form>
+    </div>
+    <div id="addGroupForm" class="form-container">
+        <h3>Ajouter un groupe</h3>
+        <form id="addGroupFormInner">
+            <input name="nom" placeholder="Nom du groupe" required />
+            <select name="field_id">
+                <option value="">Aucune filière</option>
+            </select>
+            <select name="section_id" required>
+            </select>
+            <button type="submit" class="button add-button">Ajouter</button>
+            <button type="button" class="button" onclick="hideForm('addGroupForm')">Annuler</button>
+        </form>
+    </div>
+    <div id="editGroupForm" class="form-container">
+        <h3>Modifier un groupe</h3>
+        <form id="editGroupFormInner">
+            <input type="hidden" name="group_id" />
+            <input name="nom" placeholder="Nom du groupe" required />
+            <select name="field_id">
+                <option value="">Aucune filière</option>
+            </select>
+            <select name="section_id" required>
+            </select>
+            <button type="submit" class="button edit-button">Modifier</button>
+            <button type="button" class="button" onclick="hideForm('editGroupForm')">Annuler</button>
+        </form>
+    </div>
+    <script>
+        const apiUrl = adminURL + "/section.php";
+        function loadSections() {
+            fetch(`${apiUrl}?action=getSections`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById("sectionTableBody");
+                    tbody.innerHTML = "";
+                    (data.data.data.sections || []).forEach(section => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${section.nom}</td>
+                            <td>${section.field_name || 'Aucun'}</td>
+                            <td>${section.etape_name}</td>
+                            <td>
+                                <button class="button edit-button" onclick='editSection(${JSON.stringify(section)})'>Modifier</button>
+                                <button class="button delete-button" onclick='deleteSection(${section.section_id})'>Supprimer</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(err => console.error('Erreur:', err));
+        }
+        function loadGroups() {
+            fetch(`${apiUrl}?action=getGroups`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById("groupTableBody");
+                    tbody.innerHTML = "";
+                    (data.data.data.groups || []).forEach(group => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${group.nom}</td>
+                            <td>${group.field_name || 'Aucun'}</td>
+                            <td>${group.section_name}</td>
+                            <td>
+                                <button class="button edit-button" onclick='editGroup(${JSON.stringify(group)})'>Modifier</button>
+                                <button class="button delete-button" onclick='deleteGroup(${group.group_id})'>Supprimer</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(err => console.error('Erreur:', err));
+        }
+        function loadOptions() {
+            fetch(`${apiUrl}?action=getOptions`)
+                .then(res => res.json())
+                .then(data => {
+                    const sectionForms = ["addSectionFormInner", "editSectionFormInner"];
+                    const groupForms = ["addGroupFormInner", "editGroupFormInner"];
+                    sectionForms.forEach(formId => {
+                        const form = document.getElementById(formId);
+                        const fieldSelect = form.querySelector("[name='field_id']");
+                        const etapeSelect = form.querySelector("[name='etape_id']");
+                        fieldSelect.innerHTML = '<option value="">Aucune filière</option>' +
+                            (data.data.data.filieres || []).map(f => `<option value="${f.field_id}">${f.nom}</option>`).join('');
+                        etapeSelect.innerHTML = (data.data.data.etapes || []).map(e => `<option value="${e.etape_id}">${e.nom_etape}</option>`).join('');
+                    });
+                    groupForms.forEach(formId => {
+                        const form = document.getElementById(formId);
+                        const fieldSelect = form.querySelector("[name='field_id']");
+                        const sectionSelect = form.querySelector("[name='section_id']");
+                        fieldSelect.innerHTML = '<option value="">Aucune filière</option>' +
+                            (data.data.data.filieres || []).map(f => `<option value="${f.field_id}">${f.nom}</option>`).join('');
+                        sectionSelect.innerHTML = (data.data.data.sections || []).map(s => `<option value="${s.section_id}">${s.nom}</option>`).join('');
+                    });
+                })
+                .catch(err => console.error('Erreur:', err));
+        }
+        function showAddSectionForm() {
+            document.getElementById("addSectionForm").style.display = "block";
+        }
+        function showAddGroupForm() {
+            document.getElementById("addGroupForm").style.display = "block";
+        }
+        function hideForm(formId) {
+            document.getElementById(formId).style.display = "none";
+            document.getElementById(formId).querySelector("form").reset();
+        }
+        document.getElementById("addSectionFormInner").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(this).entries());
+            fetch(`${apiUrl}?action=addSection`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data.status === 'success') {
+                    loadSections();
+                    loadOptions(); // Refresh section options for group forms
+                    hideForm("addSectionForm");
+                } else {
+                    alert(data.data.message);
+                }
+            })
+            .catch(err => console.error('Erreur:', err));
+        });
+        document.getElementById("editSectionFormInner").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(this).entries());
+            fetch(`${apiUrl}?action=updateSection&section_id=${formData.section_id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data.status === 'success') {
+                    loadSections();
+                    loadOptions(); // Refresh section options for group forms
+                    hideForm("editSectionForm");
+                } else {
+                    alert(data.data.message);
+                }
+            })
+            .catch(err => console.error('Erreur:', err));
+        });
+        document.getElementById("addGroupFormInner").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(this).entries());
+            fetch(`${apiUrl}?action=addGroup`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data.status === 'success') {
+                    loadGroups();
+                    hideForm("addGroupForm");
+                } else {
+                    alert(data.data.message);
+                }
+            })
+            .catch(err => console.error('Erreur:', err));
+        });
+        document.getElementById("editGroupFormInner").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const formData = Object.fromEntries(new FormData(this).entries());
+            fetch(`${apiUrl}?action=updateGroup&group_id=${formData.group_id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data.status === 'success') {
+                    loadGroups();
+                    hideForm("editGroupForm");
+                } else {
+                    alert(data.data.message);
+                }
+            })
+            .catch(err => console.error('Erreur:', err));
+        });
+        function editSection(section) {
+            const form = document.getElementById("editSectionFormInner");
+            form.querySelector("[name='section_id']").value = section.section_id;
+            form.querySelector("[name='nom']").value = section.nom;
+            form.querySelector("[name='field_id']").value = section.field_id || "";
+            form.querySelector("[name='etape_id']").value = section.etape_id;
+            document.getElementById("editSectionForm").style.display = "block";
+        }
+        function editGroup(group) {
+            const form = document.getElementById("editGroupFormInner");
+            form.querySelector("[name='group_id']").value = group.group_id;
+            form.querySelector("[name='nom']").value = group.nom;
+            form.querySelector("[name='field_id']").value = group.field_id || "";
+            form.querySelector("[name='section_id']").value = group.section_id;
+            document.getElementById("editGroupForm").style.display = "block";
+        }
+       function deleteSection(section_id) {
+    if (!confirm("Voulez-vous vraiment supprimer cette section ?")) return;
+
+    fetch(`${apiUrl}?action=deleteSection&section_id=${section_id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.data.status === 'success') {
+            alert("Section supprimée avec succès !");
+            loadSections();
+            loadOptions(); // Update section options in group forms
+        } else {
+            alert(data.data.message || "Erreur lors de la suppression de la section");
+        }
+    })
+    .catch(err => console.error("Erreur:", err));
+}
+
+function deleteGroup(group_id) {
+    if (!confirm("Voulez-vous vraiment supprimer ce groupe ?")) return;
+
+    fetch(`${apiUrl}?action=deleteGroup&group_id=${group_id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.data.status === 'success') {
+            alert("Groupe supprimé avec succès !");
+            loadGroups();
+        } else {
+            alert(data.data.message || "Erreur lors de la suppression du groupe");
+        }
+    })
+    .catch(err => console.error("Erreur:", err));
+}
+
+        loadSections();
+        loadGroups();
+        loadOptions();
+    </script>
+</body>
+</html>
