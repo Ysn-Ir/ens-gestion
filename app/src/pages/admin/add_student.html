@@ -372,7 +372,7 @@
                 try {
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
                     if (!fieldId & !etape_id) return;
-                    if(etape_id===undefined) etape_id=null;
+                    if(etape_id===undefined ) etape_id=null;
                     const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}&etape_id=${etape_id}`, {
                         headers: { 'X-CSRF-Token': csrfToken }
                     });

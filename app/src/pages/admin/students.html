@@ -970,95 +970,112 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function loadStudents(page = 1) {
-        currentPage = page;
-        const filters = {
-            annee_id: yearFilter.value,
-            department_id: departmentFilter.value,
-            field_id: filiereFilter.value,
-            cycle_id: cycleFilter.value,
-            etape_id: etapeFilter.value,
-            semestre_id: semesterFilter.value,
-            section_id: sectionFilter.value,
-            groupe_id: groupeFilter.value,
-            search: searchInput.value.trim(),
-            page: page,
-            limit: itemsPerPage
-        };
-        studentsTable.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-        try {
-            const params = new URLSearchParams();
-            for (const [key, value] of Object.entries(filters)) {
-                if (value) params.append(key, value);
-            }
-            const response = await fetch(`${API_ENDPOINTS.students}&${params.toString()}`, {
-                headers: { 'X-CSRF-Token': csrfToken }
-            });
-            const result = await response.json();
-            if (result.status === 200 && result.data) {
-                studentsData = result.data.students || [];
-                totalStudents = result.data.count || 0;
-                renderStudentsTable();
-                renderPagination();
-            } else {
-                throw new Error(result.message || 'Erreur lors du chargement des étudiants');
-            }
-        } catch (error) {
-            console.error('Erreur:', error);
-            studentsTable.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">${error.message}</td></tr>`;
-            pagination.innerHTML = '';
-            paginationInfo.textContent = 'Erreur de chargement';
+   async function loadStudents(page = 1) {
+    currentPage = page;
+    const filters = {
+        annee_id: yearFilter.value,
+        department_id: departmentFilter.value,
+        field_id: filiereFilter.value,
+        cycle_id: cycleFilter.value,
+        etape_id: etapeFilter.value,
+        semestre_id: semesterFilter.value,
+        section_id: sectionFilter.value,
+        groupe_id: groupeFilter.value,
+        search: searchInput.value.trim(),
+        page: page,
+        limit: itemsPerPage
+    };
+    studentsTable.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+    try {
+        const params = new URLSearchParams();
+        for (const [key, value] of Object.entries(filters)) {
+            if (value) params.append(key, value);
         }
+        const response = await fetch(`${API_ENDPOINTS.students}&${params.toString()}`, {
+            headers: { 'X-CSRF-Token': csrfToken }
+        });
+        const result = await response.json();
+        console.log('loadStudents response:', result); // Debug API response
+        if (result.status === 200 && result.data) {
+            studentsData = result.data.students || [];
+            totalStudents = result.data.count || 0;
+            // Validate currentPage
+            const totalPages = Math.ceil(totalStudents / itemsPerPage);
+            if (totalPages > 0 && currentPage > totalPages) {
+                console.log(`Adjusting currentPage from ${currentPage} to ${totalPages}`);
+                currentPage = totalPages;
+                return loadStudents(currentPage); // Reload with valid page
+            }
+            renderStudentsTable();
+            renderPagination();
+        } else {
+            throw new Error(result.message || 'Erreur lors du chargement des étudiants');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        studentsTable.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-4">${error.message}</td></tr>`;
+        pagination.innerHTML = '';
+        paginationInfo.textContent = 'Erreur de chargement';
     }
+}
 
     function renderStudentsTable() {
-        studentsTable.innerHTML = '';
-        if (studentsData.length === 0) {
-            studentsTable.innerHTML = '<tr><td colspan="9" class="text-center py-4">Aucun étudiant trouvé</td></tr>';
-            return;
-        }
-        studentsData.forEach(student => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${student.user_id || 'N/A'}</td>
-                <td>${student.cne || 'N/A'}</td>
-                <td>${student.nom || 'N/A'}</td>
-                <td>${student.prenom || 'N/A'}</td>
-                <td>${student.email || 'N/A'}</td>
-                <td>${student.departement_nom || 'N/A'}</td>
-                <td>${student.filiere_nom || 'N/A'}</td>
-                <td>${student.date || 'N/A'}</td>
-                <td class="text-center">
-                    <a href="edit_student.html?id=${student.user_id}" class="btn btn-sm btn-primary action-btn edit-btn" data-id="${student.user_id}" title="Modifier">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <button class="btn btn-sm btn-danger action-btn delete-btn" data-id="${student.user_id}" title="Supprimer">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    <button class="btn btn-sm btn-primary action-btn info-btn" data-id="${student.user_id}" title="Informations">
-                        <i class="bi bi-info-circle"></i>
-                    </button>
-                </td>
-            `;
-            studentsTable.appendChild(tr);
-        });
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
-                const student = studentsData.find(s => s.user_id == id);
+    studentsTable.innerHTML = '';
+    if (studentsData.length === 0) {
+        studentsTable.innerHTML = '<tr><td colspan="9" class="text-center py-4">Aucun étudiant trouvé</td></tr>';
+        return;
+    }
+    studentsData.forEach(student => {
+        console.log('Student data:', student); // Debug student object
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${student.user_id || 'N/A'}</td>
+            <td>${student.cne || 'N/A'}</td>
+            <td>${student.nom || 'N/A'}</td>
+            <td>${student.prenom || 'N/A'}</td>
+            <td>${student.email || 'N/A'}</td>
+            <td>${student.departement_nom || 'N/A'}</td>
+            <td>${student.filiere_nom || 'N/A'}</td>
+            <td>${student.date || 'N/A'}</td>
+            <td class="text-center">
+                <a href="edit_student.html?id=${student.user_id || ''}" class="btn btn-sm btn-primary action-btn edit-btn" data-id="${student.user_id || ''}" title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-danger action-btn delete-btn" data-id="${student.user_id || ''}" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-sm btn-primary action-btn info-btn" data-id="${student.user_id || ''}" title="Informations">
+                    <i class="bi bi-info-circle"></i>
+                </button>
+            </td>
+        `;
+        studentsTable.appendChild(tr);
+    });
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const student = studentsData.find(s => s.user_id == id);
+            if (student) {
                 studentToDelete = id;
                 document.getElementById('deleteStudentName').textContent = 
-                    `${student.nom} ${student.prenom} (${student.cne})`;
+                    `${student.nom || 'N/A'} ${student.prenom || 'N/A'} (${student.cne || 'N/A'})`;
                 deleteConfirmModal.show();
-            });
+            } else {
+                showNotification('Erreur: Étudiant non trouvé', false);
+            }
         });
-        document.querySelectorAll('.info-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentStudentId = btn.dataset.id;
+    });
+    document.querySelectorAll('.info-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentStudentId = btn.dataset.id;
+            if (currentStudentId) {
                 loadStudentInfo(currentStudentId);
-            });
+            } else {
+                showNotification('Erreur: ID étudiant invalide', false);
+            }
         });
-    }
+    });
+}
 
     async function loadStudentInfo(studentId) {
     // Set loading state

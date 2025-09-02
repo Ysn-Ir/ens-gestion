@@ -410,105 +410,157 @@ public function createStudent(array $data) {
             return false;
         }
     }
-public function getFilteredStudents(
-    ?string $annee_id = null,
-    ?int $field_id = null,
-    ?int $semestreId = null,
-    ?int $sectionId = null,
-    ?int $groupId = null,
-    ?int $cycle_id = null,
-    ?int $department_id = null,
-    bool $includeEnrollmentInfo = false,
-    ?string $search = null
-) {
-    $sql = "
-        SELECT
-            et.user_id AS user_id,
-            et.cne AS cne,
-            et.cin AS cin,
-            et.nom AS nom,
-            et.prenom AS prenom,
-            et.date_naissance AS date,
-            u.email AS email,
-            et.telephone AS telephone,
-            d.nom AS departement_nom,
-            f.nom AS filiere_nom";
+public function getFilteredStudents($annee_id = null, $field_id = null, $semestre_id = null,$etape_id=null, $section_id = null, $group_id = null, $cycle_id = null, $department_id = null, $includeEnrollmentInfo = false, $search = null, $page = 1, $limit = 10) {
+    try {
+        $sql = "
+            SELECT 
+                et.user_id,
+                et.cne,
+                et.cin,
+                et.nom,
+                et.prenom,
+                u.email,
+                et.telephone AS telephone,
+                d.nom AS departement_nom,
+                f.nom AS filiere_nom,
+                aa.annee_id AS date";
 
-    if ($includeEnrollmentInfo) {
-        $sql .= ",
-            aa.annee_id AS annee_id";
+        if ($includeEnrollmentInfo) {
+            $sql .= ",
+                s.nom AS semestre_nom,
+                sec.nom AS section_nom,
+                g.nom AS groupe_nom,
+                c.nom AS cycle_nom";
+        }
+
+        $sql .= "
+            FROM etudiants et
+            JOIN utilisateurs u ON u.user_id = et.user_id
+            LEFT JOIN departements d ON d.department_id = et.department_id
+            LEFT JOIN filieres f ON f.field_id = et.field_id
+            LEFT JOIN student_enrollments se ON se.student_id = et.user_id
+            LEFT JOIN annees_academiques aa ON aa.annee_id = se.annee_id
+            LEFT JOIN semestres s ON s.semestre_id = se.semestre_id
+            LEFT JOIN sections sec ON sec.section_id = se.section_id
+            LEFT JOIN groupes g ON g.group_id = se.group_id
+            LEFT JOIN cycles c ON c.cycle_id = se.cycle_id
+            WHERE et.actuel = 1";
+
+        $params = [];
+
+        if ($annee_id !== null) {
+            $sql .= " AND aa.annee_id = :annee_id";
+            $params[':annee_id'] = $annee_id;
+        }
+
+        if ($department_id !== null) {
+            $sql .= " AND et.department_id = :department_id";
+            $params[':department_id'] = $department_id;
+        }
+         if ($etape_id !== null) {
+            $sql .= " AND se.etape_id = :etape_id";
+            $params[':etape_id'] = $etape_id;
+        }
+        if ($field_id !== null) {
+            $sql .= " AND et.field_id = :field_id";
+            $params[':field_id'] = $field_id;
+        }
+
+        if ($cycle_id !== null) {
+            $sql .= " AND se.cycle_id = :cycle_id";
+            $params[':cycle_id'] = $cycle_id;
+        }
+
+        if ($semestre_id !== null) {
+            $sql .= " AND se.semestre_id = :semestre_id";
+            $params[':semestre_id'] = $semestre_id;
+        }
+
+        if ($section_id !== null) {
+            $sql .= " AND se.section_id = :section_id";
+            $params[':section_id'] = $section_id;
+        }
+
+        if ($group_id !== null) {
+            $sql .= " AND se.group_id = :group_id";
+            $params[':group_id'] = $group_id;
+        }
+
+        if ($search !== null && $search !== '') {
+            $sql .= " AND (
+                et.nom LIKE :search OR
+                et.prenom LIKE :search OR
+                et.cne LIKE :search OR
+                et.cin LIKE :search OR
+                u.email LIKE :search
+            )";
+            $params[':search'] = '%' . $search . '%';
+        }
+
+        // Count query
+        $countSql = "SELECT COUNT(DISTINCT et.user_id) as total
+                     FROM etudiants et
+                     JOIN utilisateurs u ON u.user_id = et.user_id
+                     LEFT JOIN departements d ON d.department_id = et.department_id
+                     LEFT JOIN filieres f ON f.field_id = et.field_id
+                     LEFT JOIN student_enrollments se ON se.student_id = et.user_id
+                     LEFT JOIN annees_academiques aa ON aa.annee_id = se.annee_id
+                     LEFT JOIN semestres s ON s.semestre_id = se.semestre_id
+                     LEFT JOIN sections sec ON sec.section_id = se.section_id
+                     LEFT JOIN groupes g ON g.group_id = se.group_id
+                     LEFT JOIN cycles c ON c.cycle_id = se.cycle_id
+                     WHERE et.actuel = 1";
+
+        if (!empty($params)) {
+            $countSql .= " AND " . implode(" AND ", array_map(function ($key) {
+                $column = str_replace(":", "", $key);
+                // Map parameter names to fully qualified column names
+                $columnMap = [
+                    'annee_id' => 'aa.annee_id',
+                    'department_id' => 'et.department_id',
+                    'field_id' => 'et.field_id',
+                    'cycle_id' => 'se.cycle_id',
+                    'etape_id'=>'se.etape_id',
+                    'semestre_id' => 'se.semestre_id',
+                    'section_id' => 'se.section_id',
+                    'group_id' => 'se.group_id',
+                    'search' => 'search' // Handled separately in main query
+                ];
+                return in_array($column, ['search']) ? '' : "{$columnMap[$column]} = :{$column}";
+            }, array_keys($params)));
+        }
+
+        $countStmt = $this->db->prepare($countSql);
+        foreach ($params as $key => $value) {
+            $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $countStmt->bindValue($key, $value, $type);
+        }
+        $countStmt->execute();
+        $totalStudents = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        // Pagination
+        $offset = ($page - 1) * $limit;
+        $sql .= " ORDER BY et.nom, et.prenom LIMIT :limit OFFSET :offset";
+        $params[':limit'] = $limit;
+        $params[':offset'] = $offset;
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $value) {
+            $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $stmt->bindValue($key, $value, $type);
+        }
+        $stmt->execute();
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'students' => $students,
+            'count' => (int)$totalStudents
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getFilteredStudents: " . $e->getMessage());
+        throw $e;
     }
-
-    $sql .= "
-        FROM etudiants et
-        JOIN utilisateurs u ON u.user_id = et.user_id
-        LEFT JOIN departements d ON d.department_id = et.department_id
-        LEFT JOIN filieres f ON f.field_id = et.field_id
-        LEFT JOIN student_enrollments se ON se.student_id = et.user_id
-        LEFT JOIN annees_academiques aa ON aa.annee_id = se.annee_id
-        LEFT JOIN semestres s ON s.semestre_id = se.semestre_id
-        
-        LEFT JOIN sections sec ON sec.section_id = se.section_id
-        LEFT JOIN groupes g ON g.group_id = se.group_id
-        LEFT JOIN cycles c ON c.cycle_id = se.cycle_id
-        WHERE et.actuel = 1";
-
-    $params = [];
-
-    if ($annee_id !== null) {
-        $sql .= " AND aa.annee_id = :annee_id";
-        $params[':annee_id'] = $annee_id;
-    }
-
-    if ($department_id !== null) {
-        $sql .= " AND et.department_id = :department_id";
-        $params[':department_id'] = $department_id;
-    }
-
-    if ($field_id !== null) {
-        $sql .= " AND f.field_id = :field_id";
-        $params[':field_id'] = $field_id;
-    }
-
-    if ($cycle_id !== null) {
-        $sql .= " AND et.cycle_id = :cycle_id";
-        $params[':cycle_id'] = $cycle_id;
-    }
-    if ($semestreId !== null) {
-        $sql .= " AND s.semestre_id = :semestre_id";
-        $params[':semestre_id'] = $semestreId;
-    }
-
-    if ($sectionId !== null) {
-        $sql .= " AND sec.section_id = :section_id";
-        $params[':section_id'] = $sectionId;
-    }
-
-    if ($groupId !== null) {
-        $sql .= " AND g.group_id = :group_id";
-        $params[':group_id'] = $groupId;
-    }
-
-    if ($search !== null && $search !== '') {
-        $sql .= " AND (
-            et.nom LIKE :search OR
-             et.prenom LIKE :search OR
-            et.cne LIKE :search OR
-            et.cin LIKE :search OR
-            u.email LIKE :search 
-           
-        )";
-        $params[':search'] = '%' . $search . '%';
-    }
-
-    $sql .= " ORDER BY et.nom, et.prenom";
-
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute($params);
-
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
-
 
     public function getAllFilieres()
     {
