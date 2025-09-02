@@ -205,10 +205,10 @@ public function createStudent(array $data) {
                 $userId,
                 $data['annee_id'],
                 (int)$data['semestre_id'],
-                (int)$data['cycle_id'],
+               (int)$data['cycle_id'],
                 (int)$data['field_id'],
                 (int)$data['etape_id'] ,
-                (int)$data['group_id'] ,
+                (int)$data['group_id'] ,    
                 (int)$data['section_id'] 
             ];
             
@@ -326,57 +326,60 @@ public function createStudent(array $data) {
         }
 
         // 8. Update or Insert enrollment if data is available
-        if (!empty($data['annee_id']) && !empty($data['semestre_id'])) {
-            // Check if enrollment exists
-            $stmt = $db->prepare("SELECT 1 FROM student_enrollments WHERE student_id = ? AND annee_id = ? AND semestre_id = ?");
-            $stmt->execute([$id, $data['annee_id'], $data['semestre_id']]);
-            $enrollmentExists = $stmt->fetch();
+if (!empty($data['annee_id']) && !empty($data['semestre_id'])) {
+    // Check if enrollment exists
+    $stmt = $db->prepare("SELECT 1 FROM student_enrollments WHERE student_id = ? AND annee_id = ? AND semestre_id = ?");
+    $stmt->execute([$id, $data['annee_id'], $data['semestre_id']]);
+    $enrollmentExists = $stmt->fetch();
 
-            if ($enrollmentExists) {
-                // Update existing enrollment
-                $stmt = $db->prepare("
-                    UPDATE student_enrollments
-                    SET annee_id = ?, semestre_id = ?, cycle_id = ?, field_id = ?, etape_id = ?, 
-                        group_id = ?, section_id = ?, status = ?
-                    WHERE student_id = ? AND annee_id = ? AND semestre_id = ?
-                ");
-                if (!$stmt->execute([
-                    $data['annee_id'],
-                    (int)$data['semestre_id'],
-                    (int)$data['cycle_id'],
-                    (int)$data['field_id'],
-                    (int)$data['etape_id'] ,
-                    (int)$data['group_id'],
-                    (int)$data['section_id'] ,
-                    $data['status'] ?? 'active',
-                    (int)$id,
-                    (int)$data['annee_id'],
-                    (int)$data['semestre_id']
-                ])) {
-                    throw new Exception("Failed to update enrollment record");
-                }
-            } else {
-                // Insert new enrollment
-                $stmt = $db->prepare("
-                    INSERT INTO student_enrollments 
-                    (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, group_id, section_id, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
-                if (!$stmt->execute([
-                    $id,
-                    $data['annee_id'],
-                    (int)$data['semestre_id'],
-                    (int)$data['cycle_id'],
-                    (int)$data['field_id'],
-                    (int)$data['etape_id'] ,
-                    (int)$data['group_id'] ,
-                    (int)$data['section_id'] ,
-                    (int)$data['status'] ?? 'active'
-                ])) {
-                    throw new Exception("Failed to insert enrollment record");
-                }
-            }
+    // Ensure field_id matches etudiants.field_id
+    $field_id = !empty($data['field_id']) ? (int)$data['field_id'] : null;
+
+    if ($enrollmentExists) {
+        // Update existing enrollment
+        $stmt = $db->prepare("
+            UPDATE student_enrollments
+            SET annee_id = ?, semestre_id = ?, cycle_id = ?, field_id = ?, etape_id = ?, 
+                group_id = ?, section_id = ?, status = ?
+            WHERE student_id = ? AND annee_id = ? AND semestre_id = ?
+        ");
+        if (!$stmt->execute([
+            $data['annee_id'],
+            (int)$data['semestre_id'],
+            !empty($data['cycle_id']) ? (int)$data['cycle_id'] : null,
+            $field_id,
+            !empty($data['etape_id']) ? (int)$data['etape_id'] : null,
+            !empty($data['group_id']) ? (int)$data['group_id'] : null,
+            !empty($data['section_id']) ? (int)$data['section_id'] : null,
+            $data['status'] ?? 'active',
+            (int)$id,
+            $data['annee_id'],
+            (int)$data['semestre_id']
+        ])) {
+            throw new Exception("Failed to update enrollment record");
         }
+    } else {
+        // Insert new enrollment
+        $stmt = $db->prepare("
+            INSERT INTO student_enrollments 
+            (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, group_id, section_id, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        if (!$stmt->execute([
+            (int)$id,
+            $data['annee_id'],
+            (int)$data['semestre_id'],
+            !empty($data['cycle_id']) ? (int)$data['cycle_id'] : null,
+            $field_id,
+            !empty($data['etape_id']) ? (int)$data['etape_id'] : null,
+            !empty($data['group_id']) ? (int)$data['group_id'] : null,
+            !empty($data['section_id']) ? (int)$data['section_id'] : null,
+            $data['status'] ?? 'active'
+        ])) {
+            throw new Exception("Failed to insert enrollment record");
+        }
+    }
+}
 
         $db->commit();
         return ['success' => true];
@@ -511,23 +514,39 @@ public function getFilteredStudents($annee_id = null, $field_id = null, $semestr
                      LEFT JOIN cycles c ON c.cycle_id = se.cycle_id
                      WHERE et.actuel = 1";
 
-        if (!empty($params)) {
-            $countSql .= " AND " . implode(" AND ", array_map(function ($key) {
-                $column = str_replace(":", "", $key);
-                // Map parameter names to fully qualified column names
-                $columnMap = [
-                    'annee_id' => 'aa.annee_id',
-                    'department_id' => 'et.department_id',
-                    'field_id' => 'et.field_id',
-                    'cycle_id' => 'se.cycle_id',
-                    'etape_id'=>'se.etape_id',
-                    'semestre_id' => 'se.semestre_id',
-                    'section_id' => 'se.section_id',
-                    'group_id' => 'se.group_id',
-                    'search' => 'search' // Handled separately in main query
-                ];
-                return in_array($column, ['search']) ? '' : "{$columnMap[$column]} = :{$column}";
-            }, array_keys($params)));
+        $countConditions = [];
+        $columnMap = [
+            'annee_id' => 'aa.annee_id',
+            'department_id' => 'et.department_id',
+            'field_id' => 'et.field_id',
+            'cycle_id' => 'se.cycle_id',
+            'etape_id'=>'se.etape_id',
+            'semestre_id' => 'se.semestre_id',
+            'section_id' => 'se.section_id',
+            'group_id' => 'se.group_id',
+            'search' => 'search' // Handled separately in main query
+        ];
+
+        foreach (array_keys($params) as $key) {
+            $column = str_replace(":", "", $key);
+            if ($column === 'search') {
+                continue;
+            }
+            $countConditions[] = "{$columnMap[$column]} = :{$column}";
+        }
+
+        if (!empty($countConditions)) {
+            $countSql .= " AND " . implode(" AND ", $countConditions);
+        }
+
+        if (isset($params[':search'])) {
+            $countSql .= " AND (
+                et.nom LIKE :search OR
+                et.prenom LIKE :search OR
+                et.cne LIKE :search OR
+                et.cin LIKE :search OR
+                u.email LIKE :search
+            )";
         }
 
         $countStmt = $this->db->prepare($countSql);
@@ -561,7 +580,6 @@ public function getFilteredStudents($annee_id = null, $field_id = null, $semestr
         throw $e;
     }
 }
-
     public function getAllFilieres()
     {
         return $this->db->query("SELECT field_id, nom FROM filieres ORDER BY nom")->fetchAll();

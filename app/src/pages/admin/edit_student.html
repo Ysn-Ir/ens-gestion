@@ -172,9 +172,9 @@
                         <input type="text" class="form-control" id="address" />
                     </div>
                     <div class="col-md-6">
-                        <label for="password" class="form-label">Mot de passe</label>
+                        <label for="password" class="form-label required">Mot de passe</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="password" placeholder="Laisser vide pour ne pas modifier" />
+                            <input type="password" class="form-control" id="password" placeholder="Laisser vide pour ne pas modifier" required/>
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -409,78 +409,85 @@
             }
 
             async function handleStudentFormSubmit(e) {
-                e.preventDefault();
-                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                let isValid = true;
-                document.querySelectorAll('#studentForm [required]').forEach(input => {
-                    if (!input.value.trim()) {
-                        input.classList.add('is-invalid');
-                        isValid = false;
-                    }
-                });
-                const email = document.getElementById('email').value.trim();
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    document.getElementById('email').classList.add('is-invalid');
-                    isValid = false;
-                }
-                if (!isValid) {
-                    showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
-                    return;
-                }
-                const formData = { ...originalStudentData };
-                formData.email = document.getElementById('email').value.trim() || formData.email;
-                formData.cne = document.getElementById('cne').value.trim() || formData.cne;
-                formData.nom = document.getElementById('lastName').value.trim() || formData.nom;
-                formData.prenom = document.getElementById('firstName').value.trim() || formData.prenom;
-                formData.telephone = document.getElementById('phone').value.trim() || formData.telephone;
-                formData.department_id = document.getElementById('department').value || formData.department_id;
-                formData.field_id = document.getElementById('filiere').value || formData.field_id;
-                formData.annee_id = document.getElementById('year').value || formData.annee_id;
-                formData.cycle_id = document.getElementById('cycle_id').value || formData.cycle_id;
-                formData.etape_id = document.getElementById('etape_id').value || formData.etape_id;
-                formData.semestre_id = document.getElementById('semester_id').value || formData.semestre_id;
-                formData.section_id = document.getElementById('section_id').value || formData.section_id;
-                formData.group_id = document.getElementById('group_id').value || formData.group_id;
-                formData.cin = document.getElementById('cin').value.trim() || formData.cin;
-                formData.date_naissance = document.getElementById('birthdate').value || formData.date_naissance;
-                formData.nationalite = document.getElementById('nationality').value || formData.nationalite;
-                formData.adresse = document.getElementById('address').value || formData.adresse;
-                formData.username = `${formData.prenom}.${formData.nom}`.toLowerCase().replace(/\s+/g, '');
-                const password = document.getElementById('password').value;
-                if (password) {
-                    if (password.length < 8) {
-                        document.getElementById('password').classList.add('is-invalid');
-                        showNotification('Le mot de passe doit contenir au moins 8 caractères', false);
-                        return;
-                    }
-                    formData.password = password;
-                }
-                try {
-                    const saveBtn = document.getElementById('saveBtn');
-                    saveBtn.disabled = true;
-                    document.getElementById('saveSpinner').classList.remove('d-none');
-                    const response = await fetch(`${API_ENDPOINTS.updateStudent}&id=${studentId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-                        body: JSON.stringify(formData)
-                    });
-                    const result = await response.json();
-                    if (result.status) {
-                        showNotification('Étudiant mis à jour avec succès', true);
-                        setTimeout(() => {
-                            window.location.href = 'students.html';
-                        }, 1500);
-                    } else {
-                        throw new Error(result.message || 'Échec de la mise à jour');
-                    }
-                } catch (error) {
-                    console.error('Erreur:', error);
-                    showNotification('Erreur lors de la mise à jour: ' + error.message, false);
-                } finally {
-                    document.getElementById('saveBtn').disabled = false;
-                    document.getElementById('saveSpinner').classList.add('d-none');
-                }
-            }
+    e.preventDefault();
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    let isValid = true;
+    document.querySelectorAll('#studentForm [required]').forEach(input => {
+        if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            isValid = false;
+        }
+    });
+    const email = document.getElementById('email').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        document.getElementById('email').classList.add('is-invalid');
+        isValid = false;
+    }
+    const fieldId = document.getElementById('filiere').value;
+    if (!fieldId) {
+        document.getElementById('filiere').classList.add('is-invalid');
+        showNotification('Veuillez sélectionner une filière', false);
+        isValid = false;
+    }
+    if (!isValid) {
+        showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
+        return;
+    }
+    const formData = { ...originalStudentData };
+    formData.email = document.getElementById('email').value.trim() || formData.email;
+    formData.cne = document.getElementById('cne').value.trim() || formData.cne;
+    formData.nom = document.getElementById('lastName').value.trim() || formData.nom;
+    formData.prenom = document.getElementById('firstName').value.trim() || formData.prenom;
+    formData.telephone = document.getElementById('phone').value.trim() || formData.telephone;
+    formData.department_id = document.getElementById('department').value || formData.department_id;
+    formData.field_id = fieldId; // Ensure field_id is always set
+    formData.annee_id = document.getElementById('year').value || formData.annee_id;
+    formData.cycle_id = document.getElementById('cycle_id').value || formData.cycle_id;
+    formData.etape_id = document.getElementById('etape_id').value || formData.etape_id;
+    formData.semestre_id = document.getElementById('semester_id').value || formData.semestre_id;
+    formData.section_id = document.getElementById('section_id').value || formData.section_id;
+    formData.group_id = document.getElementById('group_id').value || formData.group_id;
+    formData.cin = document.getElementById('cin').value.trim() || formData.cin;
+    formData.date_naissance = document.getElementById('birthdate').value || formData.date_naissance;
+    formData.nationalite = document.getElementById('nationality').value || formData.nationalite;
+    formData.adresse = document.getElementById('address').value || formData.adresse;
+    formData.username = `${formData.prenom}.${formData.nom}`.toLowerCase().replace(/\s+/g, '');
+    formData.user_id = studentId;
+    const password = document.getElementById('password').value;
+    if (password) {
+        if (password.length < 8) {
+            document.getElementById('password').classList.add('is-invalid');
+            showNotification('Le mot de passe doit contenir au moins 8 caractères', false);
+            return;
+        }
+        formData.password = password;
+    }
+    try {
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        document.getElementById('saveSpinner').classList.remove('d-none');
+        const response = await fetch(`${API_ENDPOINTS.updateStudent}&id=${studentId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            body: JSON.stringify(formData)
+        });
+        const result = await response.json();
+        if (result.status) {
+            showNotification('Étudiant mis à jour avec succès', true);
+            setTimeout(() => {
+                window.location.href = 'students.html';
+            }, 1500);
+        } else {
+            throw new Error(result.message || 'Échec de la mise à jour');
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        showNotification('Erreur lors de la mise à jour: ' + error.message, false);
+    } finally {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveSpinner').classList.add('d-none');
+    }
+}
 
             async function loadDepartments() {
                 try {

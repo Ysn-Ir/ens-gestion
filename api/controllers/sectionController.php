@@ -11,54 +11,57 @@ class SectionController {
     private $response;
 
     public function __construct() {
-        $this->model = new SectionGroupModel();
+        $this->model = new SectionModel();
         $this->authMiddleware = new AuthMiddleware();
         $this->adminMiddleware = new AdminMiddleware();
         $this->response = new Response();
     }
 
-    public function getSections() {
-                $this->authMiddleware->verifySession();
+    private function checkAccess() {
+        $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
-        }
 
-        try {
-            $sections = $this->model->getSections();
-            $this->response->send(200, [
-                'status' => 'success',
-                'data' => ['sections' => $sections]
-            ]);
-        } catch (Exception $e) {
-            $this->response->send(500, [
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+            $this->response->send(403, [
                 'status' => 'error',
-                'message' => 'Erreur lors de la récupération des sections: ' . $e->getMessage()
+                'message' => 'Accès refusé'
             ]);
+            exit;
         }
     }
 
-    public function addSection() {
-                $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
-        }
+    /** =========================
+     *   SECTIONS
+     *  ========================= */
+   public function getSections($filiereId = null) {
+    $this->checkAccess();
+    try {
+        $sections = $this->model->getSections($filiereId);
+        $this->response->send(200, [
+            'status' => 'success',
+            'data' => ['sections' => $sections]
+        ]);
+    } catch (Exception $e) {
+        $this->response->send(500, [
+            'status' => 'error',
+            'message' => 'Erreur lors de la récupération des sections: ' . $e->getMessage()
+        ]);
+    }
+}
 
+
+    public function addSection() {
+        $this->checkAccess();
         $data = json_decode(file_get_contents('php://input'), true);
+
         if (!is_array($data)) {
             $this->response->send(400, ['status' => 'error', 'message' => 'Données JSON invalides']);
             return;
         }
 
-        $required_fields = ['nom', 'etape_id'];
-        foreach ($required_fields as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                $this->response->send(400, ['status' => 'error', 'message' => "Le champ $field est requis"]);
-                return;
-            }
+        if (empty($data['nom']) || empty($data['etape_id'])) {
+            $this->response->send(400, ['status' => 'error', 'message' => 'Le nom et l\'étape sont requis']);
+            return;
         }
 
         try {
@@ -67,11 +70,7 @@ class SectionController {
                 $data['field_id'] ?? null,
                 $data['etape_id']
             );
-            $this->response->send($result['status'] === 'success' ? 201 : 400, [
-                'status' => $result['status'],
-                'message' => $result['message'],
-                'section_id' => $result['section_id'] ?? null
-            ]);
+            $this->response->send(201, $result);
         } catch (Exception $e) {
             $this->response->send($e->getCode() ?: 500, [
                 'status' => 'error',
@@ -81,25 +80,17 @@ class SectionController {
     }
 
     public function updateSection($section_id) {
-                $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
-        }
-
+        $this->checkAccess();
         $data = json_decode(file_get_contents('php://input'), true);
+
         if (!is_array($data)) {
             $this->response->send(400, ['status' => 'error', 'message' => 'Données JSON invalides']);
             return;
         }
 
-        $required_fields = ['nom', 'etape_id'];
-        foreach ($required_fields as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                $this->response->send(400, ['status' => 'error', 'message' => "Le champ $field est requis"]);
-                return;
-            }
+        if (empty($data['nom']) || empty($data['etape_id'])) {
+            $this->response->send(400, ['status' => 'error', 'message' => 'Le nom et l\'étape sont requis']);
+            return;
         }
 
         try {
@@ -109,10 +100,7 @@ class SectionController {
                 $data['field_id'] ?? null,
                 $data['etape_id']
             );
-            $this->response->send($result['status'] === 'success' ? 200 : 400, [
-                'status' => $result['status'],
-                'message' => $result['message']
-            ]);
+            $this->response->send(200, $result);
         } catch (Exception $e) {
             $this->response->send($e->getCode() ?: 500, [
                 'status' => 'error',
@@ -121,48 +109,51 @@ class SectionController {
         }
     }
 
-    public function getGroups() {
-                $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
-        }
-
+    public function deleteSection($section_id) {
+        $this->checkAccess();
         try {
-            $groups = $this->model->getGroups();
-            $this->response->send(200, [
-                'status' => 'success',
-                'data' => ['groups' => $groups]
-            ]);
+            $result = $this->model->deleteSection($section_id);
+            $this->response->send(200, $result);
         } catch (Exception $e) {
-            $this->response->send(500, [
+            $this->response->send($e->getCode() ?: 500, [
                 'status' => 'error',
-                'message' => 'Erreur lors de la récupération des groupes: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ]);
         }
     }
 
-    public function addGroup() {
-                $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
-        }
+    /** =========================
+     *   GROUPES
+     *  ========================= */
+    public function getGroups($filiereId = null) {
+    $this->checkAccess();
+    try {
+        $groups = $this->model->getGroups($filiereId);
+        $this->response->send(200, [
+            'status' => 'success',
+            'data' => ['groups' => $groups]
+        ]);
+    } catch (Exception $e) {
+        $this->response->send(500, [
+            'status' => 'error',
+            'message' => 'Erreur lors de la récupération des groupes: ' . $e->getMessage()
+        ]);
+    }
+}
 
+
+    public function addGroup() {
+        $this->checkAccess();
         $data = json_decode(file_get_contents('php://input'), true);
+
         if (!is_array($data)) {
             $this->response->send(400, ['status' => 'error', 'message' => 'Données JSON invalides']);
             return;
         }
 
-        $required_fields = ['nom', 'section_id'];
-        foreach ($required_fields as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                $this->response->send(400, ['status' => 'error', 'message' => "Le champ $field est requis"]);
-                return;
-            }
+        if (empty($data['nom']) || empty($data['section_id'])) {
+            $this->response->send(400, ['status' => 'error', 'message' => 'Le nom et la section sont requis']);
+            return;
         }
 
         try {
@@ -171,11 +162,7 @@ class SectionController {
                 $data['field_id'] ?? null,
                 $data['section_id']
             );
-            $this->response->send($result['status'] === 'success' ? 201 : 400, [
-                'status' => $result['status'],
-                'message' => $result['message'],
-                'group_id' => $result['group_id'] ?? null
-            ]);
+            $this->response->send(201, $result);
         } catch (Exception $e) {
             $this->response->send($e->getCode() ?: 500, [
                 'status' => 'error',
@@ -185,25 +172,17 @@ class SectionController {
     }
 
     public function updateGroup($group_id) {
-                $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
-        }
-
+        $this->checkAccess();
         $data = json_decode(file_get_contents('php://input'), true);
+
         if (!is_array($data)) {
             $this->response->send(400, ['status' => 'error', 'message' => 'Données JSON invalides']);
             return;
         }
 
-        $required_fields = ['nom', 'section_id'];
-        foreach ($required_fields as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
-                $this->response->send(400, ['status' => 'error', 'message' => "Le champ $field est requis"]);
-                return;
-            }
+        if (empty($data['nom']) || empty($data['section_id'])) {
+            $this->response->send(400, ['status' => 'error', 'message' => 'Le nom et la section sont requis']);
+            return;
         }
 
         try {
@@ -213,10 +192,7 @@ class SectionController {
                 $data['field_id'] ?? null,
                 $data['section_id']
             );
-            $this->response->send($result['status'] === 'success' ? 200 : 400, [
-                'status' => $result['status'],
-                'message' => $result['message']
-            ]);
+            $this->response->send(200, $result);
         } catch (Exception $e) {
             $this->response->send($e->getCode() ?: 500, [
                 'status' => 'error',
@@ -224,57 +200,25 @@ class SectionController {
             ]);
         }
     }
-public function deleteSection($section_id) {
-    $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-        $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-        return;
-    }
 
-    try {
-        $result = $this->model->deleteSection($section_id);
-        $this->response->send($result['status'] === 'success' ? 200 : 400, [
-            'status' => $result['status'],
-            'message' => $result['message']
-        ]);
-    } catch (Exception $e) {
-        $this->response->send($e->getCode() ?: 500, [
-            'status' => 'error',
-            'message' => $e->getMessage()
-        ]);
-    }
-}
-
-public function deleteGroup($group_id) {
-    $this->authMiddleware->verifySession();
-    $this->adminMiddleware->verifyAdmin();
-    if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-        $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-        return;
-    }
-
-    try {
-        $result = $this->model->deleteGroup($group_id);
-        $this->response->send($result['status'] === 'success' ? 200 : 400, [
-            'status' => $result['status'],
-            'message' => $result['message']
-        ]);
-    } catch (Exception $e) {
-        $this->response->send($e->getCode() ?: 500, [
-            'status' => 'error',
-            'message' => $e->getMessage()
-        ]);
-    }
-}
-    public function getOptions() {
-                $this->authMiddleware->verifySession();
-        $this->adminMiddleware->verifyAdmin();
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-            $this->response->send(403, ['status' => 'error', 'message' => 'Accès refusé']);
-            return;
+    public function deleteGroup($group_id) {
+        $this->checkAccess();
+        try {
+            $result = $this->model->deleteGroup($group_id);
+            $this->response->send(200, $result);
+        } catch (Exception $e) {
+            $this->response->send($e->getCode() ?: 500, [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
         }
+    }
 
+    /** =========================
+     *   OPTIONS
+     *  ========================= */
+    public function getOptions() {
+        $this->checkAccess();
         try {
             $options = $this->model->getOptions();
             $this->response->send(200, [
@@ -289,4 +233,3 @@ public function deleteGroup($group_id) {
         }
     }
 }
-?>
