@@ -241,265 +241,339 @@
          * @return array Success status and message
          * @throws Exception If inputs are invalid or database errors occur
          */
-        public function calculateAllFinalNotes($semestre_id, $annee_id)
-        {
-            try {
-                // Validate inputs
-                if (!filter_var($semestre_id, FILTER_VALIDATE_INT)) {
-                    throw new Exception("Invalid semestre_id: must be an integer", 400);
+/**
+ * Calculate final notes for elements, modules, and semesters for a given semester and year.
+ *
+ * @param int $semestre_id The semester ID
+ * @param string $annee_id The academic year in YYYY-YYYY format
+ * @return array Success status and message
+ * @throws Exception If inputs are invalid or database errors occur
+ */
+public function calculateAllFinalNotes($semestre_id, $annee_id)
+{
+    try {
+        // Validate inputs
+        if (!filter_var($semestre_id, FILTER_VALIDATE_INT)) {
+            throw new Exception("Invalid semestre_id: must be an integer", 400);
+        }
+        if (!preg_match('/^\d{4}-\d{4}$/', $annee_id)) {
+            throw new Exception("Invalid annee_id: must be in YYYY-YYYY format", 400);
+        }
+        [$start_year, $end_year] = explode('-', $annee_id);
+        if ($end_year - $start_year !== 1) {
+            throw new Exception("Invalid annee_id: second year must be one more than first year", 400);
+        }
+
+        // Validate notes data
+        $invalidNotes = $this->validateNotesData($semestre_id, $annee_id);
+        if (!empty($invalidNotes)) {
+            ($this->logger)("Found " . count($invalidNotes) . " invalid notes for semestre_id=$semestre_id, annee_id=$annee_id");
+            throw new Exception("Invalid notes data detected: " . count($invalidNotes) . " records with missing or invalid element_id", 400);
+        }
+
+        $this->startTransaction();
+
+        // Fetch students
+        $studentQuery = "
+            SELECT DISTINCT se.student_id, se.cycle_id, se.field_id, se.etape_id, se.group_id, se.section_id, se.status,
+                CONCAT(e.nom, ' ', e.prenom) as student_name
+            FROM student_enrollments se
+            JOIN etudiants e ON se.student_id = e.user_id
+            WHERE se.semestre_id = :semestre_id AND se.annee_id = :annee_id
+        ";
+        $studentStmt = $this->db->prepare($studentQuery);
+        $studentStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
+        $students = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($students)) {
+            $this->db->commit();
+            ($this->logger)("No students found for semestre_id=$semestre_id, annee_id=$annee_id");
+            return ['success' => true, 'message' => "No students found for semestre_id=$semestre_id, annee_id=$annee_id"];
+        }
+
+        foreach ($students as $student) {
+            $student_id = $student['student_id'];
+            $cycle_id = $student['cycle_id'];
+            $field_id = $student['field_id'];
+            $etape_id = $student['etape_id'] ?? 1;
+            $group_id = $student['group_id'] ?? 1;
+            $section_id = $student['section_id'] ?? null;
+            $status = $student['status'] ?? 'active';
+
+            // Fetch elements with element_id and decision_ratt
+            $elementQuery = "
+                SELECT n.note_id, n.note_tp, n.note_cc, n.note_exam, n.note_rattrapage, n.decision_ratt,
+                    e.element_id, e.coeff_element, e.coeff_tp, e.coeff_cc, e.coeff_ecrit, e.module_id
+                FROM notes n
+                LEFT JOIN elements e ON n.element_id = e.element_id
+                WHERE n.student_id = :student_id AND n.semestre_id = :semestre_id AND n.annee_id = :annee_id
+            ";
+            $elementStmt = $this->db->prepare($elementQuery);
+            $elementStmt->execute(['student_id' => $student_id, 'semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
+            $elements = $elementStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Log and skip invalid elements
+            $validElements = [];
+            foreach ($elements as $element) {
+                if (!isset($element['element_id']) || $element['element_id'] === null) {
+                    ($this->logger)("Skipping invalid element: note_id={$element['note_id']}, student_id=$student_id, element_id=" . ($element['element_id'] ?? 'NULL'));
+                    continue;
                 }
-                if (!preg_match('/^\d{4}-\d{4}$/', $annee_id)) {
-                    throw new Exception("Invalid annee_id: must be in YYYY-YYYY format", 400);
-                }
-                [$start_year, $end_year] = explode('-', $annee_id);
-                if ($end_year - $start_year !== 1) {
-                    throw new Exception("Invalid annee_id: second year must be one more than first year", 400);
-                }
+                $validElements[] = $element;
+            }
+            $elements = $validElements;
 
-                // Validate notes data
-                $invalidNotes = $this->validateNotesData($semestre_id, $annee_id);
-                if (!empty($invalidNotes)) {
-                    ($this->logger)("Found " . count($invalidNotes) . " invalid notes for semestre_id=$semestre_id, annee_id=$annee_id");
-                    throw new Exception("Invalid notes data detected: " . count($invalidNotes) . " records with missing or invalid element_id", 400);
-                }
+            // Group elements by module
+            $elementsByModule = [];
+            foreach ($elements as $element) {
+                $elementsByModule[$element['module_id']][] = $element;
+            }
 
-                $this->startTransaction();
-
-                // Fetch students
-                $studentQuery = "
-                    SELECT DISTINCT se.student_id, e.field_id, CONCAT(e.nom, ' ', e.prenom) as student_name
-                    FROM student_enrollments se
-                    JOIN etudiants e ON se.student_id = e.user_id
-                    WHERE se.semestre_id = :semestre_id AND se.annee_id = :annee_id
-                ";
-                $studentStmt = $this->db->prepare($studentQuery);
-                $studentStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
-                $students = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                if (empty($students)) {
-                    $this->db->commit();
-                    ($this->logger)("No students found for semestre_id=$semestre_id, annee_id=$annee_id");
-                    return ['success' => true, 'message' => "No students found for semestre_id=$semestre_id, annee_id=$annee_id"];
+            foreach ($elementsByModule as $module_id => $moduleElements) {
+                $elementCount = count($moduleElements);
+                if ($elementCount === 0) {
+                    ($this->logger)("No valid elements for student_id=$student_id, module_id=$module_id");
+                    continue;
                 }
 
-                foreach ($students as $student) {
-                    $student_id = $student['student_id'];
-                    $field_id = $student['field_id'];
-
-                    // Fetch elements with element_id and decision_ratt
-                    $elementQuery = "
-                        SELECT n.note_id, n.note_tp, n.note_cc, n.note_exam, n.note_rattrapage, n.decision_ratt,
-                            e.element_id, e.coeff_element, e.coeff_tp, e.coeff_cc, e.coeff_ecrit, e.module_id
-                        FROM notes n
-                        LEFT JOIN elements e ON n.element_id = e.element_id
-                        WHERE n.student_id = :student_id AND n.semestre_id = :semestre_id AND n.annee_id = :annee_id
-                    ";
-                    $elementStmt = $this->db->prepare($elementQuery);
-                    $elementStmt->execute(['student_id' => $student_id, 'semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
-                    $elements = $elementStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                    // Log and skip invalid elements
-                    $validElements = [];
-                    foreach ($elements as $element) {
-                        if (!isset($element['element_id']) || $element['element_id'] === null) {
-                            ($this->logger)("Skipping invalid element: note_id={$element['note_id']}, student_id=$student_id, element_id=" . ($element['element_id'] ?? 'NULL'));
-                            continue;
-                        }
-                        $validElements[] = $element;
-                    }
-                    $elements = $validElements;
-
-                    // Group elements by module
-                    $elementsByModule = [];
-                    foreach ($elements as $element) {
-                        $elementsByModule[$element['module_id']][] = $element;
-                    }
-
-                    foreach ($elementsByModule as $module_id => $moduleElements) {
-                        $elementCount = count($moduleElements);
-                        if ($elementCount === 0) {
-                            ($this->logger)("No valid elements for student_id=$student_id, module_id=$module_id");
-                            continue;
-                        }
-
-                        foreach ($moduleElements as $element) {
-                            $note_finale = null;
-                            $decision = null;
-                            $decision_ratt = null;
-
-                            // Normalize coefficients
-                            $total_coeff = ($element['coeff_tp'] ?? 0) + ($element['coeff_cc'] ?? 0) + ($element['coeff_ecrit'] ?? 0);
-                            if ($total_coeff > 0) {
-                                $coeff_tp = $element['coeff_tp'] / $total_coeff;
-                                $coeff_cc = $element['coeff_cc'] / $total_coeff;
-                                $coeff_ecrit = $element['coeff_ecrit'] / $total_coeff;
-                            } else {
-                                $coeff_tp = $coeff_cc = $coeff_ecrit = 1/3;
-                            }
-
-                            $note_tp = $element['note_tp'] ?? 0;
-                            $note_cc = $element['note_cc'] ?? 0;
-                            $note_exam = $element['note_exam'] ?? 0;
-                            $note_rattrapage = $element['note_rattrapage'] ?? null;
-
-                            // Calculate normal final note if all required grades are present
-                            if (isset($element['note_exam'], $element['note_tp'], $element['note_cc']) && !isset($element['note_rattrapage'])) {
-                                $note_finale = ($note_tp * $coeff_tp) + ($note_cc * $coeff_cc) + ($note_exam * $coeff_ecrit);
-                                $decision = ($note_finale >= 10) ? 'V' : 'R';
-                            } elseif (isset($element['note_rattrapage'], $element['note_tp'], $element['note_cc'])) {
-                                $note_ratt = ($note_tp * $coeff_tp) + ($note_cc * $coeff_cc) + ($note_rattrapage * $coeff_ecrit);
-                                $note_finale = max($note_ratt, $note_finale ?? 0);
-                                $decision_ratt = ($note_finale >= 10) ? 'VR' : 'NV';
-                            }
-
-                            // Update notes table
-                            $updateQuery = "
-                                UPDATE notes
-                                SET note_finale = :note_finale, decision = :decision, decision_ratt = :decision_ratt
-                                WHERE note_id = :note_id
-                            ";
-                            $updateStmt = $this->db->prepare($updateQuery);
-                            $updateStmt->execute([
-                                'note_finale' => $note_finale,
-                                'decision' => $decision,
-                                'decision_ratt' => $decision_ratt,
-                                'note_id' => $element['note_id']
-                            ]);
-                        }
-
-                        // Calculate module note
-                        $moduleQuery = "
-                            SELECT m.module_id, m.coefficient, AVG(n.note_finale * e.coeff_element / 100) as avg_note 
-                            AVG(CASE 
-                                    WHEN n.note_rattrapage IS NOT NULL 
-                                    THEN n.note_rattrapage * e.coeff_element / 100
-                                END
-                            ) AS avg_note_rattrapage
-                            
-                            FROM note_modules nm
-                            JOIN modules m ON nm.module_id = m.module_id
-                            JOIN elements e ON m.module_id = e.module_id
-                            JOIN notes n ON e.element_id = n.element_id AND n.student_id = nm.student_id
-                            WHERE nm.student_id = :student_id AND nm.semestre_id = :semestre_id AND nm.annee_id = :annee_id AND m.module_id = :module_id
-                            GROUP BY m.module_id
-                        ";
-                        $moduleStmt = $this->db->prepare($moduleQuery);
-                        $moduleStmt->execute([
-                            'student_id' => $student_id,
-                            'semestre_id' => $semestre_id,
-                            'annee_id' => $annee_id,
-                            'module_id' => $module_id
-                        ]);
-                        $module = $moduleStmt->fetch(PDO::FETCH_ASSOC);
-
-                        if ($module) {
-                            $note_module = $module['avg_note'];
-                            $note_module_ratt =$module['avg_note_rattrapage'];
-                            // Safely check for decision_ratt with isset
-                            $has_ratt = count(array_filter($moduleElements, fn($e) => isset($e['decision_ratt']) && $e['decision_ratt'] !== null)) > 0;
-                            $decision = ($note_module >= 10) ? 'V' : 'R';
-                            $decision_ratt=null;
-                            if ($has_ratt && $note_module >= 10) {
-                                $note_module = min($note_module, 10); // Cap retake note
-                                $decision_ratt = 'VR';
-                            }
-                            else if ($has_ratt && $note_module<10)
-                            {
-                                $note_module = max($note_module_ratt, $note_module); // Cap retake note
-                                $decision_ratt = 'NV';
-                            }
-
-                            // Log elements without decision_ratt for debugging
-                            foreach ($moduleElements as $e) {
-                                if (!isset($e['decision_ratt'])) {
-                                    $element_id = isset($e['element_id']) ? $e['element_id'] : 'unknown';
-                                    $note_id = isset($e['note_id']) ? $e['note_id'] : 'unknown';
-                                    ($this->logger)("Missing decision_ratt for student_id=$student_id, module_id=$module_id, element_id=$element_id, note_id=$note_id");
-                                }
-                            }
-
-                            // Update module
-                            $updateModuleQuery = "
-                                UPDATE note_modules
-                                SET note_module = :note_module, decision = :decision,decision_ratt = :decision_ratt ,retake_status = :retake_status
-                                WHERE student_id = :student_id AND module_id = :module_id AND semestre_id = :semestre_id AND annee_id = :annee_id
-                            ";
-                            $updateModuleStmt = $this->db->prepare($updateModuleQuery);
-                            $retake_status = ($decision_ratt == 'NV') ? 'pending' : 'completed';
-                            $updateModuleStmt->execute([
-                                'note_module' => $note_module,
-                                'decision' => $decision,
-                                'decision_ratt'=>$decision_ratt,
-                                'retake_status' => $retake_status,
-                                'student_id' => $student_id,
-                                'module_id' => $module_id,
-                                'semestre_id' => $semestre_id,
-                                'annee_id' => $annee_id
-                            ]);
-                        }
-                    }
-
-                    // Calculate semester note and decision
-                    $semesterQuery = "
-                        SELECT SUM(m.coefficient * nm.note_module) / SUM(m.coefficient) as note_semestre,
-                            COUNT(CASE WHEN nm.decision = 'NV' THEN 1 END) as nv_count
-                        FROM note_modules nm
-                        JOIN modules m ON nm.module_id = m.module_id
-                        WHERE nm.student_id = :student_id AND nm.semestre_id = :semestre_id AND nm.annee_id = :annee_id
-                    ";
-                    $semesterStmt = $this->db->prepare($semesterQuery);
-                    $semesterStmt->execute(['student_id' => $student_id, 'semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
-                    $semester = $semesterStmt->fetch(PDO::FETCH_ASSOC);
-
-                    $note_semestre = $semester['note_semestre'] ?? null;
-                    $nv_count = $semester['nv_count'] ?? 0;
+                foreach ($moduleElements as $element) {
+                    $note_finale = null;
                     $decision = null;
-                    if ($note_semestre !== null) {
-                        if ($nv_count > 2) {
-                            $decision = 'F';
-                        } elseif ($note_semestre >= 10 && $nv_count == 0) {
-                            $decision = 'V';
-                        } elseif ($note_semestre >= 10 && $nv_count <= 2) {
-                            $decision = 'VPC';
-                        } else {
-                            $decision = 'NV';
+                    $decision_ratt = null;
+
+                    // Normalize coefficients
+                    $total_coeff = ($element['coeff_tp'] ?? 0) + ($element['coeff_cc'] ?? 0) + ($element['coeff_ecrit'] ?? 0);
+                    if ($total_coeff > 0) {
+                        $coeff_tp = $element['coeff_tp'] / $total_coeff;
+                        $coeff_cc = $element['coeff_cc'] / $total_coeff;
+                        $coeff_ecrit = $element['coeff_ecrit'] / $total_coeff;
+                    } else {
+                        $coeff_tp = $coeff_cc = $coeff_ecrit = 1/3;
+                    }
+
+                    $note_tp = $element['note_tp'] ?? 0;
+                    $note_cc = $element['note_cc'] ?? 0;
+                    $note_exam = $element['note_exam'] ?? 0;
+                    $note_rattrapage = $element['note_rattrapage'] ?? null;
+
+                    // Calculate normal final note if all required grades are present
+                    if (isset($element['note_exam'], $element['note_tp'], $element['note_cc']) && !isset($element['note_rattrapage'])) {
+                        $note_finale = ($note_tp * $coeff_tp) + ($note_cc * $coeff_cc) + ($note_exam * $coeff_ecrit);
+                        $decision = ($note_finale >= 10) ? 'V' : 'R';
+                    } elseif (isset($element['note_rattrapage'], $element['note_tp'], $element['note_cc'])) {
+                        $note_ratt = ($note_tp * $coeff_tp) + ($note_cc * $coeff_cc) + ($note_rattrapage * $coeff_ecrit);
+                        $note_finale = max($note_ratt, $note_finale ?? 0);
+                        $decision_ratt = ($note_finale >= 10) ? 'VR' : 'NV';
+                    }
+
+                    // Update notes table
+                    $updateQuery = "
+                        UPDATE notes
+                        SET note_finale = :note_finale, decision = :decision, decision_ratt = :decision_ratt
+                        WHERE note_id = :note_id
+                    ";
+                    $updateStmt = $this->db->prepare($updateQuery);
+                    $updateStmt->execute([
+                        'note_finale' => $note_finale,
+                        'decision' => $decision,
+                        'decision_ratt' => $decision_ratt,
+                        'note_id' => $element['note_id']
+                    ]);
+                }
+
+                // Calculate module note
+                $moduleQuery = "
+                    SELECT 
+                        m.module_id, 
+                        m.coefficient, 
+                        AVG(n.note_finale * e.coeff_element / 100) AS avg_note,
+                        AVG(
+                            CASE 
+                                WHEN n.note_rattrapage IS NOT NULL 
+                                THEN n.note_rattrapage * e.coeff_element / 100
+                            END
+                        ) AS avg_note_rattrapage
+                    FROM note_modules nm
+                    JOIN modules m ON nm.module_id = m.module_id
+                    JOIN elements e ON m.module_id = e.module_id
+                    JOIN notes n ON e.element_id = n.element_id 
+                                AND n.student_id = nm.student_id
+                    WHERE nm.student_id = :student_id
+                    AND nm.semestre_id = :semestre_id
+                    AND nm.annee_id = :annee_id
+                    AND m.module_id = :module_id
+                    GROUP BY m.module_id, m.coefficient;
+                ";
+                $moduleStmt = $this->db->prepare($moduleQuery);
+                $moduleStmt->execute([
+                    'student_id' => $student_id,
+                    'semestre_id' => $semestre_id,
+                    'annee_id' => $annee_id,
+                    'module_id' => $module_id
+                ]);
+                $module = $moduleStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($module) {
+                    $note_module = $module['avg_note'];
+                    $note_module_ratt = $module['avg_note_rattrapage'];
+                    // Safely check for decision_ratt with isset
+                    $has_ratt = count(array_filter($moduleElements, fn($e) => isset($e['decision_ratt']) && $e['decision_ratt'] !== null)) > 0;
+                    $decision = ($note_module >= 10) ? 'V' : 'R';
+                    $decision_ratt = null;
+                    if ($has_ratt && $note_module >= 10) {
+                        $note_module = min($note_module, 10); // Cap retake note
+                        $decision_ratt = 'VR';
+                    } else if ($has_ratt && $note_module < 10) {
+                        $note_module = max($note_module_ratt, $note_module); // Cap retake note
+                        $decision_ratt = 'NV';
+                        $decision='NV';
+                    }
+
+                    // Log elements without decision_ratt for debugging
+                    foreach ($moduleElements as $e) {
+                        if (!isset($e['decision_ratt'])) {
+                            $element_id = isset($e['element_id']) ? $e['element_id'] : 'unknown';
+                            $note_id = isset($e['note_id']) ? $e['note_id'] : 'unknown';
+                            ($this->logger)("Missing decision_ratt for student_id=$student_id, module_id=$module_id, element_id=$element_id, note_id=$note_id");
                         }
                     }
 
-                    // Update semester
-                    $updateSemesterQuery = "
-                        UPDATE note_semestres
-                        SET note_semestre = :note_semestre, decision = :decision, nv_module_count = :nv_count
-                        WHERE student_id = :student_id AND semestre_id = :semestre_id AND annee_id = :annee_id
+                    // Update module
+                    $updateModuleQuery = "
+                        UPDATE note_modules
+                        SET note_module = :note_module, decision = :decision, decision_ratt = :decision_ratt, retake_status = :retake_status
+                        WHERE student_id = :student_id AND module_id = :module_id AND semestre_id = :semestre_id AND annee_id = :annee_id
                     ";
-                    $updateSemesterStmt = $this->db->prepare($updateSemesterQuery);
-                    $updateSemesterStmt->execute([
-                        'note_semestre' => $note_semestre,
+                    $updateModuleStmt = $this->db->prepare($updateModuleQuery);
+                    $retake_status = ($decision_ratt == 'NV') ? 'pending' : 'completed';
+                    $updateModuleStmt->execute([
+                        'note_module' => $note_module,
                         'decision' => $decision,
-                        'nv_count' => $nv_count,
+                        'decision_ratt' => $decision_ratt,
+                        'retake_status' => $retake_status,
                         'student_id' => $student_id,
+                        'module_id' => $module_id,
                         'semestre_id' => $semestre_id,
                         'annee_id' => $annee_id
                     ]);
                 }
+            }
 
-                $this->db->commit();
-                ($this->logger)("Calculated final notes for " . count($students) . " students");
-                return ['success' => true, 'message' => "Semester notes calculated successfully for semestre_id=$semestre_id"];
-            } catch (PDOException $e) {
-                if ($this->db->inTransaction()) {
-                    $this->db->rollBack();
+            // Calculate semester note and decision
+            $semesterQuery = "
+                SELECT SUM(m.coefficient * nm.note_module) / SUM(m.coefficient) as note_semestre,
+                    COUNT(CASE WHEN nm.decision = 'NV' THEN 1 END) as nv_count
+                FROM note_modules nm
+                JOIN modules m ON nm.module_id = m.module_id
+                WHERE nm.student_id = :student_id AND nm.semestre_id = :semestre_id AND nm.annee_id = :annee_id
+            ";
+            $semesterStmt = $this->db->prepare($semesterQuery);
+            $semesterStmt->execute(['student_id' => $student_id, 'semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
+            $semester = $semesterStmt->fetch(PDO::FETCH_ASSOC);
+
+            $note_semestre = $semester['note_semestre'] ?? null;
+            $nv_count = $semester['nv_count'] ?? 0;
+            $decision = null;
+            if ($note_semestre !== null) {
+                if ($nv_count > 2) {
+                    $decision = 'F';
+                } elseif ($note_semestre >= 10 && $nv_count == 0) {
+                    $decision = 'V';
+                } elseif ($note_semestre >= 10 && $nv_count <= 2) {
+                    $decision = 'VPC';
+                } else {
+                    $decision = 'NV';
                 }
-                ($this->logger)("PDO Error in calculateAllFinalNotes: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
-                return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
-            } catch (Exception $e) {
-                if ($this->db->inTransaction()) {
-                    $this->db->rollBack();
+            }
+
+            // Update semester
+            $updateSemesterQuery = "
+                UPDATE note_semestres
+                SET note_semestre = :note_semestre, decision = :decision, nv_module_count = :nv_count
+                WHERE student_id = :student_id AND semestre_id = :semestre_id AND annee_id = :annee_id
+            ";
+            $updateSemesterStmt = $this->db->prepare($updateSemesterQuery);
+            $updateSemesterStmt->execute([
+                'note_semestre' => $note_semestre,
+                'decision' => $decision,
+                'nv_count' => $nv_count,
+                'student_id' => $student_id,
+                'semestre_id' => $semestre_id,
+                'annee_id' => $annee_id
+            ]);
+
+            // Enroll students with decision != 'F' in the next semester if current semester is 1, 3, or 5
+            if (in_array($semestre_id, [1, 3, 5]) && $decision !== 'F') {
+                $next_semestre_id = $semestre_id + 1;
+                // Verify next semester exists
+                $checkSemesterQuery = "
+                    SELECT 1
+                    FROM semestres
+                    WHERE semestre_id = :next_semestre_id
+                ";
+                $checkSemesterStmt = $this->db->prepare($checkSemesterQuery);
+                $checkSemesterStmt->execute(['next_semestre_id' => $next_semestre_id]);
+                if (!$checkSemesterStmt->fetch()) {
+                    ($this->logger)("Next semester not found: semestre_id=$next_semestre_id for student_id=$student_id");
+                    continue;
                 }
-                ($this->logger)("Error in calculateAllFinalNotes: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
-                return ['success' => false, 'message' => $e->getMessage()];
+
+                // Check if the student is already enrolled in the next semester
+                $checkEnrollmentQuery = "
+                    SELECT COUNT(*) as count
+                    FROM student_enrollments
+                    WHERE student_id = :student_id AND semestre_id = :next_semestre_id AND annee_id = :annee_id
+                ";
+                $checkEnrollmentStmt = $this->db->prepare($checkEnrollmentQuery);
+                $checkEnrollmentStmt->execute([
+                    'student_id' => $student_id,
+                    'next_semestre_id' => $next_semestre_id,
+                    'annee_id' => $annee_id
+                ]);
+                $enrollmentCount = $checkEnrollmentStmt->fetch(PDO::FETCH_ASSOC)['count'];
+
+                if ($enrollmentCount == 0) {
+                    // Enroll the student in the next semester
+                    $enrollQuery = "
+                        INSERT INTO student_enrollments (student_id, semestre_id, annee_id, cycle_id, field_id, etape_id, group_id, section_id, status)
+                        VALUES (:student_id, :next_semestre_id, :annee_id, :cycle_id, :field_id, :etape_id, :group_id, :section_id, :status)
+                    ";
+                    $enrollStmt = $this->db->prepare($enrollQuery);
+                    $enrollStmt->execute([
+                        'student_id' => $student_id,
+                        'next_semestre_id' => $next_semestre_id,
+                        'annee_id' => $annee_id,
+                        'cycle_id' => $cycle_id,
+                        'field_id' => $field_id,
+                        'etape_id' => $etape_id,
+                        'group_id' => $group_id,
+                        'section_id' => $section_id,
+                        'status' => $status
+                    ]);
+                    ($this->logger)("Enrolled student_id=$student_id in semestre_id=$next_semestre_id, annee_id=$annee_id");
+                } else {
+                    ($this->logger)("Student_id=$student_id already enrolled in semestre_id=$next_semestre_id, annee_id=$annee_id");
+                }
             }
         }
+
+        $this->db->commit();
+        ($this->logger)("Calculated final notes for " . count($students) . " students");
+        return ['success' => true, 'message' => "Semester notes calculated successfully for semestre_id=$semestre_id"];
+    } catch (PDOException $e) {
+        if ($this->db->inTransaction()) {
+            $this->db->rollBack();
+        }
+        ($this->logger)("PDO Error in calculateAllFinalNotes: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
+        return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+    } catch (Exception $e) {
+        if ($this->db->inTransaction()) {
+            $this->db->rollBack();
+        }
+        ($this->logger)("Error in calculateAllFinalNotes: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
 
         /**
          * Calculate final notes for a given academic year.
@@ -508,146 +582,160 @@
          * @return array Success status and message
          * @throws Exception If input is invalid or database errors occur
          */
-        public function calculateYearFinalNotes($annee_id)
-        {
-            try {
-                // Validate input
-                if (!preg_match('/^\d{4}-\d{4}$/', $annee_id)) {
-                    throw new Exception("Invalid annee_id: must be in YYYY-YYYY format", 400);
-                }
-                [$start_year, $end_year] = explode('-', $annee_id);
-                if ($end_year - $start_year !== 1) {
-                    throw new Exception("Invalid annee_id: second year must be one more than first year", 400);
-                }
+        /**
+ * Calculate final notes for a given academic year.
+ *
+ * @param string $annee_id The academic year in YYYY-YYYY format
+ * @return array Success status and message
+ * @throws Exception If input is invalid or database errors occur
+ */
+public function calculateYearFinalNotes($annee_id)
+{
+    try {
+        // Validate input
+        if (!preg_match('/^\d{4}-\d{4}$/', $annee_id)) {
+            throw new Exception("Invalid annee_id: must be in YYYY-YYYY format", 400);
+        }
+        [$start_year, $end_year] = explode('-', $annee_id);
+        if ($end_year - $start_year !== 1) {
+            throw new Exception("Invalid annee_id: second year must be one more than first year", 400);
+        }
 
-                $this->startTransaction();
+        $this->startTransaction();
 
-                // Fetch students
-                $studentQuery = "
-                    SELECT DISTINCT se.student_id, CONCAT(e.nom, ' ', e.prenom) as student_name
-                    FROM student_enrollments se
-                    JOIN etudiants e ON se.student_id = e.user_id
-                    WHERE se.annee_id = :annee_id
+        // Fetch students
+        $studentQuery = "
+            SELECT DISTINCT se.student_id, CONCAT(e.nom, ' ', e.prenom) as student_name
+            FROM student_enrollments se
+            JOIN etudiants e ON se.student_id = e.user_id
+            WHERE se.annee_id = :annee_id
+        ";
+        $studentStmt = $this->db->prepare($studentQuery);
+        $studentStmt->execute(['annee_id' => $annee_id]);
+        $students = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($students)) {
+            $this->db->commit();
+            ($this->logger)("No students found for annee_id=$annee_id");
+            return ['success' => true, 'message' => "No students found for annee_id=$annee_id"];
+        }
+
+        foreach ($students as $student) {
+            $student_id = $student['student_id'];
+
+            // Check for semesters with excessive NV modules
+            $semesterNvQuery = "
+                SELECT nv_module_count
+                FROM note_semestres
+                WHERE student_id = :student_id AND annee_id = :annee_id
+            ";
+            $semesterNvStmt = $this->db->prepare($semesterNvQuery);
+            $semesterNvStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
+            $semesterNvCounts = $semesterNvStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            $yearFail = false;
+            foreach ($semesterNvCounts as $nv_count) {
+                if ($nv_count > 2) {
+                    $yearFail = true;
+                    break;
+                }
+            }
+
+            // Calculate year note
+            $yearQuery = "
+                SELECT AVG(ns.note_semestre) as note_annee,
+                    COUNT(CASE WHEN ns.decision IN ('NV', 'F') THEN 1 END) as nv_count
+                FROM note_semestres ns
+                WHERE ns.student_id = :student_id AND ns.annee_id = :annee_id
+            ";
+            $yearStmt = $this->db->prepare($yearQuery);
+            $yearStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
+            $year = $yearStmt->fetch(PDO::FETCH_ASSOC);
+
+            $note_annee = $year['note_annee'] ?? null;
+            $nv_count = $year['nv_count'] ?? 0;
+            $decision_annee = null;
+            if ($note_annee !== null) {
+                if ($yearFail) {
+                    $decision_annee = 'F';
+                } elseif ($note_annee >= 10 && $nv_count == 0) {
+                    $decision_annee = 'V';
+                } elseif ($note_annee >= 10 && $nv_count <= 1) {
+                    $decision_annee = 'VPC';
+                } else {
+                    $decision_annee = 'NV';
+                }
+            }
+
+            // Fetch existing fail_count and decision_annee
+            $failCountQuery = "
+                SELECT fail_count, decision_annee
+                FROM note_annees
+                WHERE student_id = :student_id AND annee_id = :annee_id
+            ";
+            $failCountStmt = $this->db->prepare($failCountQuery);
+            $failCountStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
+            $existing = $failCountStmt->fetch(PDO::FETCH_ASSOC);
+            $fail_count = $existing['fail_count'] ?? 0;
+            $previous_decision = $existing['decision_annee'] ?? null;
+
+            // Increment fail_count only if decision_annee is 'NV' and it wasn't previously 'NV'
+            if ($decision_annee == 'NV' && $previous_decision != 'NV') {
+                $fail_count++;
+            }
+
+            // Handle expulsion
+            if ($fail_count >= 3) {
+                $updateExpulsion = "UPDATE etudiants SET actuel = 0 WHERE user_id = :student_id";
+                $expulsionStmt = $this->db->prepare($updateExpulsion);
+                $expulsionStmt->execute(['student_id' => $student_id]);
+                ($this->logger)("Student $student_id expelled after $fail_count fails in $annee_id");
+            }
+
+            // Update note_annees
+            $updateYearQuery = "
+                UPDATE note_annees
+                SET note_annee = :note_annee, decision_annee = :decision_annee, fail_count = :fail_count
+                WHERE student_id = :student_id AND annee_id = :annee_id
+            ";
+            $updateYearStmt = $this->db->prepare($updateYearQuery);
+            $updateYearStmt->execute([
+                'note_annee' => $note_annee,
+                'decision_annee' => $decision_annee,
+                'fail_count' => $fail_count,
+                'student_id' => $student_id,
+                'annee_id' => $annee_id
+            ]);
+
+            // Schedule retakes if year passes
+            if ($decision_annee == 'V' || $decision_annee == 'VPC') {
+                $updateRetake = "
+                    UPDATE note_modules
+                    SET retake_status = 'scheduled'
+                    WHERE student_id = :student_id AND annee_id = :annee_id AND decision_ratt = 'NV' AND retake_status = 'pending'
                 ";
-                $studentStmt = $this->db->prepare($studentQuery);
-                $studentStmt->execute(['annee_id' => $annee_id]);
-                $students = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
-
-                if (empty($students)) {
-                    $this->db->commit();
-                    ($this->logger)("No students found for annee_id=$annee_id");
-                    return ['success' => true, 'message' => "No students found for annee_id=$annee_id"];
-                }
-
-                foreach ($students as $student) {
-                    $student_id = $student['student_id'];
-
-                    // Check for semesters with excessive NV modules
-                    $semesterNvQuery = "
-                        SELECT nv_module_count
-                        FROM note_semestres
-                        WHERE student_id = :student_id AND annee_id = :annee_id
-                    ";
-                    $semesterNvStmt = $this->db->prepare($semesterNvQuery);
-                    $semesterNvStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
-                    $semesterNvCounts = $semesterNvStmt->fetchAll(PDO::FETCH_COLUMN);
-
-                    $yearFail = false;
-                    foreach ($semesterNvCounts as $nv_count) {
-                        if ($nv_count > 2) {
-                            $yearFail = true;
-                            break;
-                        }
-                    }
-
-                    // Calculate year note
-                    $yearQuery = "
-                        SELECT AVG(ns.note_semestre) as note_annee,
-                            COUNT(CASE WHEN ns.decision IN ('NV', 'F') THEN 1 END) as nv_count
-                        FROM note_semestres ns
-                        WHERE ns.student_id = :student_id AND ns.annee_id = :annee_id
-                    ";
-                    $yearStmt = $this->db->prepare($yearQuery);
-                    $yearStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
-                    $year = $yearStmt->fetch(PDO::FETCH_ASSOC);
-
-                    $note_annee = $year['note_annee'] ?? null;
-                    $nv_count = $year['nv_count'] ?? 0;
-                    $decision_annee = null;
-                    if ($note_annee !== null) {
-                        if ($yearFail) {
-                            $decision_annee = 'F';
-                        } elseif ($note_annee >= 10 && $nv_count == 0) {
-                            $decision_annee = 'V';
-                        } elseif ($note_annee >= 10 && $nv_count <= 1) {
-                            $decision_annee = 'VPC';
-                        } else {
-                            $decision_annee = 'NV';
-                        }
-                    }
-
-                    // Update fail_count
-                    $failCountQuery = "SELECT fail_count FROM note_annees WHERE student_id = :student_id AND annee_id = :annee_id";
-                    $failCountStmt = $this->db->prepare($failCountQuery);
-                    $failCountStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
-                    $fail_count = $failCountStmt->fetchColumn() ?: 0;
-
-                    if ($decision_annee == 'F') {
-                        $fail_count++;
-                    }
-
-                    // Handle expulsion
-                    if ($fail_count >= 3) {
-                        $updateExpulsion = "UPDATE etudiants SET actuel = 0 WHERE user_id = :student_id";
-                        $expulsionStmt = $this->db->prepare($updateExpulsion);
-                        $expulsionStmt->execute(['student_id' => $student_id]);
-                        ($this->logger)("Student $student_id expelled after $fail_count fails in $annee_id");
-                    }
-
-                    // Update note_annees
-                    $updateYearQuery = "
-                        UPDATE note_annees
-                        SET note_annee = :note_annee, decision_annee = :decision_annee, fail_count = :fail_count
-                        WHERE student_id = :student_id AND annee_id = :annee_id
-                    ";
-                    $updateYearStmt = $this->db->prepare($updateYearQuery);
-                    $updateYearStmt->execute([
-                        'note_annee' => $note_annee,
-                        'decision_annee' => $decision_annee,
-                        'fail_count' => $fail_count,
-                        'student_id' => $student_id,
-                        'annee_id' => $annee_id
-                    ]);
-
-                    // Schedule retakes if year passes
-                    if ($decision_annee == 'V' || $decision_annee == 'VPC') {
-                        $updateRetake = "
-                            UPDATE note_modules
-                            SET retake_status = 'scheduled'
-                            WHERE student_id = :student_id AND annee_id = :annee_id AND decision_ratt = 'NV' AND retake_status = 'pending'
-                        ";
-                        $retakeStmt = $this->db->prepare($updateRetake);
-                        $retakeStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
-                    }
-                }
-
-                $this->db->commit();
-                ($this->logger)("Calculated year notes for " . count($students) . " students");
-                return ['success' => true, 'message' => "Year notes calculated successfully for annee_id=$annee_id"];
-            } catch (PDOException $e) {
-                if ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
-                ($this->logger)("PDO Error in calculateYearFinalNotes: annee_id=$annee_id, error=" . $e->getMessage());
-                return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
-            } catch (Exception $e) {
-                if ($this->db->inTransaction()) {
-                    $this->db->rollBack();
-                }
-                ($this->logger)("Error in calculateYearFinalNotes: annee_id=$annee_id, error=" . $e->getMessage());
-                return ['success' => false, 'message' => $e->getMessage()];
+                $retakeStmt = $this->db->prepare($updateRetake);
+                $retakeStmt->execute(['student_id' => $student_id, 'annee_id' => $annee_id]);
             }
         }
+
+        $this->db->commit();
+        ($this->logger)("Calculated year notes for " . count($students) . " students");
+        return ['success' => true, 'message' => "Year notes calculated successfully for annee_id=$annee_id"];
+    } catch (PDOException $e) {
+        if ($this->db->inTransaction()) {
+            $this->db->rollBack();
+        }
+        ($this->logger)("PDO Error in calculateYearFinalNotes: annee_id=$annee_id, error=" . $e->getMessage());
+        return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+    } catch (Exception $e) {
+        if ($this->db->inTransaction()) {
+            $this->db->rollBack();
+        }
+        ($this->logger)("Error in calculateYearFinalNotes: annee_id=$annee_id, error=" . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    }
+}
 
         /**
          * Generate diplomas for students completing a cycle in the given year.
