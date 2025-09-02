@@ -195,6 +195,7 @@
             const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
             const departmentSelect = document.getElementById('department');
             const filiereSelect = document.getElementById('filiere');
+            const etapeSelect = document.getElementById('etape_id');
             const sectionSelect = document.getElementById('section_id');
             const groupeSelect = document.getElementById('groupe_id');
             
@@ -239,9 +240,11 @@
             });
 
             filiereSelect.addEventListener('change', () => {
-                updateSectionsDropdown(filiereSelect.value);
+                updateSectionsDropdown(filiereSelect.value,etapeSelect.value);
             });
-
+            etapeSelect.addEventListener('change', () => {
+                updateSectionsDropdown(filiereSelect.value,etapeSelect.value);
+            });
             sectionSelect.addEventListener('change', () => {
                 updateGroupesDropdown(sectionSelect.value);
             });
@@ -365,11 +368,12 @@
                 }
             }
 
-            async function updateSectionsDropdown(fieldId) {
+            async function updateSectionsDropdown(fieldId,etape_id) {
                 try {
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                    if (!fieldId) return;
-                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}`, {
+                    if (!fieldId & !etape_id) return;
+                    if(etape_id===undefined) etape_id=null;
+                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}&etape_id=${etape_id}`, {
                         headers: { 'X-CSRF-Token': csrfToken }
                     });
                     const data = await response.json();

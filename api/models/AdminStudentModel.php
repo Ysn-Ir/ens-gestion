@@ -546,12 +546,21 @@ public function getFilteredStudents(
         $stmt->execute([$depId]);
         return $stmt->fetchAll();
     }
-    public function getSectionsByFiliere($fieldId)
-    {
-        $stmt = $this->db->prepare("SELECT section_id, nom FROM sections WHERE field_id = ? ORDER BY nom");
-        $stmt->execute([$fieldId]);
-        return $stmt->fetchAll();
-    }
+  public function getSectionsByFiliere($fieldId, $etape_id)
+{
+    $stmt = $this->db->prepare("
+        SELECT section_id, nom
+        FROM sections
+        WHERE (field_id = ? OR ? IS NULL)
+          AND (etape = ? OR ? IS NULL)
+        ORDER BY nom
+    ");
+    
+    // Pass each parameter twice, as explained earlier
+    $stmt->execute([$fieldId, $fieldId, $etape_id, $etape_id]);
+    return $stmt->fetchAll();
+}
+
 
     public function getGroupesBySection($sectionId)
     {

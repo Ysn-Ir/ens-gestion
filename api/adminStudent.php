@@ -61,7 +61,7 @@ try {
 
         case 'getSections':
             validateMethod($method, 'GET');
-            if ($field_id) {
+            if ($field_id || $etape_id) {
                 $controller->getSectionsByFiliere();
             } else {
                 $controller->getAllSections();

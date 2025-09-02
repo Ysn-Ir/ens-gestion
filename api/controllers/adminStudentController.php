@@ -215,7 +215,8 @@ public function getSectionsByFiliere() {
        
     try {
         $field_id =filter_input(INPUT_GET, 'field_id', filter: FILTER_VALIDATE_INT);
-       $sections = $this->model->getSectionsByFiliere($field_id);
+        $etape_id =filter_input(INPUT_GET, 'etape_id', filter: FILTER_VALIDATE_INT);
+       $sections = $this->model->getSectionsByFiliere($field_id,$etape_id);
         $this->response->send(200, $sections);
     } catch (Exception $e) {
         $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des sections', 'error' => $e->getMessage()]);

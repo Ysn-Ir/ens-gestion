@@ -216,6 +216,7 @@
             const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
             const departmentSelect = document.getElementById('department');
             const filiereSelect = document.getElementById('filiere');
+            const etapeSelect = document.getElementById('etape_id');
             const sectionSelect = document.getElementById('section_id');
             const groupSelect = document.getElementById('group_id');
             const firstNameInput = document.getElementById('firstName');
@@ -270,9 +271,11 @@
             });
 
             filiereSelect.addEventListener('change', () => {
-                updateSectionsDropdown(filiereSelect.value);
+                updateSectionsDropdown(filiereSelect.value,etapeSelect.value);
             });
-
+            etapeSelect.addEventListener('change', () => {
+                updateSectionsDropdown(filiereSelect.value,etapeSelect.value);
+            });
             sectionSelect.addEventListener('change', () => {
                 updateGroupesDropdown(sectionSelect.value);
             });
@@ -640,11 +643,12 @@
                 }
             }
 
-            async function loadSections(fieldId) {
+            async function loadSections(fieldId,etape_id) {
                 try {
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                    if (!fieldId) return;
-                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}`, {
+                    if (!fieldId&etape_id) return;
+                    if(etape_id===undefined) etape_id=null;
+                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}&etape_id=${etape_id}`, {
                         headers: { 'X-CSRF-Token': csrfToken }
                     });
                     const data = await response.json();
@@ -711,15 +715,15 @@
                 await loadFilieres(departmentId);
             }
 
-            async function updateSectionsDropdown(fieldId) {
+            async function updateSectionsDropdown(fieldId,etape_id) {
                 sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                if (!fieldId) {
+                if (!fieldId&!etape_id) {
                     if (currentStudent && currentStudent.section_id && currentStudent.section_nom) {
                         populateDropdown('section_id', currentStudent.section_id, currentStudent.section_nom);
                     }
                     return;
                 }
-                await loadSections(fieldId);
+                await loadSections(fieldId,etape_id);
             }
 
             async function updateGroupesDropdown(sectionId) {
