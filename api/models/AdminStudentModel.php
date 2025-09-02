@@ -187,7 +187,7 @@ public function createStudent(array $data) {
             (int)$data['department_id'],
             (int)$data['field_id'],
             (int)$data['cycle_id'],
-            $data['group_id'] ?? null
+            (int)$data['group_id'] 
         ];
         
         if (!$stmt->execute($studentData)) {
@@ -207,9 +207,9 @@ public function createStudent(array $data) {
                 (int)$data['semestre_id'],
                 (int)$data['cycle_id'],
                 (int)$data['field_id'],
-                $data['etape_id'] ?? null,
-                $data['group_id'] ?? null,
-                $data['section_id'] ?? null
+                (int)$data['etape_id'] ,
+                (int)$data['group_id'] ,
+                (int)$data['section_id'] 
             ];
             
             if (!$stmt->execute($enrollmentData)) {
@@ -234,7 +234,7 @@ public function createStudent(array $data) {
 
     try {
         // 1. Validate required fields
-        $required = ['username', 'email', 'password_hash','cin', 'cne', 'nom', 'prenom', 
+        $required = ['username', 'email', 'password','cin', 'cne', 'nom', 'prenom', 
                      'date_naissance', 'department_id', 'field_id', 'cycle_id'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
@@ -318,7 +318,7 @@ public function createStudent(array $data) {
             (int)$data['department_id'],
             (int)$data['field_id'],
             (int)$data['cycle_id'],
-            $data['group_id'] ?? null,
+            (int)$data['group_id'],
             $data['actuel'] ?? 1,
             $id
         ])) {
@@ -345,13 +345,13 @@ public function createStudent(array $data) {
                     (int)$data['semestre_id'],
                     (int)$data['cycle_id'],
                     (int)$data['field_id'],
-                    $data['etape_id'] ?? null,
-                    $data['group_id'] ?? null,
-                    $data['section_id'] ?? null,
+                    (int)$data['etape_id'] ,
+                    (int)$data['group_id'],
+                    (int)$data['section_id'] ,
                     $data['status'] ?? 'active',
-                    $id,
-                    $data['annee_id'],
-                    $data['semestre_id']
+                    (int)$id,
+                    (int)$data['annee_id'],
+                    (int)$data['semestre_id']
                 ])) {
                     throw new Exception("Failed to update enrollment record");
                 }
@@ -368,10 +368,10 @@ public function createStudent(array $data) {
                     (int)$data['semestre_id'],
                     (int)$data['cycle_id'],
                     (int)$data['field_id'],
-                    $data['etape_id'] ?? null,
-                    $data['group_id'] ?? null,
-                    $data['section_id'] ?? null,
-                    $data['status'] ?? 'active'
+                    (int)$data['etape_id'] ,
+                    (int)$data['group_id'] ,
+                    (int)$data['section_id'] ,
+                    (int)$data['status'] ?? 'active'
                 ])) {
                     throw new Exception("Failed to insert enrollment record");
                 }

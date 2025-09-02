@@ -301,51 +301,61 @@
             <h4>ENS-Gestion</h4>
         </div>
         
-        <div class="sidebar-menu">
-            <a href="#" class="sidebar-link active" data-section="dashboard">
-                <i class="bi bi-speedometer2"></i>
-                <span>Tableau de Bord</span>
-            </a>
-              <a href="#" class="sidebar-link" data-section="profile">
-                <i class="bi bi-people-fill"></i>
-                <span>Profile</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="etudiants">
-                <i class="bi bi-people-fill"></i>
-                <span>Étudiants</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="professeurs">
-                <i class="bi bi-person-badge-fill"></i>
-                <span>Professeurs</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="departements">
-                <i class="bi bi-building"></i>
-                <span>Départements</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="filieres">
-                <i class="bi bi-diagram-3-fill"></i>
-                <span>Filières</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="modules">
-                <i class="bi bi-journal-bookmark-fill"></i>
-                <span>Modules</span>
-            <a href="#" class="sidebar-link" data-section="section">
-                <i class="bi bi-journal-bookmark-fill"></i>
-                <span>Section/Groupe</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="notes">
-                <i class="bi bi-clipboard-data-fill"></i>
-                <span>Notes</span>
-            </a>
-             <a href="#" class="sidebar-link" data-section="superadmin">
-                <i class="bi bi-gear-fill"></i>
-                <span>Admin Gestion</span>
-            </a>
-            <a href="#" class="sidebar-link" data-section="parametres">
-                <i class="bi bi-gear-fill"></i>
-                <span>Paramètres</span>
-            </a>
-        </div>
+       <div class="sidebar">
+    <div class="sidebar-header">
+        <h2>Dashboard</h2>
+    </div>
+    <nav class="sidebar-menu">
+        <a href="#" class="sidebar-link active" data-section="dashboard">
+            <i class="bi bi-speedometer2"></i>
+            <span>Tableau de Bord</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="profile">
+            <i class="bi bi-person-circle"></i>
+            <span>Profile</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="etudiants">
+            <i class="bi bi-people-fill"></i>
+            <span>Étudiants</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="professeurs">
+            <i class="bi bi-person-badge-fill"></i>
+            <span>Professeurs</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="departements">
+            <i class="bi bi-building"></i>
+            <span>Départements</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="filieres">
+            <i class="bi bi-diagram-3-fill"></i>
+            <span>Filières</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="modules">
+            <i class="bi bi-journal-bookmark-fill"></i>
+            <span>Modules</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="section">
+            <i class="bi bi-journal-text"></i>
+            <span>Section/Groupe</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="notes">
+            <i class="bi bi-clipboard-data-fill"></i>
+            <span>Notes</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="superadmin">
+            <i class="bi bi-shield-lock-fill"></i>
+            <span>Admin Gestion</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="reinscription">
+            <i class="bi bi-arrow-repeat"></i>
+            <span>Réinscription</span>
+        </a>
+        <a href="#" class="sidebar-link" data-section="parametres">
+            <i class="bi bi-gear-fill"></i>
+            <span>Paramètres</span>
+        </a>
+    </nav>
+</div>
     </div>
 
     <!-- Main Content -->
@@ -564,6 +574,7 @@
                 'modules': 'modules.html',
                 'notes': 'notes.html',
                 'superadmin':'superadmin.html',
+                'reinscription':'reinscription.html',
                 'parametres': 'parametres.html'
             };
             
@@ -578,6 +589,7 @@
                 'filieres': 'Filières',
                 'modules': 'Modules',
                 'superadmin':'Admin Gestion',
+                'reinscription':'Reinscription',
                 'notes': 'Notes',
                 'parametres': 'Paramètres'
             };
