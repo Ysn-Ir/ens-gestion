@@ -98,140 +98,140 @@
          * @return array Success status and message
          * @throws Exception If inputs are invalid or database errors occur
          */
-        public function generateEmptyNoteRows($semestre_id, $annee_id)
-{
-    try {
-        // Validate inputs
-        if (!filter_var($semestre_id, FILTER_VALIDATE_INT)) {
-            throw new Exception("Invalid semestre_id: must be an integer", 400);
-        }
-        if (!preg_match('/^\d{4}-\d{4}$/', $annee_id)) {
-            throw new Exception("Invalid annee_id: must be in YYYY-YYYY format", 400);
-        }
-        [$start_year, $end_year] = explode('-', $annee_id);
-        if ($end_year - $start_year !== 1) {
-            throw new Exception("Invalid annee_id: second year must be one more than first year", 400);
-        }
+            public function generateEmptyNoteRows($semestre_id, $annee_id)
+    {
+        try {
+            // Validate inputs
+            if (!filter_var($semestre_id, FILTER_VALIDATE_INT)) {
+                throw new Exception("Invalid semestre_id: must be an integer", 400);
+            }
+            if (!preg_match('/^\d{4}-\d{4}$/', $annee_id)) {
+                throw new Exception("Invalid annee_id: must be in YYYY-YYYY format", 400);
+            }
+            [$start_year, $end_year] = explode('-', $annee_id);
+            if ($end_year - $start_year !== 1) {
+                throw new Exception("Invalid annee_id: second year must be one more than first year", 400);
+            }
 
-        $this->startTransaction();
+            $this->startTransaction();
 
-        // Fetch students
-        $studentQuery = "
-            SELECT DISTINCT se.student_id, e.field_id, CONCAT(e.nom, ' ', e.prenom) as student_name
-            FROM student_enrollments se
-            JOIN etudiants e ON se.student_id = e.user_id
-            WHERE se.semestre_id = :semestre_id AND se.annee_id = :annee_id
-        ";
-        $studentStmt = $this->db->prepare($studentQuery);
-        $studentStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
-        $students = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
-        error_log("Found " . count($students) . " students for semestre_id=$semestre_id, annee_id=$annee_id");
-
-        if (empty($students)) {
-            $this->db->commit();
-            ($this->logger)("No students enrolled for semestre_id=$semestre_id, annee_id=$annee_id");
-            return ['success' => true, 'message' => "No students enrolled for semestre_id=$semestre_id, annee_id=$annee_id"];
-        }
-
-        $noteInserts = [];
-        $moduleInserts = [];
-        $semesterInserts = [];
-        $yearInserts = [];
-        $skippedStudents = [];
-
-        foreach ($students as $student) {
-            $student_id = $student['student_id'];
-            $field_id = $student['field_id'];
-            error_log("Processing student_id=$student_id, field_id=$field_id");
-
-            // Fetch modules and elements
-            $moduleQuery = "
-                SELECT m.module_id, m.semestre_id, e.element_id
-                FROM modules m
-                LEFT JOIN elements e ON m.module_id = e.module_id
-                WHERE m.semestre_id = :semestre_id AND m.annee_id = :annee_id AND m.field_id = :field_id
+            // Fetch students
+            $studentQuery = "
+                SELECT DISTINCT se.student_id, e.field_id, CONCAT(e.nom, ' ', e.prenom) as student_name
+                FROM student_enrollments se
+                JOIN etudiants e ON se.student_id = e.user_id
+                WHERE se.semestre_id = :semestre_id AND se.annee_id = :annee_id
             ";
-            $moduleStmt = $this->db->prepare($moduleQuery);
-            $moduleStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id, 'field_id' => $field_id]);
-            $modules = $moduleStmt->fetchAll(PDO::FETCH_ASSOC);
-            error_log("Found " . count($modules) . " modules for student_id=$student_id");
+            $studentStmt = $this->db->prepare($studentQuery);
+            $studentStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id]);
+            $students = $studentStmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Found " . count($students) . " students for semestre_id=$semestre_id, annee_id=$annee_id");
 
-            if (empty($modules)) {
-                ($this->logger)("No modules found for student_id=$student_id, field_id=$field_id");
-                $skippedStudents[] = $student['student_name'];
-                continue;
+            if (empty($students)) {
+                $this->db->commit();
+                ($this->logger)("No students enrolled for semestre_id=$semestre_id, annee_id=$annee_id");
+                return ['success' => true, 'message' => "No students enrolled for semestre_id=$semestre_id, annee_id=$annee_id"];
             }
 
-            foreach ($modules as $module) {
-                if (!empty($module['element_id'])) {
-                    $noteInserts[] = "($student_id, {$module['element_id']}, $semestre_id, '$annee_id', NULL, NULL, NULL, NULL, NULL, NULL, NULL)";
+            $noteInserts = [];
+            $moduleInserts = [];
+            $semesterInserts = [];
+            $yearInserts = [];
+            $skippedStudents = [];
+
+            foreach ($students as $student) {
+                $student_id = $student['student_id'];
+                $field_id = $student['field_id'];
+                error_log("Processing student_id=$student_id, field_id=$field_id");
+
+                // Fetch modules and elements
+                $moduleQuery = "
+                    SELECT m.module_id, m.semestre_id, e.element_id
+                    FROM modules m
+                    LEFT JOIN elements e ON m.module_id = e.module_id
+                    WHERE m.semestre_id = :semestre_id AND m.annee_id = :annee_id AND m.field_id = :field_id
+                ";
+                $moduleStmt = $this->db->prepare($moduleQuery);
+                $moduleStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id, 'field_id' => $field_id]);
+                $modules = $moduleStmt->fetchAll(PDO::FETCH_ASSOC);
+                error_log("Found " . count($modules) . " modules for student_id=$student_id");
+
+                if (empty($modules)) {
+                    ($this->logger)("No modules found for student_id=$student_id, field_id=$field_id");
+                    $skippedStudents[] = $student['student_name'];
+                    continue;
                 }
-                $moduleInserts[] = "($student_id, {$module['module_id']}, $semestre_id, '$annee_id', NULL, NULL, NULL)";
-            }
-            $semesterInserts[] = "($student_id, $semestre_id, '$annee_id', NULL, NULL, NULL)";
-            $yearInserts[] = "($student_id, '$annee_id', NULL, NULL, 0)";
-        }
 
-        // Batch inserts with error handling
-        $successCount = 0;
-        if (!empty($noteInserts)) {
-            try {
-                $noteQuery = "INSERT IGNORE INTO notes (student_id, element_id, semestre_id, annee_id, note_tp, note_cc, note_exam, note_rattrapage, note_finale, decision, decision_ratt) VALUES " . implode(',', $noteInserts);
-                $successCount += $this->db->exec($noteQuery);
-                error_log("Inserted $successCount note rows");
-            } catch (PDOException $e) {
-                error_log("Note insert error: " . $e->getMessage());
+                foreach ($modules as $module) {
+                    if (!empty($module['element_id'])) {
+                        $noteInserts[] = "($student_id, {$module['element_id']}, $semestre_id, '$annee_id', NULL, NULL, NULL, NULL, NULL, NULL, NULL)";
+                    }
+                    $moduleInserts[] = "($student_id, {$module['module_id']}, $semestre_id, '$annee_id', NULL, NULL, NULL)";
+                }
+                $semesterInserts[] = "($student_id, $semestre_id, '$annee_id', NULL, NULL, NULL)";
+                $yearInserts[] = "($student_id, '$annee_id', NULL, NULL, 0)";
             }
-        }
-        if (!empty($moduleInserts)) {
-            try {
-                $moduleQuery = "INSERT IGNORE INTO note_modules (student_id, module_id, semestre_id, annee_id, note_module, decision, retake_status) VALUES " . implode(',', $moduleInserts);
-                $successCount += $this->db->exec($moduleQuery);
-                error_log("Inserted module rows");
-            } catch (PDOException $e) {
-                error_log("Module insert error: " . $e->getMessage());
-            }
-        }
-        if (!empty($semesterInserts)) {
-            try {
-                $semesterQuery = "INSERT IGNORE INTO note_semestres (student_id, semestre_id, annee_id, note_semestre, decision, nv_module_count) VALUES " . implode(',', $semesterInserts);
-                $successCount += $this->db->exec($semesterQuery);
-                error_log("Inserted semester rows");
-            } catch (PDOException $e) {
-                error_log("Semester insert error: " . $e->getMessage());
-            }
-        }
-        if (!empty($yearInserts)) {
-            try {
-                $yearQuery = "INSERT IGNORE INTO note_annees (student_id, annee_id, note_annee, decision_annee, fail_count) VALUES " . implode(',', $yearInserts);
-                $successCount += $this->db->exec($yearQuery);
-                error_log("Inserted year rows");
-            } catch (PDOException $e) {
-                error_log("Year insert error: " . $e->getMessage());
-            }
-        }
 
-        $this->db->commit();
-        $message = "Generated $successCount note rows for " . (count($students) - count($skippedStudents)) . " students";
-        if (!empty($skippedStudents)) {
-            $message .= ". Skipped students: " . implode(', ', $skippedStudents);
+            // Batch inserts with error handling
+            $successCount = 0;
+            if (!empty($noteInserts)) {
+                try {
+                    $noteQuery = "INSERT IGNORE INTO notes (student_id, element_id, semestre_id, annee_id, note_tp, note_cc, note_exam, note_rattrapage, note_finale, decision, decision_ratt) VALUES " . implode(',', $noteInserts);
+                    $successCount += $this->db->exec($noteQuery);
+                    error_log("Inserted $successCount note rows");
+                } catch (PDOException $e) {
+                    error_log("Note insert error: " . $e->getMessage());
+                }
+            }
+            if (!empty($moduleInserts)) {
+                try {
+                    $moduleQuery = "INSERT IGNORE INTO note_modules (student_id, module_id, semestre_id, annee_id, note_module, decision, retake_status) VALUES " . implode(',', $moduleInserts);
+                    $successCount += $this->db->exec($moduleQuery);
+                    error_log("Inserted module rows");
+                } catch (PDOException $e) {
+                    error_log("Module insert error: " . $e->getMessage());
+                }
+            }
+            if (!empty($semesterInserts)) {
+                try {
+                    $semesterQuery = "INSERT IGNORE INTO note_semestres (student_id, semestre_id, annee_id, note_semestre, decision, nv_module_count) VALUES " . implode(',', $semesterInserts);
+                    $successCount += $this->db->exec($semesterQuery);
+                    error_log("Inserted semester rows");
+                } catch (PDOException $e) {
+                    error_log("Semester insert error: " . $e->getMessage());
+                }
+            }
+            if (!empty($yearInserts)) {
+                try {
+                    $yearQuery = "INSERT IGNORE INTO note_annees (student_id, annee_id, note_annee, decision_annee, fail_count) VALUES " . implode(',', $yearInserts);
+                    $successCount += $this->db->exec($yearQuery);
+                    error_log("Inserted year rows");
+                } catch (PDOException $e) {
+                    error_log("Year insert error: " . $e->getMessage());
+                }
+            }
+
+            $this->db->commit();
+            $message = "Generated $successCount note rows for " . (count($students) - count($skippedStudents)) . " students";
+            if (!empty($skippedStudents)) {
+                $message .= ". Skipped students: " . implode(', ', $skippedStudents);
+            }
+            ($this->logger)($message);
+            return ['success' => count($skippedStudents) === 0, 'message' => $message];
+        } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            ($this->logger)("PDO Error in generateEmptyNoteRows: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            ($this->logger)("Error in generateEmptyNoteRows: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
         }
-        ($this->logger)($message);
-        return ['success' => count($skippedStudents) === 0, 'message' => $message];
-    } catch (PDOException $e) {
-        if ($this->db->inTransaction()) {
-            $this->db->rollBack();
-        }
-        ($this->logger)("PDO Error in generateEmptyNoteRows: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
-        return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
-    } catch (Exception $e) {
-        if ($this->db->inTransaction()) {
-            $this->db->rollBack();
-        }
-        ($this->logger)("Error in generateEmptyNoteRows: semestre_id=$semestre_id, annee_id=$annee_id, error=" . $e->getMessage());
-        return ['success' => false, 'message' => $e->getMessage()];
     }
-}
 
         /**
          * Calculate final notes for elements, modules, and semesters for a given semester and year.

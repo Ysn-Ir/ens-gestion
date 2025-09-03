@@ -187,7 +187,7 @@ public function createStudent(array $data) {
             (int)$data['department_id'],
             (int)$data['field_id'],
             (int)$data['cycle_id'],
-            (int)$data['group_id'] 
+            (int)$data['groupe_id'] 
         ];
         
         if (!$stmt->execute($studentData)) {
@@ -208,7 +208,7 @@ public function createStudent(array $data) {
                (int)$data['cycle_id'],
                 (int)$data['field_id'],
                 (int)$data['etape_id'] ,
-                (int)$data['group_id'] ,    
+                (int)$data['groupe_id'] ,    
                 (int)$data['section_id'] 
             ];
             
