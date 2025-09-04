@@ -205,7 +205,9 @@ public function getAllSemestres() {
     $this->authMiddleware->verifySession();
     $this->adminMiddleware->verifyAdmin();
     try {
-        $sections = $this->model->getAllSemesteres();
+        $field_id =filter_input(INPUT_GET, 'field_id',  FILTER_VALIDATE_INT);
+        $etape_id =filter_input(INPUT_GET, 'etape_id',  FILTER_VALIDATE_INT);
+        $sections = $this->model->getAllSemesteres($field_id,$etape_id);
         $this->response->send(200, $sections);   //  ← send RAW array
 
     } catch (Exception $e) {

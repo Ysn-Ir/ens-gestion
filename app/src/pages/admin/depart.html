@@ -276,6 +276,7 @@
           }
           
           data.data.forEach(depart => {
+
             const row = document.createElement('tr');
             
             // Convertir les filières en tableau
@@ -296,7 +297,7 @@
             row.innerHTML = `
               <td class="fw-semibold">${depart.department_id ?? "-"}</td>
               <td>${depart.nom_departement ?? "-"}</td>
-              <td>${depart.nom_chef_departement ?? "-"}</td>
+              <td>${depart.nom_Chef_departement ?? "-"}</td>
               <td>${depart.date_debut ? new Date(depart.date_debut).toLocaleDateString('fr-FR') : "-"}</td>
               <td>${depart.date_fin ? new Date(depart.date_fin).toLocaleDateString('fr-FR') : "-"}</td>
               <td>${filieresList}</td>
@@ -347,6 +348,8 @@
       localStorage.setItem("id_depart", depart.department_id);
       localStorage.setItem("date_debut", depart.date_debut);
       localStorage.setItem("date_fin", depart.date_fin);
+      localStorage.setItem("chef", depart.nom_Chef_departement);
+      localStorage.setItem("id_chef", depart.head_professor_id);
 
       window.location.href = "updateDepart.html";
     }

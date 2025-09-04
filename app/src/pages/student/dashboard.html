@@ -6,8 +6,8 @@
     <title>Dashboard Étudiant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-     <script src="../../route.js"></script>
- <style>
+    <script src="../../route.js"></script>
+    <style>
         :root {
             --primary-color: #3498db;
             --primary-light: #5dade2;
@@ -502,6 +502,15 @@
                 visibility: visible;
             }
         }
+
+        .module-row {
+            background-color: var(--primary-light);
+            font-weight: 600;
+        }
+        .element-row td:first-child,
+        .element-row td:nth-child(2) {
+            background-color: var(--card-background);
+        }
     </style>
 </head>
 <body>
@@ -557,7 +566,7 @@
 
     <div class="container-fluid main-content" id="mainContent">
         <div id="homeSection" class="section">
-            <p class="text-muted">Bjr</p>
+            <p class="welcome-message">Bonjour, <span id="welcomeName"></span>!</p>
         </div>
 
         <div id="profileSection" class="section" style="display: none;">
@@ -693,7 +702,38 @@
             
             <div class="error-message" id="notesError"></div>
             
-            <div id="notesTable" class="mt-4"></div>
+            <div id="notesTable" class="mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Notes par Semestre</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="notesTableContent" aria-label="Notes académiques par semestre">
+                                <thead>
+                                    <tr>
+                                        <th>Code Module</th>
+                                        <th>Module</th>
+                                        <th>Élément</th>
+                                        <th>TP</th>
+                                        <th>TD</th>
+                                        <th>CC</th>
+                                        <th>Examen</th>
+                                        <th>Rattrapage</th>
+                                        <th>Finale Élément</th>
+                                        <th>Décision</th>
+                                        <th>Finale Module</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container" id="notesChartContainer" style="display: none;">
+                    <canvas id="notesChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <div id="annualSection" class="section" style="display: none;">
@@ -774,405 +814,557 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const user = JSON.parse(localStorage.getItem('userData'));
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = JSON.parse(localStorage.getItem('userData'));
 
-    if (!user) {
-        window.location.href = loginPage;
-        return;
-    }
+            if (!user) {
+                window.location.href = loginPage;
+                return;
+            }
 
-    // Theme toggle
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    themeToggleBtn.innerHTML = currentTheme === 'dark' 
-        ? '<i class="bi bi-sun-fill"></i><span>Mode Clair</span>'
-        : '<i class="bi bi-moon-stars-fill"></i><span>Mode Sombre</span>';
+            // Theme toggle
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            themeToggleBtn.innerHTML = currentTheme === 'dark' 
+                ? '<i class="bi bi-sun-fill"></i><span>Mode Clair</span>'
+                : '<i class="bi bi-moon-stars-fill"></i><span>Mode Sombre</span>';
 
-    themeToggleBtn.addEventListener('click', function() {
-        const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        themeToggleBtn.innerHTML = newTheme === 'dark' 
-            ? '<i class="bi bi-sun-fill"></i><span>Mode Clair</span>'
-            : '<i class="bi bi-moon-stars-fill"></i><span>Mode Sombre</span>';
-    });
+            themeToggleBtn.addEventListener('click', function() {
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeToggleBtn.innerHTML = newTheme === 'dark' 
+                    ? '<i class="bi bi-sun-fill"></i><span>Mode Clair</span>'
+                    : '<i class="bi bi-moon-stars-fill"></i><span>Mode Sombre</span>';
+            });
 
-    // Mobile sidebar toggle
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
+            // Mobile sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-    sidebarToggle.addEventListener('click', function() {
-        sidebar.classList.toggle('active');
-        sidebarOverlay.classList.toggle('active');
-    });
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+            });
 
-    sidebarOverlay.addEventListener('click', function() {
-        sidebar.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-    });
-
-    // Show/hide sections based on nav clicks
-    const sections = document.querySelectorAll('.section');
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            const sectionId = this.getAttribute('data-section') + 'Section';
-            
-            if (window.innerWidth < 992) {
+            sidebarOverlay.addEventListener('click', function() {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
-            }
-            
-            sections.forEach(section => section.style.display = 'none');
-            document.getElementById(sectionId).style.display = 'block';
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
+            });
 
-    // Fetch and display student info
-    const studentError = document.getElementById('studentError');
-    let studentCycleId;
-    fetch(adminURL+`/student.php?action=me`, {
-        method: 'GET',
-        credentials: 'include'
-    })
-        .then(response => response.json())
-        .then(json => {
-            if (json.status === 'error') throw new Error(json.error);
-            const student = json.data.student;
-            document.getElementById('profileName').textContent = `${student.prenom} ${student.nom}`;
-            document.getElementById('profileEmail').textContent = student.email || 'Non renseigné';
-            document.getElementById('cin').textContent = student.cin || 'Non renseigné';
-            document.getElementById('cne').textContent = student.cne || 'Non renseigné';
-            document.getElementById('birthdate').textContent = student.date_naissance || 'Non renseigné';
-            document.getElementById('nationalite').textContent = student.nationalite || 'Non renseigné';
-            document.getElementById('telephone').textContent = student.telephone || 'Non renseigné';
-            document.getElementById('adresse').textContent = student.adresse || 'Non renseigné';
-            document.getElementById('groupId').textContent = student.group_id || 'Non renseigné';
-            document.getElementById('email').textContent = student.email || 'Non renseigné';
-            
-            studentCycleId = student.cycle_id;
-
-            // Populate cycle dropdown
-            const cycleError = document.getElementById('cycleError');
-            fetch(adminURL+`/student.php?action=getCycleOfStudent&id=${user.user_id}`, {
-                method: 'GET',
-                credentials: 'include'
-            })
-                .then(response => response.json())
-                .then(json => {
-                    if (json.status === 'error' || json.status !== 200) throw new Error(json.error || 'Erreur inconnue');
-                    const cycle = json.data;
-                    if (!cycle || !cycle.cycle_id) throw new Error('Réponse invalide: données du cycle non valides');
-                    const cycleSelect = document.getElementById('cycleSelect');
-                    const option = document.createElement('option');
-                    option.value = cycle.cycle_id;
-                    option.textContent = cycle.cycle_name || 'License';
-                    cycleSelect.appendChild(option);
-                    cycleSelect.value = cycle.cycle_id;
-                    cycleSelect.dispatchEvent(new Event('change'));
-                })
-                .catch(err => {
-                    console.error('Erreur lors de la récupération du cycle:', err);
-                    cycleError.textContent = `Erreur: ${err.message}`;
-                    cycleError.style.display = 'block';
+            // Show/hide sections based on nav clicks
+            const sections = document.querySelectorAll('.section');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section') + 'Section';
+                    
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('active');
+                        sidebarOverlay.classList.remove('active');
+                    }
+                    
+                    sections.forEach(section => section.style.display = 'none');
+                    document.getElementById(sectionId).style.display = 'block';
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
                 });
-        })
-        .catch(err => {
-            console.error('Erreur lors de la récupération des infos étudiant:', err);
-            window.location.href = loginPage;
-        });
+            });
 
-    // Update semesters when cycle changes
-    const semesterError = document.getElementById('semesterError');
-    document.getElementById('cycleSelect').addEventListener('change', function () {
-        const cycleId = this.value;
-        const semesterSelect = document.getElementById('semesterSelect');
-        semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
-        semesterError.style.display = 'none';
-
-        if (cycleId) {
-            fetch(adminURL+`/student.php?action=getSemestresOfStudentByCycle&cycle_id=${cycleId}&id=${user.user_id}`, {
+            // Fetch and display student info
+            const studentError = document.getElementById('studentError');
+            let studentCycleId;
+            let studentName = '';
+            fetch(adminURL + '/student.php?action=me', {
                 method: 'GET',
                 credentials: 'include'
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = loginPage;
+                        throw new Error('Session expirée. Veuillez vous reconnecter.');
+                    }
+                    if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                    return response.json();
+                })
                 .then(json => {
-                    if (json.status === 'error') throw new Error(json.message);
-                    const semestres = json.data;
-                    if (!Array.isArray(semestres)) throw new Error('Réponse invalide: données des semestres non valides');
-                    semestres.forEach(semestre => {
-                        const option = document.createElement('option');
-                        option.value = semestre.semestre_id;
-                        option.textContent = semestre.semestre_name || `Semestre ${semestre.nom}`;   
-                                             semesterSelect.appendChild(option);
-                    });
+                    if (json.status === 'error') throw new Error(json.error || 'Erreur inconnue');
+                    const student = json.data.student;
+                    studentName = `${student.prenom} ${student.nom}`;
+                    document.getElementById('welcomeName').textContent = studentName;
+                    document.getElementById('profileName').textContent = studentName;
+                    document.getElementById('profileEmail').textContent = student.email || 'Non renseigné';
+                    document.getElementById('cin').textContent = student.cin || 'Non renseigné';
+                    document.getElementById('cne').textContent = student.cne || 'Non renseigné';
+                    document.getElementById('birthdate').textContent = student.date_naissance || 'Non renseigné';
+                    document.getElementById('nationalite').textContent = student.nationalite || 'Non renseigné';
+                    document.getElementById('telephone').textContent = student.telephone || 'Non renseigné';
+                    document.getElementById('adresse').textContent = student.adresse || 'Non renseigné';
+                    document.getElementById('groupId').textContent = student.group_id || 'Non renseigné';
+                    document.getElementById('email').textContent = student.email || 'Non renseigné';
+                    
+                    studentCycleId = student.cycle_id;
+
+                    // Populate cycle dropdown
+                    const cycleError = document.getElementById('cycleError');
+                    fetch(adminURL + '/student.php?action=getCycleOfStudent&id=' + user.user_id, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (response.status === 401) {
+                                window.location.href = loginPage;
+                                throw new Error('Session expirée. Veuillez vous reconnecter.');
+                            }
+                            if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(json => {
+                            if (json.status === 'error' || json.status !== 200) throw new Error(json.error || 'Erreur inconnue');
+                            const cycle = json.data;
+                            if (!cycle || !cycle.cycle_id) throw new Error('Réponse invalide: données du cycle non valides');
+                            const cycleSelect = document.getElementById('cycleSelect');
+                            const option = document.createElement('option');
+                            option.value = cycle.cycle_id;
+                            option.textContent = cycle.cycle_name || 'Licence';
+                            cycleSelect.appendChild(option);
+                            cycleSelect.value = cycle.cycle_id;
+                            cycleSelect.dispatchEvent(new Event('change'));
+                        })
+                        .catch(err => {
+                            console.error('Erreur lors de la récupération du cycle:', err);
+                            cycleError.textContent = `Erreur: ${err.message}`;
+                            cycleError.style.display = 'block';
+                        });
                 })
                 .catch(err => {
-                    console.error('Erreur lors de la récupération des semestres:', err);
-                    semesterError.textContent = `Erreur: ${err.message}`;
+                    console.error('Erreur lors de la récupération des infos étudiant:', err);
+                    window.location.href = loginPage;
+                });
+
+            // Update semesters when cycle changes
+            const semesterError = document.getElementById('semesterError');
+            document.getElementById('cycleSelect').addEventListener('change', function () {
+                const cycleId = this.value;
+                const semesterSelect = document.getElementById('semesterSelect');
+                semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                semesterError.style.display = 'none';
+
+                if (cycleId) {
+                    fetch(adminURL + '/student.php?action=getSemestresOfStudentByCycle&cycle_id=' + cycleId + '&id=' + user.user_id, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (response.status === 401) {
+                                window.location.href = loginPage;
+                                throw new Error('Session expirée. Veuillez vous reconnecter.');
+                            }
+                            if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(json => {
+                            if (json.status === 'error') throw new Error(json.message || 'Erreur inconnue');
+                            const semestres = json.data;
+                            if (!Array.isArray(semestres)) throw new Error('Réponse invalide: données des semestres non valides');
+                            semestres.forEach(semestre => {
+                                const option = document.createElement('option');
+                                option.value = semestre.semestre_id;
+                                option.textContent = semestre.semestre_name || `Semestre ${semestre.nom}`;   
+                                semesterSelect.appendChild(option);
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Erreur lors de la récupération des semestres:', err);
+                            semesterError.textContent = `Erreur: ${err.message}`;
+                            semesterError.style.display = 'block';
+                        });
+                } else {
+                    semesterError.textContent = 'Veuillez sélectionner un cycle.';
                     semesterError.style.display = 'block';
-                });
-        } else {
-            semesterError.textContent = 'Veuillez sélectionner un cycle.';
-            semesterError.style.display = 'block';
-        }
-    });
+                }
+            });
 
-    // Fetch notes by semester
-    document.getElementById('fetchNotesBtn').addEventListener('click', function () {
-        const userId = user.user_id;
-        const cycleId = document.getElementById('cycleSelect').value;
-        const semesterId = document.getElementById('semesterSelect').value;
-        const notesSpinner = document.getElementById('notesSpinner');
-        const notesError = document.getElementById('notesError');
-        const notesTable = document.getElementById('notesTable');
+            // Fetch notes by semester and render chart
+            let notesChart = null;
+            document.getElementById('fetchNotesBtn').addEventListener('click', function () {
+                const userId = user.user_id;
+                const cycleId = document.getElementById('cycleSelect').value;
+                const semesterId = document.getElementById('semesterSelect').value;
+                const notesSpinner = document.getElementById('notesSpinner');
+                const notesError = document.getElementById('notesError');
+                const notesTableContent = document.getElementById('notesTableContent').querySelector('tbody');
+                const notesChartContainer = document.getElementById('notesChartContainer');
+                const fetchButton = this; // Reference to the button
 
-        if (!cycleId || !semesterId) {
-            notesError.textContent = 'Veuillez sélectionner un cycle et un semestre.';
-            notesError.style.display = 'block';
-            return;
-        }
-
-        notesSpinner.style.display = 'block';
-        notesError.style.display = 'none';
-        notesTable.innerHTML = '';
-
-        fetch(adminURL+`/student.php?action=getNoteOfStudentBySemester&id=${userId}&semester_id=${semesterId}`, {
-            method: 'GET',
-            credentials: 'include'
-        })
-            .then(response => response.json())
-            .then(json => {
-                notesSpinner.style.display = 'none';
-                if (json.status === 'error') throw new Error(json.error);
-                const notes = json.data;
-                if (!Array.isArray(notes)) throw new Error('Réponse invalide: données des notes non valides');
-                if (notes.length === 0) {
-                    notesError.textContent = 'Aucune note trouvée pour ce semestre.';
+                if (!cycleId || !semesterId) {
+                    notesError.textContent = 'Veuillez sélectionner un cycle et un semestre.';
                     notesError.style.display = 'block';
                     return;
                 }
 
-                const table = document.createElement('table');
-                table.className = 'table table-hover';
-                table.innerHTML = `
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Nom</th>
-                            <th>Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${notes.map(note => `
-                            <tr>
-                                <td>${note.code || 'N/A'}</td>
-                                <td>${note.module_name || 'N/A'}</td>
-                                <td><strong>${note.note_module || 'N/A'}</strong></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                `;
-                notesTable.appendChild(table);
+                // Show spinner and disable button immediately
+                notesSpinner.style.display = 'block';
+                fetchButton.disabled = true;
+                notesError.style.display = 'none';
+                notesTableContent.innerHTML = '';
+                notesChartContainer.style.display = 'none';
+
+                fetch(adminURL + '/student.php?action=getNoteOfStudentBySemester&id=' + userId + '&semester_id=' + semesterId, {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(response => {
+                        if (response.status === 401) {
+                            window.location.href = loginPage;
+                            throw new Error('Session expirée. Veuillez vous reconnecter.');
+                        }
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        notesSpinner.style.display = 'none'; // Hide spinner on success
+                        fetchButton.disabled = false; // Re-enable button
+                        if (json.status === 'error') throw new Error(json.error || 'Erreur inconnue');
+                        const modules = json.data.data;
+                        if (!Array.isArray(modules)) throw new Error('Réponse invalide: données des notes non valides');
+                        if (modules.length === 0) {
+                            notesError.textContent = 'Aucune note trouvée pour ce semestre.';
+                            notesError.style.display = 'block';
+                            return;
+                        }
+
+                        let html = '';
+                        modules.forEach(mod => {
+                            if (!mod.module_code || !mod.elements || !Array.isArray(mod.elements)) {
+                                throw new Error('Données du module incomplètes ou invalides');
+                            }
+                            const moduleDecision = mod.module_decision === 'V' ? '<span class="badge badge-success">Validé</span>' :
+                                                  mod.module_decision === 'NV' ? '<span class="badge badge-danger">Non Validé</span>' :
+                                                  mod.module_decision === 'R' ? '<span class="badge badge-warning">Rattrapage</span>' :
+                                                  '-';
+
+                            html += `
+                                <tr class="module-row">
+                                    <td>${mod.module_code || 'N/A'}</td>
+                                    <td colspan="8">${mod.module_name || 'N/A'}</td>
+                                    <td class="text-center">${moduleDecision}</td>
+                                    <td class="text-center"><strong>${mod.module_finale !== null ? parseFloat(mod.module_finale).toFixed(2) : '-'}</strong></td>
+                                </tr>
+                            `;
+                            mod.elements.forEach(el => {
+                                if (!el.element_name) {
+                                    throw new Error('Données de l\'élément incomplètes');
+                                }
+                                const elementDecision = el.element_decision_ratt || el.element_decision;
+                                const decisionDisplay = elementDecision === 'V' ? '<span class="badge badge-success">Validé</span>' :
+                                                       elementDecision === 'NV' ? '<span class="badge badge-danger">Non Validé</span>' :
+                                                       elementDecision === 'R' ? '<span class="badge badge-warning">Rattrapage</span>' :
+                                                       '-';
+
+                                html += `
+                                    <tr class="element-row">
+                                        <td></td>
+                                        <td></td>
+                                        <td>${el.element_name || 'N/A'}</td>
+                                        <td>${el.note_tp !== null ? parseFloat(el.note_tp).toFixed(2) : '-'}</td>
+                                        <td>${el.note_td !== null ? parseFloat(el.note_td).toFixed(2) : '-'}</td>
+                                        <td>${el.note_cc !== null ? parseFloat(el.note_cc).toFixed(2) : '-'}</td>
+                                        <td>${el.note_exam !== null ? parseFloat(el.note_exam).toFixed(2) : '-'}</td>
+                                        <td>${el.note_rattrapage !== null ? parseFloat(el.note_rattrapage).toFixed(2) : '-'}</td>
+                                        <td><strong>${el.element_finale !== null ? parseFloat(el.element_finale).toFixed(2) : '-'}</strong></td>
+                                        <td>${decisionDisplay}</td>
+                                        <td></td>
+                                    </tr>
+                                `;
+                            });
+                        });
+                        notesTableContent.innerHTML = html;
+
+                        // Destroy existing chart if it exists
+                        if (notesChart) {
+                            notesChart.destroy();
+                        }
+
+                        // Render bar chart for module final grades
+                        try {
+                            const ctx = document.getElementById('notesChart').getContext('2d');
+                            notesChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: modules.map(mod => mod.module_code),
+                                    datasets: [{
+                                        label: 'Note Finale par Module',
+                                        data: modules.map(mod => mod.module_finale),
+                                        backgroundColor: '#3498db',
+                                        borderColor: '#2980b9',
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            max: 20,
+                                            title: {
+                                                display: true,
+                                                text: 'Note Finale',
+                                                color: '#7f8c8d'
+                                            },
+                                            grid: {
+                                                color: 'rgba(0, 0, 0, 0.05)'
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Modules',
+                                                color: '#7f8c8d'
+                                            },
+                                            grid: {
+                                                display: false
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            position: 'top',
+                                            labels: {
+                                                color: '#7f8c8d'
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                            notesChartContainer.style.display = 'block';
+                        } catch (chartError) {
+                            console.error('Erreur lors de la création du graphique:', chartError);
+                            notesError.textContent = 'Erreur lors de l\'affichage du graphique.';
+                            notesError.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        notesSpinner.style.display = 'none'; // Hide spinner on error
+                        fetchButton.disabled = false; // Re-enable button
+                        notesError.textContent = err.message.includes('Session') ? err.message : `Erreur: ${err.message}`;
+                        notesError.style.display = 'block';
+                        console.error('Erreur lors de la récupération des notes:', err);
+                    });
+            });
+
+            // Populate annee dropdown
+            const anneeError = document.getElementById('anneeError');
+            const userId = user.user_id;
+            fetch(adminURL + '/student.php?action=getYearStudied&id=' + userId, {
+                method: 'GET',
+                credentials: 'include'
             })
-            .catch(err => {
-                notesSpinner.style.display = 'none';
-                notesError.textContent = `Erreur: ${err.message}`;
-                notesError.style.display = 'block';
-            });
-    });
+                .then(response => {
+                    if (response.status === 401) {
+                        window.location.href = loginPage;
+                        throw new Error('Session expirée. Veuillez vous reconnecter.');
+                    }
+                    if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                    return response.json();
+                })
+                .then(json => {
+                    if (json.status === 'error') throw new Error(json.error || 'Erreur inconnue');
+                    const annees = json.data;
+                    if (!Array.isArray(annees)) throw new Error('Réponse invalide: données des années non valides');
+                    const anneeSelect = document.getElementById('anneeSelect');
+                    annees.forEach(annee => {
+                        const option = document.createElement('option');
+                        option.value = annee.annee_id;
+                        option.textContent = annee.annee_id;
+                        anneeSelect.appendChild(option);
+                    });
+                    // Auto-select "2024-2025" if available
+                    const targetYear = '2024-2025';
+                    if (annees.some(annee => annee.annee_id === targetYear)) {
+                        anneeSelect.value = targetYear;
+                    }
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la récupération des années étudiées:', err);
+                    anneeError.textContent = `Erreur: ${err.message}`;
+                    anneeError.style.display = 'block';
+                });
 
-    // Populate annee dropdown
-    const anneeError = document.getElementById('anneeError');
-    const userId = user.user_id;
-    fetch(adminURL+`/student.php?action=getYearStudied&id=${userId}`, {
-        method: 'GET',
-        credentials: 'include'
-    })
-        .then(response => response.json())
-        .then(json => {
-            if (json.status === 'error') throw new Error(json.error);
-            const annees = json.data;
-            if (!Array.isArray(annees)) throw new Error('Réponse invalide: données des années non valides');
-            const anneeSelect = document.getElementById('anneeSelect');
-            annees.forEach(annee => {
-                const option = document.createElement('option');
-                option.value = annee.annee_id;
-                option.textContent = annee.annee_id; // e.g., "2024-2025"
-                anneeSelect.appendChild(option);
-            });
-            // Auto-select "2024-2025" if available
-            const targetYear = '2024-2025';
-            if (annees.some(annee => annee.annee_id === targetYear)) {
-                anneeSelect.value = targetYear;
-            }
-        })
-        .catch(err => {
-            console.error('Erreur lors de la récupération des années étudiées:', err);
-            anneeError.textContent = `Erreur: ${err.message}`;
-            anneeError.style.display = 'block';
-        });
+            // Fetch annual note and ranking
+            let rankingChart = null;
+            document.getElementById('fetchAnnualBtn').addEventListener('click', function () {
+                const userId = user.user_id;
+                const anneeId = document.getElementById('anneeSelect').value;
+                const annualSpinner = document.getElementById('annualSpinner');
+                const annualError = document.getElementById('annualError');
+                const annualResult = document.getElementById('annualResult');
 
-    // Fetch annual note and ranking
-    let rankingChart = null;
-    document.getElementById('fetchAnnualBtn').addEventListener('click', function () {
-        const userId = user.user_id;
-        const anneeId = document.getElementById('anneeSelect').value;
-        const annualSpinner = document.getElementById('annualSpinner');
-        const annualError = document.getElementById('annualError');
-        const annualResult = document.getElementById('annualResult');
-
-        if (!anneeId) {
-            annualError.textContent = 'Veuillez sélectionner une année académique.';
-            annualError.style.display = 'block';
-            return;
-        }
-
-        annualSpinner.style.display = 'block';
-        annualError.style.display = 'none';
-        annualResult.style.display = 'none';
-
-        fetch(adminURL+`/student.php?action=getAnnualNoteAndRanking&user_id=${userId}&annee_id=${anneeId}`, {
-            method: 'GET',
-            credentials: 'include'
-        })
-            .then(response => response.json())
-            .then(json => {
-                annualSpinner.style.display = 'none';
-                if (json.status === 'error') throw new Error(json.error);
-                const data = json.data;
-                if (!data) throw new Error('Réponse invalide: données absentes');
-
-                document.getElementById('noteAnnee').textContent = data.note_annee || 'N/A';
-                const decisionAnnee = document.getElementById('decisionAnnee');
-                decisionAnnee.textContent = data.decision_annee === 'V' ? 'Validé' : 'Non Validé';
-                decisionAnnee.className = 'badge ' + (data.decision_annee === 'V' ? 'badge-success' : 'badge-danger');
-                document.getElementById('classement').textContent = data.classement || 'N/A';
-                document.getElementById('totalStudents').textContent = data.total_students || 'N/A';
-                annualResult.style.display = 'block';
-
-                if (rankingChart) {
-                    rankingChart.destroy();
+                if (!anneeId) {
+                    annualError.textContent = 'Veuillez sélectionner une année académique.';
+                    annualError.style.display = 'block';
+                    return;
                 }
 
-                const ctx = document.getElementById('rankingChart').getContext('2d');
-                rankingChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Votre Position', 'Autres Étudiants'],
-                        datasets: [{
-                            data: [data.classement, data.total_students - data.classement],
-                            backgroundColor: ['#3498db', '#ecf0f1'],
-                            borderColor: ['#2980b9', '#bdc3c7'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
+                setTimeout(() => { annualSpinner.style.display = 'block'; }, 100);
+                annualError.style.display = 'none';
+                annualResult.style.display = 'none';
+
+                fetch(adminURL + '/student.php?action=getAnnualNoteAndRanking&user_id=' + userId + '&annee_id=' + anneeId, {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(response => {
+                        if (response.status === 401) {
+                            window.location.href = loginPage;
+                            throw new Error('Session expirée. Veuillez vous reconnecter.');
+                        }
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        annualSpinner.style.display = 'none';
+                        if (json.status === 'error') throw new Error(json.error || 'Erreur inconnue');
+                        const data = json.data;
+                        if (!data) throw new Error('Réponse invalide: données absentes');
+
+                        document.getElementById('noteAnnee').textContent = data.note_annee || 'N/A';
+                        const decisionAnnee = document.getElementById('decisionAnnee');
+                        decisionAnnee.textContent = data.decision_annee === 'V' ? 'Validé' : 'Non Validé';
+                        decisionAnnee.className = 'badge ' + (data.decision_annee === 'V' ? 'badge-success' : 'badge-danger');
+                        document.getElementById('classement').textContent = data.classement || 'N/A';
+                        document.getElementById('totalStudents').textContent = data.total_students || 'N/A';
+                        annualResult.style.display = 'block';
+
+                        if (rankingChart) {
+                            rankingChart.destroy();
+                        }
+
+                        const ctx = document.getElementById('rankingChart').getContext('2d');
+                        rankingChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Votre Position', 'Autres Étudiants'],
+                                datasets: [{
+                                    data: [data.classement, data.total_students - data.classement],
+                                    backgroundColor: ['#3498db', '#ecf0f1'],
+                                    borderColor: ['#2980b9', '#bdc3c7'],
+                                    borderWidth: 1
+                                }]
                             },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ' + context.raw + ' étudiant(s)';
+                            options: {
+                                indexAxis: 'y',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return context.dataset.label + ': ' + context.raw + ' étudiant(s)';
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        beginAtZero: true,
+                                        max: data.total_students,
+                                        title: {
+                                            display: true,
+                                            text: 'Nombre d\'étudiants',
+                                            color: '#7f8c8d'
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.05)'
+                                        }
+                                    },
+                                    y: {
+                                        grid: {
+                                            display: false
+                                        }
                                     }
                                 }
                             }
-                        },
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                max: data.total_students,
-                                title: {
-                                    display: true,
-                                    text: 'Nombre d\'étudiants',
-                                    color: '#7f8c8d'
-                                },
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)'
-                                }
-                            },
-                            y: {
-                                grid: {
-                                    display: false
-                                }
-                            }
+                        });
+                    })
+                    .catch(err => {
+                        annualSpinner.style.display = 'none';
+                        annualError.textContent = err.message.includes('Session') ? err.message : `Erreur: ${err.message}`;
+                        annualError.style.display = 'block';
+                        console.error('Erreur lors de la récupération des résultats annuels:', err);
+                    });
+            });
+
+            // Change password
+            document.getElementById('changePasswordBtn').addEventListener('click', function () {
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const passwordError = document.getElementById('passwordError');
+                const passwordSuccess = document.getElementById('passwordSuccess');
+
+                passwordError.style.display = 'none';
+                passwordSuccess.style.display = 'none';
+
+                if (!newPassword || !confirmPassword) {
+                    passwordError.textContent = 'Veuillez remplir tous les champs.';
+                    passwordError.style.display = 'block';
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    passwordError.textContent = 'Les nouveaux mots de passe ne correspondent pas.';
+                    passwordError.style.display = 'block';
+                    return;
+                }
+
+                if (newPassword.length < 8) {
+                    passwordError.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+                    passwordError.style.display = 'block';
+                    return;
+                }
+
+                fetch(adminURL + '/student.php?action=changePassword', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'user_id=' + encodeURIComponent(user.user_id) + '&new_password=' + encodeURIComponent(newPassword)
+                })
+                    .then(response => {
+                        if (response.status === 401) {
+                            window.location.href = loginPage;
+                            throw new Error('Session expirée. Veuillez vous reconnecter.');
                         }
-                    }
-                });
-            })
-            .catch(err => {
-                annualSpinner.style.display = 'none';
-                annualError.textContent = `Erreur: ${err.message}`;
-                annualError.style.display = 'block';
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        if (json.status === 'error') throw new Error(json.error || 'Erreur inconnue');
+                        passwordSuccess.textContent = 'Mot de passe changé avec succès !';
+                        passwordSuccess.style.display = 'block';
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                    })
+                    .catch(err => {
+                        passwordError.textContent = err.message.includes('Session') ? err.message : `Erreur: ${err.message}`;
+                        passwordError.style.display = 'block';
+                        console.error('Erreur lors du changement de mot de passe:', err);
+                    });
             });
-    });
 
-    // Change password
-    document.getElementById('changePasswordBtn').addEventListener('click', function () {
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        const passwordError = document.getElementById('passwordError');
-        const passwordSuccess = document.getElementById('passwordSuccess');
-
-        passwordError.style.display = 'none';
-        passwordSuccess.style.display = 'none';
-
-        if (!newPassword || !confirmPassword) {
-            passwordError.textContent = 'Veuillez remplir tous les champs.';
-            passwordError.style.display = 'block';
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            passwordError.textContent = 'Les nouveaux mots de passe ne correspondent pas.';
-            passwordError.style.display = 'block';
-            return;
-        }
-
-        if (newPassword.length < 8) {
-            passwordError.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
-            passwordError.style.display = 'block';
-            return;
-        }
-
-        fetch(adminURL+`/student.php?action=changePassword`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `user_id=${encodeURIComponent(user.user_id)}&new_password=${encodeURIComponent(newPassword)}`
-        })
-            .then(response => response.json())
-            .then(json => {
-                if (json.status === 'error') throw new Error(json.error);
-                passwordSuccess.textContent = 'Mot de passe changé avec succès !';
-                passwordSuccess.style.display = 'block';
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-            })
-            .catch(err => {
-                passwordError.textContent = `Erreur: ${err.message}`;
-                passwordError.style.display = 'block';
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', function () {
+                localStorage.removeItem('userData');
+                window.location.href = loginPage;
             });
-    });
-
-    // Handle logout
-    document.getElementById('logoutBtn').addEventListener('click', function () {
-        localStorage.removeItem('userData');
-        window.location.href = loginPage;
-    });
-});
-</script>
+        });
+    </script>
 </body>
 </html>

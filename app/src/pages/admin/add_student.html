@@ -198,6 +198,7 @@
             const filiereSelect = document.getElementById('filiere');
             const etapeSelect = document.getElementById('etape_id');
             const sectionSelect = document.getElementById('section_id');
+            const semesterSelect = document.getElementById('semester_id');
             const groupeSelect = document.getElementById('groupe_id');
             
             const API_BASE_URL = adminURL+'/adminStudent.php';
@@ -242,9 +243,11 @@
 
             filiereSelect.addEventListener('change', () => {
                 updateSectionsDropdown(filiereSelect.value,etapeSelect.value);
+                updateSemestersDropdown(filiereSelect.value,etapeSelect.value);
             });
             etapeSelect.addEventListener('change', () => {
                 updateSectionsDropdown(filiereSelect.value,etapeSelect.value);
+                updateSemestersDropdown(filiereSelect.value,etapeSelect.value);
             });
             sectionSelect.addEventListener('change', () => {
                 updateGroupesDropdown(sectionSelect.value);
@@ -292,7 +295,7 @@
                     annee_id: document.getElementById('year').value,
                     cycle_id: document.getElementById('cycle_id').value,
                     etape_id: document.getElementById('etape_id').value,
-                    semestre_id: document.getElementById('semester_id').value,
+                    semester_id: document.getElementById('semester_id').value,
                     section_id: document.getElementById('section_id').value,
                     groupe_id: document.getElementById('groupe_id').value,
                     cin: document.getElementById('cin').value.trim() || null,
@@ -368,7 +371,28 @@
                     showNotification('Erreur lors du chargement des filières: ' + error.message, false);
                 }
             }
-
+            async function updateSemestersDropdown(fieldId,etape_id) {
+                try {
+                    semesterSelect.innerHTML = '<option value="">Sélectionner une semester</option>';
+                    if (!fieldId & !etape_id) return;
+                    if(etape_id===undefined ) etape_id=null;
+                    const response = await fetch(`${API_ENDPOINTS.semesters}&field_id=${fieldId}&etape_id=${etape_id}`, {
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    const semesters = data.data || [];
+                    semesters.forEach(sec => {
+                        const option = document.createElement('option');
+                        option.value = sec.section_id;
+                        option.textContent = sec.nom;
+                        semesterSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du chargement des sections:', error);
+                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+                }
+            }
             async function updateSectionsDropdown(fieldId,etape_id) {
                 try {
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';

@@ -294,16 +294,82 @@ public function getAllEtapes() {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getNoteOfStudentBysemestre($student_id, $semestre_id) {
+    public function getNoteOfStudentBySemestre($student_id, $semestre_id) {
+    if (!is_numeric($student_id) || !is_numeric($semestre_id)) {
+        return [];
+    }
+
+    try {
         $stmt = $this->db->prepare("
-            SELECT m.nom AS module_name, nm.note_module,m.code
-            FROM note_modules nm
-            JOIN modules m ON nm.module_id = m.module_id
-            WHERE nm.student_id = ? AND nm.semestre_id = ?
+            SELECT 
+                m.module_id,
+                m.code AS module_code,
+                m.nom AS module_name,
+                e.element_id,
+                e.nom AS element_name,
+                n.note_tp,
+                n.note_td,
+                n.note_cc,
+                n.note_exam,
+                n.note_rattrapage,
+                n.note_finale AS element_finale,
+                n.decision AS element_decision,
+                n.decision_ratt AS element_decision_ratt,
+                nm.note_module AS module_finale,
+                nm.decision AS module_decision,
+                nm.decision_ratt AS module_decision_ratt
+            FROM notes n
+            JOIN elements e ON n.element_id = e.element_id
+            JOIN modules m ON e.module_id = m.module_id
+            LEFT JOIN note_modules nm 
+                ON nm.student_id = n.student_id
+                AND nm.module_id = m.module_id
+                AND nm.semestre_id = n.semestre_id
+                AND nm.annee_id = n.annee_id
+            JOIN annees_academiques aa ON n.annee_id = aa.annee_id
+            WHERE n.student_id = ? 
+              AND n.semestre_id = ? 
+              AND aa.current_flag = 1
+            ORDER BY m.code, e.nom
         ");
         $stmt->execute([$student_id, $semestre_id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $modules = [];
+        foreach ($rows as $row) {
+            $moduleKey = $row['module_id'];
+            if (!isset($modules[$moduleKey])) {
+                $modules[$moduleKey] = [
+                    'module_code' => $row['module_code'],
+                    'module_name' => $row['module_name'],
+                    'module_finale' => $row['module_finale'] !== null ? round($row['module_finale'], 2) : null,
+                    'module_decision' => $row['module_decision'],
+                    'module_decision_ratt' => $row['module_decision_ratt'],
+                    'elements' => []
+                ];
+            }
+            $modules[$moduleKey]['elements'][] = [
+                'element_id' => $row['element_id'],
+                'element_name' => $row['element_name'],
+                'note_tp' => $row['note_tp'],
+                'note_td' => $row['note_td'],
+                'note_cc' => $row['note_cc'],
+                'note_exam' => $row['note_exam'],
+                'note_rattrapage' => $row['note_rattrapage'],
+                'element_finale' => $row['element_finale'],
+                'element_decision' => $row['element_decision'],
+                'element_decision_ratt' => $row['element_decision_ratt']
+            ];
+        }
+
+        return array_values($modules);
+    } catch (PDOException $e) {
+        return [];
     }
+}
+
+
+
 
 
 }

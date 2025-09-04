@@ -258,7 +258,7 @@
             <div class="info-item">
               <label for="professeur">Nom complet</label>
               <select class="form-select" id="professeur" required>
-                <option value="">Sélectionnez un professeur</option>
+                <option value="">Prof disponible</option>
               </select>
             </div>
             
@@ -303,11 +303,13 @@
       }
 
       // Fetch Professors
-      fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors')
+      fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement')
         .then(res => res.json())
         .then(data => {
           const profs = objectToArray(data);
           profs.forEach(prof => {
+                console.log(prof);
+
             const option = document.createElement('option');
             option.value = prof.user_id;
             option.textContent = `${prof.nom} ${prof.prenom}`;

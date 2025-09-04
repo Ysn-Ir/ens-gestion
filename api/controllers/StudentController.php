@@ -219,8 +219,37 @@ class StudentController {
         $this->response->send(200, $stmt);
     }
 
-    public function getNoteOfStudentBysemestre($student_id, $semester_id) {
-        $stmt = $this->model->getNoteOfStudentBysemestre($student_id, $semester_id);
-        $this->response->send(200, $stmt);
+    public function getNoteOfStudentBySemestre($student_id, $semestre_id) {
+    // Validation des paramètres
+    if (empty($student_id) || empty($semestre_id) || !is_numeric($student_id) || !is_numeric($semestre_id)) {
+        $this->response->send(400, [
+            'status' => 'error',
+            'message' => 'Paramètres invalides : student_id et semestre_id doivent être numériques.'
+        ]);
+        return;
     }
+
+    try {
+        // Appel du modèle
+        $notes = $this->model->getNoteOfStudentBySemestre($student_id, $semestre_id);
+
+        if (empty($notes)) {
+            $this->response->send(404, [
+                'status' => 'error',
+                'message' => 'Aucune note trouvée pour cet étudiant dans ce semestre.'
+            ]);
+        } else {
+            $this->response->send(200, [
+                'status' => 'success',
+                'data' => $notes
+            ]);
+        }
+    } catch (Exception $e) {
+        $this->response->send(500, [
+            'status' => 'error',
+            'message' => 'Erreur lors de la récupération des notes : ' . $e->getMessage()
+        ]);
+    }
+}
+
 }

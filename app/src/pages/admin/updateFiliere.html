@@ -618,20 +618,17 @@
             <label for="nom" class="form-label">Nom de la filière</label>
             <input type="text" class="form-control" id="nom" placeholder="ex: Génie Informatique" required>
           </div>
-
           <div class="col-md-6 mb-3">
-            <label for="departement" class="form-label">Département</label>
-            <select class="form-select" id="departement" required>
-              <option value="">-- Sélectionner --</option>
-            </select>
-          </div>
+            <label for="diplome" class="form-label">Diplôme correspondant</label>
+            <input type="text" class="form-control" id="diplome" placeholder="ex: License ..." required>
+          </div>        
         </div>
 
         <!-- Diplôme et Cycle dans la même ligne -->
         <div class="row">
           <div class="col-md-6 mb-3">
-            <label for="diplome" class="form-label">Diplôme correspondant</label>
-            <select class="form-select" id="diplome" required>
+            <label for="departement" class="form-label">Département</label>
+            <select class="form-select" id="departement" required>
               <option value="">-- Sélectionner --</option>
             </select>
           </div>
@@ -649,7 +646,7 @@
           <div class="col-md-4 mb-3">
             <label for="professeur" class="form-label">Professeur Responsable</label>
             <select class="form-select" id="professeur" required>
-              <option value="">-- Sélectionner --</option>
+              <option value="">-- Prof disponible --</option>
             </select>
           </div>
 
@@ -1098,23 +1095,7 @@
     
     // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
     function populateProfessorDropdowns() {
-      const dropdowns = ['professeur'];
       
-      dropdowns.forEach(dropdownId => {
-        const dropdown = document.getElementById(dropdownId);
-        // Garder l'option par défaut
-        while (dropdown.options.length > 1) {
-          dropdown.remove(1);
-        }
-        
-        // Ajouter les professeurs
-        allProfs.forEach(prof => {
-          const option = document.createElement('option');
-          option.value = prof.user_id;
-          option.textContent = `${prof.nom} ${prof.prenom} `;
-          dropdown.appendChild(option);
-        });
-      });
       
       // Remplir aussi les dropdowns des modules existants
       document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
@@ -1407,18 +1388,11 @@
       etapesContainer.innerHTML = '';
       
       // Déterminer le nombre d'étapes selon le cycle
-      const cycleId = document.getElementById('cycle').value;
-      if (cycleId == 1 || cycleId == 3 || cycleId == 4) {
-        etapesCount = 2;
-      } else if (cycleId == 2) {
-        etapesCount = 3;
-      } else {
-        etapesCount = 0;
-        return;
-      }
+      const nombreSemestre = cyclesData[document.getElementById('cycle').value];  
+    
       
       // Créer les conteneurs pour chaque étape et semestre
-      for (let etape = 1; etape <= etapesCount; etape++) {
+      for (let etape = 1; etape <= nombreSemestre/2; etape++) {
         const etapeDiv = document.createElement('div');
         etapeDiv.className = 'etape-container';
         etapeDiv.innerHTML = `<h4 class="etape-title">Étape ${etape}</h4>`;
@@ -1550,10 +1524,44 @@
                 observer.observe(select, { childList: true });
             }
             }
+                let cyclesData = {};  
 
+    
+    let profSelect=document.getElementById("professeur");
     
     // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
+
+
+      // Fetch Professors
+                fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Filiere')
+                  .then(res => res.json())
+                  .then(data => {
+                    
+                    const filiereData =JSON.parse(localStorage.getItem("filiereToUpdate")) ;
+                    const localChefId = filiereData.head_professor_id ;
+                    const   localChefName =filiereData.nom_professeur_responsable;
+                    console.log(localChefId,localChefName);
+
+                    // Add the chef from localStorage as a pre-selected option
+                    if (localChefName && localChefId) {
+                      const option = document.createElement('option');
+                      option.value = localChefId;
+                      option.textContent = localChefName;
+                      option.selected = true; // force it selected
+                      profSelect.appendChild(option);
+                    }
+                    const profs = objectToArray(data);
+                    profs.forEach(prof => {
+                      const option = document.createElement('option');
+                      option.value = prof.user_id;
+                      option.textContent = `${prof.nom} ${prof.prenom}`;
+                      profSelect.appendChild(option);
+                    });
+                  })
+                  .catch(() => {
+                    alert("Erreur lors du chargement des professeurs");
+                  });
       // Charger les professeurs
       loadProfs();
       
@@ -1589,18 +1597,18 @@
         .catch(() => alert("Erreur lors du chargement des annees"));
 
       // Fetch Diplome
-      fetch(adminURL+'/admin2.php?action=GetAllDiplome')
-        .then(res => res.json())
-        .then(data => {
-          const diplomes = objectToArray(data);
-          diplomes.forEach(diplome => {
-            const option = document.createElement('option');
-            option.value = diplome.diplome_id;
-            option.textContent = diplome.nom;
-            document.getElementById('diplome').appendChild(option);
-          });
-        })
-        .catch(() => alert("Erreur lors du chargement des diplomes"));
+      // fetch(adminURL+'/admin2.php?action=GetAllDiplome')
+      //   .then(res => res.json())
+      //   .then(data => {
+      //     const diplomes = objectToArray(data);
+      //     diplomes.forEach(diplome => {
+      //       const option = document.createElement('option');
+      //       option.value = diplome.diplome_id;
+      //       option.textContent = diplome.nom;
+      //       document.getElementById('diplome').appendChild(option);
+      //     });
+      //   })
+      //   .catch(() => alert("Erreur lors du chargement des diplomes"));
       
       // Fetch Departments
       fetch(adminURL+'/admin2.php?action=GetAllDepartment')
@@ -1622,6 +1630,8 @@
           .then(data => {
             const cycles = objectToArray(data);
             cycles.forEach(cycle => {
+              cyclesData[cycle.cycle_id] = cycle.Nombre_semestre;
+
               const option = document.createElement('option');
               option.value = cycle.cycle_id;
               option.textContent = cycle.nom;
@@ -1630,23 +1640,21 @@
           })
           .catch(() => alert("Erreur lors du chargement des cycles"));
       
-      // Configurer le bouton "Ajouter les modules"
-      document.getElementById('ajouterModulesBtn').addEventListener('click', function() {
-        const cycleId = document.getElementById('cycle').value;
-        if (!cycleId) {
-          showToast("Veuillez d'abord sélectionner un cycle.");
-          return;
-        }
-        
-        // Créer la structure des étapes et semestres
-        createEtapeSemestreStructure();
-        
-        // Afficher le conteneur des modules
-        document.getElementById('modulesContainer').style.display = 'block';
-        
-        // Cacher le bouton "Ajouter les modules"
-        this.style.display = 'none';
-      });
+      document.getElementById('ajouterModulesBtn').addEventListener('click', function () {
+              displayMod();
+
+              if( displayMod()){
+                  this.style.display = 'none';
+                } 
+        });
+
+        // 👉 Cycle : mise à jour quand on change
+        document.getElementById('cycle').addEventListener('change', function () {
+          // Seulement si le conteneur est déjà affiché (bouton cliqué une fois)
+          if (document.getElementById('modulesContainer').style.display === 'block') {
+            displayMod();
+          }
+        });
       
       // Configurer le bouton "Annuler l'ajout des modules"
       document.getElementById('annulerModulesBtn').addEventListener('click', annulerAjoutModules);
@@ -1657,30 +1665,45 @@
         UpdateFiliere();
       });
 
+      
+
       const filiereStr = localStorage.getItem("filiereToUpdate");
         if (filiereStr) {
-        const filiereData = JSON.parse(filiereStr);
-      console.log(filiereData);
-          const filedId=filiereData.field_id;
-        document.getElementById("nom").value = filiereData.nom_filiere ?? "";
+                const filiereData = JSON.parse(filiereStr);
+                console.log(filiereData);
+                const filedId=filiereData.field_id;
+                document.getElementById("nom").value = filiereData.nom_filiere ?? "";
 
-        // Utilise la fonction pour pré-sélectionner le bon texte
-        setSelectValue("departement", filiereData.department_id ?? "");
-        setSelectValue("professeur", filiereData.head_professor_id ?? "");
-        setSelectValue("annee_debut_accreditation", filiereData.annee_accreditation ?? "");
-        setSelectValue("annee_fin_accreditation", filiereData.annee_fin_accrediation ?? "");
-        setSelectValue("cycle", filiereData.cycle_id ?? "");
-        setSelectValue("diplome", filiereData.diplome_id ?? "");
-        setSelectValue("statut", filiereData.status ?? "");
+                // Utilise la fonction pour pré-sélectionner le bon texte
+                setSelectValue("departement", filiereData.department_id ?? "");
+                setSelectValue("professeur", filiereData.head_professor_id ?? "");
+                setSelectValue("annee_debut_accreditation", filiereData.annee_accreditation ?? "");
+                setSelectValue("annee_fin_accreditation", filiereData.annee_fin_accrediation ?? "");
+                setSelectValue("cycle", filiereData.cycle_id ?? "");
+                setSelectValue("statut", filiereData.status ?? "");
+                // Dates
+                document.getElementById("date_debut_affectation").value = filiereData.debut_affectation ?? "";
+                document.getElementById("date_fin_affectation").value = filiereData.fin_affectation ?? "";
+                document.getElementById("diplome").value = filiereData.nom_diplome?? "";
 
-        // Dates
-        document.getElementById("date_debut_affectation").value = filiereData.debut_affectaion ?? "";
-        document.getElementById("date_fin_affectation").value = filiereData.fin_affectaion ?? "";
         }
 
 
   
     });
+    function displayMod() {
+        const cycleId = document.getElementById('cycle').value;
+        if (!cycleId) {
+          showToast("Veuillez d'abord sélectionner un cycle.");
+          return false;
+        }
+
+        // Rebuild la structure des étapes/semestres
+        createEtapeSemestreStructure();
+
+        // Afficher le conteneur
+        document.getElementById('modulesContainer').style.display = 'block';
+      }
 
     // Fonction pour collecter tous les volumes horaires
     function collectAllVolumes() {

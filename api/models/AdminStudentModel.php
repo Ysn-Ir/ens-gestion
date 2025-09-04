@@ -602,8 +602,20 @@ public function getFilteredStudents($annee_id = null, $field_id = null, $semestr
         FROM etapes");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    public function getAllSemesteres(){
-        return $this->db->query("SELECT * FROM semestres ORDER BY nom")->fetchAll();
+    public function getAllSemesteres($fieldId, $etape_id){
+        // return $this->db->query("SELECT * FROM semestres ORDER BY nom")->fetchAll();
+        $stmt = $this->db->prepare("
+        SELECT *
+        FROM semestres
+        WHERE (field_id = ? OR ? IS NULL)
+          AND (etape_id = ? OR ? IS NULL)
+        ORDER BY nom
+    ");
+    
+    // Pass each parameter twice, as explained earlier
+    $stmt->execute([$fieldId, $fieldId, $etape_id, $etape_id]);
+    return $stmt->fetchAll();
+        
     }
    
     public function getFilierByDepartement($depId){

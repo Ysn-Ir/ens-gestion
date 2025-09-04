@@ -2,5 +2,5 @@
 define('DB_HOST', '127.0.0.1');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'new_ens');
+define('DB_NAME', 'new_ens_1');
 define('DB_CHARSET', 'utf8mb4');

@@ -619,20 +619,17 @@
             <label for="nom" class="form-label">Nom de la filière</label>
             <input type="text" class="form-control" id="nom" placeholder="ex: Génie Informatique" required>
           </div>
-
           <div class="col-md-6 mb-3">
-            <label for="departement" class="form-label">Département</label>
-            <select class="form-select" id="departement" required>
-              <option value="">-- Sélectionner --</option>
-            </select>
-          </div>
+            <label for="diplome" class="form-label">Diplôme correspondant</label>
+            <input type="text" class="form-control" id="diplome" placeholder="ex: License ..." required>
+          </div>        
         </div>
 
         <!-- Diplôme et Cycle dans la même ligne -->
         <div class="row">
           <div class="col-md-6 mb-3">
-            <label for="diplome" class="form-label">Diplôme correspondant</label>
-            <select class="form-select" id="diplome" required>
+            <label for="departement" class="form-label">Département</label>
+            <select class="form-select" id="departement" required>
               <option value="">-- Sélectionner --</option>
             </select>
           </div>
@@ -650,7 +647,7 @@
           <div class="col-md-4 mb-3">
             <label for="professeur" class="form-label">Professeur Responsable</label>
             <select class="form-select" id="professeur" required>
-              <option value="">-- Sélectionner --</option>
+              <option value="">-- Prof disponible --</option>
             </select>
           </div>
 
@@ -862,49 +859,48 @@
         <div class="horaire-container">
           <h6 class="horaire-title">Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
           <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire de TP</label>
-              <input type="number" class="form-control volume-tp" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire de TD</label>
-              <input type="number" class="form-control volume-td" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire de Cours</label>
-              <input type="number" class="form-control volume-cours" min="0" value="0">
-            </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
           </div>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire d'Activité pratique</label>
-              <input type="number" class="form-control volume-pratique" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire d'Évaluation</label>
-              <input type="number" class="form-control volume-evaluation" min="0" value="0">
-            </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
           </div>
-        </div>
-        
-        <!-- Répartition du volume horaire par mode d’enseignement -->
-        <div class="horaire-container">
-          <h6 class="horaire-title">Répartition du volume horaire par mode d’enseignement</h6>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire en présentiel</label>
-              <input type="number" class="form-control volume-presentiel" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire à distance</label>
-              <input type="number" class="form-control volume-distance" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire en alternance</label>
-              <input type="number" class="form-control volume-alternance" min="0" value="0">
-            </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+          </div>
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
           </div>
         </div>
+      </div>
+
+      <div class="horaire-container">
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En présentiel</label>
+            <input type="number" class="form-control volume-presentiel" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">A distance</label>
+            <input type="number" class="form-control volume-distance" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En alternance</label>
+            <input type="number" class="form-control volume-alternance" min="0" value="0">
+          </div>
+        </div>
+      </div>
       </div>
       
       <!-- Conteneur principal qui s'affiche seulement si Oui est sélectionné -->
@@ -1013,45 +1009,44 @@
       <div class="horaire-container">
         <h6 class="horaire-title">Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
         <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire de TP</label>
-            <input type="number" class="form-control volume-tp" min="0" value="0">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire de TD</label>
-            <input type="number" class="form-control volume-td" min="0" value="0">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire de Cours</label>
-            <input type="number" class="form-control volume-cours" min="0" value="0">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
           </div>
-        </div>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire d'Activité pratique</label>
-            <input type="number" class="form-control volume-pratique" min="0" value="0">
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire d'Évaluation</label>
-            <input type="number" class="form-control volume-evaluation" min="0" value="0">
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
           </div>
         </div>
       </div>
 
-      <!-- Répartition du volume horaire par mode d’enseignement -->
       <div class="horaire-container">
-        <h6 class="horaire-title">Répartition du volume horaire par mode d’enseignement</h6>
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
         <div class="row">
           <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire en présentiel</label>
+            <label class="form-label titles">En présentiel</label>
             <input type="number" class="form-control volume-presentiel" min="0" value="0">
           </div>
           <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire à distance</label>
+            <label class="form-label titles">A distance</label>
             <input type="number" class="form-control volume-distance" min="0" value="0">
           </div>
           <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire en alternance</label>
+            <label class="form-label titles">En alternance</label>
             <input type="number" class="form-control volume-alternance" min="0" value="0">
           </div>
         </div>
@@ -1096,27 +1091,13 @@
                             populateProfessorDropdowns();
                     });
                 }
+
+
+                
     
                 // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
                 function populateProfessorDropdowns() {
-                  const dropdowns = ['professeur'];
                   
-                  dropdowns.forEach(dropdownId => {
-                    console.log(dropdownId);
-                    const dropdown = document.getElementById(dropdownId);
-                    // Garder l'option par défaut
-                    while (dropdown.options.length > 1) {
-                      dropdown.remove(1);
-                    }
-                    
-                    // Ajouter les professeurs
-                    allProfs.forEach(prof => {
-                      const option = document.createElement('option');
-                      option.value = prof.user_id;
-                      option.textContent = `${prof.prenom} ${prof.nom}`;
-                      dropdown.appendChild(option);
-                    });
-                  });
                   
                   // Remplir aussi les dropdowns des modules existants
                   document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
@@ -1442,18 +1423,11 @@
       etapesContainer.innerHTML = '';
       
       // Déterminer le nombre d'étapes selon le cycle
-      const cycleId = document.getElementById('cycle').value;
-      if (cycleId == 1 || cycleId == 3 || cycleId == 4) {
-        etapesCount = 2;
-      } else if (cycleId == 2) {
-        etapesCount = 3;
-      } else {
-        etapesCount = 0;
-        return;
-      }
+      const nombreSemestre = cyclesData[document.getElementById('cycle').value];  
+    
       
       // Créer les conteneurs pour chaque étape et semestre
-      for (let etape = 1; etape <= etapesCount; etape++) {
+      for (let etape = 1; etape <= nombreSemestre/2; etape++) {
         const etapeDiv = document.createElement('div');
         etapeDiv.className = 'etape-container';
         etapeDiv.innerHTML = `<h4 class="etape-title">Étape ${etape}</h4>`;
@@ -1565,11 +1539,31 @@
       startYearSelect.value = currentYear;
       endYearSelect.value = currentYear + 5;
     }
-    
+    let cyclesData = {};  
+    let profSelect=document.getElementById("professeur");
     // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
+
+
+      // Fetch Professors
+                fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Filiere')
+                  .then(res => res.json())
+                  .then(data => {
+                    const profs = objectToArray(data);
+                    profs.forEach(prof => {
+                      const option = document.createElement('option');
+                      option.value = prof.user_id;
+                      option.textContent = `${prof.nom} ${prof.prenom}`;
+                      profSelect.appendChild(option);
+                    });
+                  })
+                  .catch(() => {
+                    alert("Erreur lors du chargement des professeurs");
+                  });
       // Charger les professeurs
       loadProfs();
+
+
       
       // Remplir les selects d'années
       // populateYearDropdowns();
@@ -1601,20 +1595,7 @@
           });
         })
         .catch(() => alert("Erreur lors du chargement des annees"));
-        console.log(adminURL+'/admin2.php?action=GetAllDiplome');
-      // Fetch Diplome
-      fetch(adminURL+'/admin2.php?action=GetAllDiplome')
-        .then(res => res.json())
-        .then(data => {
-          const diplomes = objectToArray(data);
-          diplomes.forEach(diplome => {
-            const option = document.createElement('option');
-            option.value = diplome.diplome_id;
-            option.textContent = diplome.nom;
-            document.getElementById('diplome').appendChild(option);
-          });
-        })
-        .catch(() => alert("Erreur lors du chargement des diplomes"));
+      
       
       // Fetch Departments
       fetch(adminURL+'/admin2.php?action=GetAllDepartment')
@@ -1629,13 +1610,15 @@
           });
         })
         .catch(() => alert("Erreur lors du chargement des departements"));
-
+      
       // Fetch Cycles
       fetch(adminURL+'/admin2.php?action=GetAllCycle')
           .then(res => res.json())
           .then(data => {
             const cycles = objectToArray(data);
             cycles.forEach(cycle => {
+              cyclesData[cycle.cycle_id] = cycle.Nombre_semestre;
+
               const option = document.createElement('option');
               option.value = cycle.cycle_id;
               option.textContent = cycle.nom;
@@ -1645,22 +1628,24 @@
           .catch(() => alert("Erreur lors du chargement des cycles"));
       
       // Configurer le bouton "Ajouter les modules"
-      document.getElementById('ajouterModulesBtn').addEventListener('click', function() {
-        const cycleId = document.getElementById('cycle').value;
-        if (!cycleId) {
-          showToast("Veuillez d'abord sélectionner un cycle.");
-          return;
-        }
-        
-        // Créer la structure des étapes et semestres
-        createEtapeSemestreStructure();
-        
-        // Afficher le conteneur des modules
-        document.getElementById('modulesContainer').style.display = 'block';
-        
-        // Cacher le bouton "Ajouter les modules"
-        this.style.display = 'none';
-      });
+      // 👉 Bouton : première ouverture
+        document.getElementById('ajouterModulesBtn').addEventListener('click', function () {
+              displayMod();
+
+
+              if( displayMod()){
+              this.style.display = 'none';
+              }
+          
+        });
+
+        // 👉 Cycle : mise à jour quand on change
+        document.getElementById('cycle').addEventListener('change', function () {
+          // Seulement si le conteneur est déjà affiché (bouton cliqué une fois)
+          if (document.getElementById('modulesContainer').style.display === 'block') {
+            displayMod();
+          }
+        });
       
       // Configurer le bouton "Annuler l'ajout des modules"
       document.getElementById('annulerModulesBtn').addEventListener('click', annulerAjoutModules);
@@ -1671,6 +1656,21 @@
         AjouterFiliere();
       });
     });
+
+    function displayMod() {
+        const cycleId = document.getElementById('cycle').value;
+        if (!cycleId) {
+          showToast("Veuillez d'abord sélectionner un cycle.");
+          return false;
+        }
+
+        // Rebuild la structure des étapes/semestres
+        createEtapeSemestreStructure();
+
+        // Afficher le conteneur
+        document.getElementById('modulesContainer').style.display = 'block';
+      }
+    
 
     // Fonction pour collecter tous les volumes horaires
     function collectAllVolumes() {

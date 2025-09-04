@@ -416,7 +416,7 @@
           const diplomes = objectToArray(data);
           diplomes.forEach(diplome => {
             const option = document.createElement('option');
-            option.value = diplome.diplome_id;
+            option.value = diplome.nom;
             option.textContent = diplome.nom;
             document.getElementById('diplome').appendChild(option);
           });
@@ -471,6 +471,8 @@
               if (selectedStatus) params.push(`status=${selectedStatus}`);
 
               if (params.length > 0) url += "&" + params.join("&");
+
+              console.log(selectedDiplome);
 
               // Loader
               const filiereTableBody = document.getElementById('filiereTableBody');
@@ -572,8 +574,8 @@
         <p><strong>Année d’accréditation :</strong> ${filiere.annee_accreditation ?? ""}</p>
         <p><strong>Année fin accréditation :</strong> ${filiere.annee_fin_accrediation ?? ""}</p>
         <p><strong>Chef de filière :</strong> ${filiere.nom_professeur_responsable ?? ""}</p>
-        <p><strong>Date de début d’affectation :</strong> ${filiere.debut_affectaion ?? ""}</p>
-        <p><strong>Date de fin d’affectation :</strong> ${filiere.fin_affectaion ?? ""}</p>
+        <p><strong>Date de début d’affectation :</strong> ${filiere.debut_affectation ?? ""}</p>
+        <p><strong>Date de fin d’affectation :</strong> ${filiere.fin_affectation ?? ""}</p>
         <p><strong>Status :</strong> ${filiere.status ?? ""}</p>
       `;
 

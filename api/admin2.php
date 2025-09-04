@@ -58,6 +58,8 @@ try {
 
     $dateDebut=filter_input(INPUT_GET, 'dateDebut', FILTER_SANITIZE_SPECIAL_CHARS);
     $dateFin=filter_input(INPUT_GET, 'dateFin', FILTER_SANITIZE_SPECIAL_CHARS);
+    $role=filter_input(INPUT_GET, 'role', FILTER_SANITIZE_SPECIAL_CHARS);
+
     // $jsonData = filter_input(INPUT_GET, 'data', FILTER_SANITIZE_SPECIAL_CHARS);
     // $decodedData = json_decode($jsonData, true); // true = associative array
 
@@ -88,10 +90,7 @@ try {
 
     // Route based on action
     switch ($action) {
-        // case 'getFilieres':
-        //     // validateMethod($method, 'GET');
-        //     $controller->getAllFilieres();
-        //     break;
+        
         case "getFilieres":
                     $cycle_id = (!empty($_GET['cycle_id'])) ? $_GET['cycle_id'] : null;
                     $diplome_id = (!empty($_GET['diplome_id'])) ? $_GET['diplome_id'] : null;
@@ -126,39 +125,18 @@ try {
                 $controller->GetAllCycle();
                 break ;
             case 'GetAllRegularProffessors':
-                $controller->GetAllRegularProffessors();
+                $controller->GetAllRegularProffessors($role);
                 break ;
             case 'GetAllDepartment':
                 $controller->GetAllDepartment();
                 break ;
-            // case 'AjouterFiliere':
-            //     $jsonData = file_get_contents('php://input');
-            //     $decodedData = json_decode($jsonData, true);
-
-            //     if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
-            //         http_response_code(400);
-            //         echo json_encode(['error' => 'Erreur JSON : ' . json_last_error_msg()]);
-            //         exit;
-            //     }
-
-            //     $nomFili = $decodedData['nom'] ?? null;
-            //     $depart_id = $decodedData['depart_id'] ?? null;
-            //     $prof_id = $decodedData['prof_id'] ?? null;
-            //     $cycle_id = $decodedData['cycle_id'] ?? null;
-
-            //     if (!$nomFili || !$depart_id || !$cycle_id || !$prof_id) {
-            //         throw new Exception("Champs obligatoires manquants", 400);
-            //     }
-
-            //     // Tu peux aussi envoyer $decodedData['sections'] ici
-            //     $controller->AjouterFiliere($nomFili, $depart_id, $cycle_id, $prof_id, $decodedData['sections']);
-            //     break;
+           
 
             case 'getFiliereById': 
                 if (!$fieldId) {
                     throw new Exception('Paramètre "field_id" requis', 400);
                 }
-                $controller->getFiliereById($fieldId);  // ici $fieldId, pas $field_id
+                $controller->getFiliereById($fieldId);  
                 break; 
 
             case 'YEARS': 
@@ -185,10 +163,10 @@ try {
                 $controller->AjouterDepart($nomDepart,$prof_id,$dateDebut,$dateFin);
                 break ; 
             case "updateDepart":
-                if (!$depart_id || !$nomDepart || !$prof_id || !$anneeAccreditation) {
+                if (!$depart_id || !$nomDepart || !$prof_id || !$anneeAccreditation || !$dateDebut || !$dateFin) {
                     throw new Exception("Paramètres requis pour la modification du département manquants", 400);
                 }
-                $controller->updateDepart($depart_id, $nomDepart, $prof_id, $anneeAccreditation);
+                $controller->updateDepart($depart_id, $nomDepart, $prof_id, $anneeAccreditation,$dateDebut,$dateFin);
                 break;
             case "infoModules" :
                 $controller->infoModules();
@@ -200,61 +178,17 @@ try {
                 $controller->getFilieresByYear($anneeAccreditation);
                 break;
 
-            case "AjouterModuleM1":
-                // Attention : 0.0 est "falsey" donc on teste explicitement === false || === null
-                if (
-                    !$codeMod || !$nomMod ||
-                    $coeff_cc === false || $coeff_cc === null ||
-                    $coeff_ecrit === false || $coeff_ecrit === null ||
-                    $coeff_element === false || $coeff_element === null ||
-                    $coeff_tp === false || $coeff_tp === null ||
-                    $ref_filiere === null || $ref_semestre === null || $ref_prof_element === null 
-                ){
-                    throw new Exception("Paramètres manquants ou invalides", 400);
-                }
-
-                // Vérifier que coefficients sont entre 0 et 1
-                foreach ([$coeff_cc, $coeff_ecrit, $coeff_element, $coeff_tp] as $c) {
-                    if ($c < 0 || $c > 1) {
-                        throw new Exception("Chaque coefficient doit être entre 0 et 1", 400);
-                    }
-                }
-
-                $controller->AjouterModuleM1($codeMod, $nomMod, $coeff_cc, $coeff_ecrit, $coeff_element, $coeff_tp, $ref_filiere, $ref_semestre, $ref_prof_element, $ref_prof_tp);
-                break;
+            
             case 'GetAllProffessors':
                 $controller->GetAllProffessors();
                 break ;
             case "getNombreSemestresByFiliere":
                 $controller->getNombreSemestresByFiliere($fieldId);
                 break;
-            case 'AjouterModuleAvecElements':
-                    $jsonData = file_get_contents('php://input');
-                    $decodedData = json_decode($jsonData, true);
-
-                    if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
-                        http_response_code(400);
-                        echo json_encode(['error' => 'Erreur lors du décodage JSON : ' . json_last_error_msg()]);
-                        exit;
-                    }
-
-                    $controller->AjouterModuleAvecElements($decodedData);
-                    break;
-           case 'ModifierModuleAvecElement':
-                    $jsonData = file_get_contents('php://input');
-                    $decodedData = json_decode($jsonData, true);
-
-                    if (!$decodedData || json_last_error() !== JSON_ERROR_NONE) {
-                        http_response_code(400);
-                        echo json_encode(['error' => 'Erreur lors du décodage JSON : ' . json_last_error_msg()]);
-                        exit;
-                    }
-
-                    $controller->ModifierModuleAvecElement($decodedData);
-                    break;
-
+           
+           
             case 'deleteModule': 
-                if (!$module_id ) {
+                if (!$module_id) {
                     throw new Exception("Paramètres requis manquants", 400);
                 }
                 $controller->deleteModule($module_id);
@@ -267,48 +201,7 @@ try {
                 break ; 
         
 
-            // case 'UpdateModuleSansElements':
-            //         try {
-            //             if (!$module_id || !$codeMod || !$nomMod || $coeff_cc === false || $coeff_ecrit === false ||
-            //                 $coeff_element === false || $coeff_tp === false || !$ref_filiere || !$ref_semestre || !$ref_prof_element) {
-            //                 throw new Exception("Paramètres manquants ou invalides", 400);
-            //             }
-
-            //             // Traitement du prof TP
-            //             if ($ref_prof_tp === 'null' || $ref_prof_tp === null || $ref_prof_tp === '') {
-            //                 $ref_prof_tp = null;
-            //             } else {
-            //                 $ref_prof_tp = intval($ref_prof_tp);
-            //             }
-
-            //             $controller->UpdateModuleSansElements(
-            //                 $module_id,
-            //                 $codeMod,
-            //                 $nomMod,
-            //                 $coeff_cc,
-            //                 $coeff_ecrit,
-            //                 $coeff_element,
-            //                 $coeff_tp,
-            //                 $ref_filiere,
-            //                 $ref_semestre,
-            //                 $ref_prof_element,
-            //                 $ref_prof_tp
-            //             );
-
-            //             // Réponse JSON
-            //             echo json_encode(["status" => "success", "message" => "Module modifié avec succès"]);
-            //             exit;
-
-            //         } catch (Exception $e) {
-            //             http_response_code(400);
-            //             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-            //             exit;
-            //         }
-
-           
-            // case 'UpdateModuleAvecElements':
-            //     $controller->UpdateModuleAvecElements();
-            //     break;
+          
             case 'AjouterFiliere':
                     $jsonData = file_get_contents('php://input');
                     $decodedData = json_decode($jsonData, true);
