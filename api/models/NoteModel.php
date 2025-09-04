@@ -386,11 +386,11 @@ public function calculateAllFinalNotes($semestre_id, $annee_id)
                     SELECT 
                         m.module_id, 
                         m.coefficient, 
-                        AVG(n.note_finale * e.coeff_element / 100) AS avg_note,
+                        AVG(n.note_finale * e.coeff_element ) AS avg_note,
                         AVG(
                             CASE 
                                 WHEN n.note_rattrapage IS NOT NULL 
-                                THEN n.note_rattrapage * e.coeff_element / 100
+                                THEN n.note_rattrapage * e.coeff_element 
                             END
                         ) AS avg_note_rattrapage
                     FROM note_modules nm
