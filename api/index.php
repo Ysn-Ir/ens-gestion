@@ -82,12 +82,6 @@ try {
             (new AuthController())->me();
             break;
 
-        case 'getAdminProfile':
-            require_once __DIR__ . '/controllers/AdminController3.php';
-            $adminController = new AdminController3();
-            $adminController->getProfile();
-            break;
-
         //////////////////////////////////////////////////////////////////////////////////////
 
         // 🔐 Professeur - Obtenir le profil du professeur
@@ -235,6 +229,12 @@ try {
             (new ProfessorMiddleware())->verifyProfessor();
             require_once __DIR__.'/controllers/ProfessorController.php';
             (new ProfessorController())->getFilieres();
+            break;
+
+        case 'getAdminProfile':
+            require_once __DIR__ . '/controllers/AdminController3.php';
+            $adminController = new AdminController3();
+            $adminController->getProfile();
             break;
 
         // Route non reconnue
