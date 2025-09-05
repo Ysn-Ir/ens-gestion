@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__.'/config/constants.php';
 require_once __DIR__.'/utils/Response.php';
 
@@ -79,6 +80,12 @@ try {
         case $request === 'auth/me' && $_SERVER['REQUEST_METHOD'] === 'GET':
             require_once __DIR__.'/controllers/AuthController.php';
             (new AuthController())->me();
+            break;
+
+        case 'getAdminProfile':
+            require_once __DIR__ . '/controllers/AdminController3.php';
+            $adminController = new AdminController3();
+            $adminController->getProfile();
             break;
 
         //////////////////////////////////////////////////////////////////////////////////////
