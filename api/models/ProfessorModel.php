@@ -806,63 +806,95 @@ class ProfessorModel {
     }
 
     /**
-     * Récupère les détails du profil du professeur.
-     * Jointures sur `utilisateurs`, `professeurs`, et `professor_roles`.
-     * Récupère également les informations sur la filière/département gérée(e) si applicable.
+     * Récupère les détails COMPLETS du profil du professeur.
+     * Jointures sur `utilisateurs`, `professeurs`, `departements`, et `professor_roles`.
+     * Calcule également des statistiques comme le nombre d'éléments et de modules enseignés.
      * @param int $userId L'ID de l'utilisateur (professeur).
-     * @return array|false Les détails du professeur, ou false si non trouvé.
+     * @return array|false Les détails complets du professeur, ou false si non trouvé.
      */
     public function getProfessorDetails($userId) {
         try {
-            // Première requête pour obtenir les informations de base et le rôle de degré
+            // --- Requête principale pour les informations de base ---
             $stmt = $this->db->prepare("
                 SELECT
                     u.user_id,
                     p.nom,
                     p.prenom,
-                    u.role,
                     u.email,
-                    pr.role AS professor_degree_role -- Rôle spécifique du professeur (pour 'Degree')
+                    u.role AS user_role, -- Renommé pour éviter la confusion
+                    p.telephone,
+                    p.cin,
+                    d.nom AS department_name, -- Nom du département d'attache
+                    pr.role AS professor_degree_role -- Rôle spécifique (Chef, etc.)
                 FROM utilisateurs u
                 JOIN professeurs p ON u.user_id = p.user_id
-                LEFT JOIN professor_roles pr ON u.user_id = pr.user_id -- LEFT JOIN pour inclure le rôle de degré s'il existe
+                LEFT JOIN departements d ON p.department_id = d.department_id
+                LEFT JOIN professor_roles pr ON u.user_id = pr.user_id
                 WHERE u.user_id = ?
             ");
             $stmt->execute([$userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($user) {
-                $user['managed_field_id'] = null;
-                $user['managed_department_id'] = null;
-                $user['managed_field_name'] = null; // Nom de la filière
-                $user['managed_department_name'] = null; // Nom du département
+            if (!$user) {
+                return false; // Si l'utilisateur n'est pas trouvé, on arrête ici.
+            }
 
-                // Récupérer l'ID et le nom de la filière ou du département géré(e) en fonction du rôle de degré
-                if ($user['professor_degree_role'] === 'Chef_de_Filiere') {
-                    $stmtField = $this->db->prepare("SELECT field_id, nom FROM filieres WHERE head_professor_id = ? LIMIT 1");
-                    $stmtField->execute([$userId]);
-                    $fieldHead = $stmtField->fetch(PDO::FETCH_ASSOC);
-                    if ($fieldHead) {
-                        $user['managed_field_id'] = $fieldHead['field_id'];
-                        $user['managed_field_name'] = $fieldHead['nom'];
-                    }
-                } elseif ($user['professor_degree_role'] === 'Chef_de_Departement') {
-                    $stmtDept = $this->db->prepare("SELECT department_id, nom FROM departements WHERE head_professor_id = ? LIMIT 1");
-                    $stmtDept->execute([$userId]);
-                    $deptHead = $stmtDept->fetch(PDO::FETCH_ASSOC);
-                    if ($deptHead) {
-                        $user['managed_department_id'] = $deptHead['department_id'];
-                        $user['managed_department_name'] = $deptHead['nom'];
-                    }
+            // --- Requêtes supplémentaires pour les statistiques ---
+
+            // Compter le nombre d'éléments enseignés (principal ou TP)
+            $stmtElements = $this->db->prepare("
+                SELECT COUNT(DISTINCT element_id) as element_count
+                FROM elements
+                WHERE Ref_prof_element = ? OR Ref_prof_tp = ?
+            ");
+            $stmtElements->execute([$userId, $userId]);
+            $user['teaching_stats']['elements_count'] = $stmtElements->fetchColumn();
+
+            // Compter le nombre de modules uniques dans lesquels le professeur enseigne
+            $stmtModules = $this->db->prepare("
+                SELECT COUNT(DISTINCT m.module_id) as module_count
+                FROM modules m
+                JOIN elements e ON m.module_id = e.module_id
+                WHERE e.Ref_prof_element = ? OR e.Ref_prof_tp = ?
+            ");
+            $stmtModules->execute([$userId, $userId]);
+            $user['teaching_stats']['modules_count'] = $stmtModules->fetchColumn();
+
+            // --- Logique pour les rôles de chef (inchangée mais importante) ---
+            $user['managed_entity'] = null; // Une seule clé pour simplifier côté JS
+
+            if ($user['professor_degree_role'] === 'Chef_de_Filiere') {
+                $stmtField = $this->db->prepare("SELECT field_id, nom FROM filieres WHERE head_professor_id = ? LIMIT 1");
+                $stmtField->execute([$userId]);
+                $fieldHead = $stmtField->fetch(PDO::FETCH_ASSOC);
+                if ($fieldHead) {
+                    $user['managed_entity'] = [
+                        'type' => 'Filière',
+                        'id' => $fieldHead['field_id'],
+                        'name' => $fieldHead['nom']
+                    ];
+                }
+            } elseif ($user['professor_degree_role'] === 'Chef_de_Departement') {
+                $stmtDept = $this->db->prepare("SELECT department_id, nom FROM departements WHERE head_professor_id = ? LIMIT 1");
+                $stmtDept->execute([$userId]);
+                $deptHead = $stmtDept->fetch(PDO::FETCH_ASSOC);
+                if ($deptHead) {
+                    $user['managed_entity'] = [
+                        'type' => 'Département',
+                        'id' => $deptHead['department_id'],
+                        'name' => $deptHead['nom']
+                    ];
                 }
             }
 
             return $user;
+
         } catch (PDOException $e) {
             error_log("Database error in getProfessorDetails: " . $e->getMessage());
             return false;
         }
     }
+
 
     /**
      * Récupère toutes les années académiques disponibles.
@@ -875,6 +907,100 @@ class ProfessorModel {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("Database error in getAllAcademicYears: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les semestres uniques associés aux modules d'une filière spécifique.
+     * Utile pour peupler les filtres d'un chef de filière.
+     * @param int $fieldId L'ID de la filière.
+     * @return array Liste des semestres pertinents.
+     */
+    public function getSemestersByFieldId($fieldId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT s.semestre_id, s.nom
+                FROM semestres s
+                JOIN modules m ON s.semestre_id = m.semestre_id
+                WHERE m.field_id = ?
+                ORDER BY s.nom ASC
+            ");
+            $stmt->execute([$fieldId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getSemestersByFieldId: " . $e->getMessage());
+            return [];
+        }
+    } 
+
+    /**
+     * Récupère les étapes uniques associées aux modules d'une filière spécifique.
+     * @param int $fieldId L'ID de la filière.
+     * @return array Liste des étapes pertinentes.
+     */
+    public function getEtapesByFieldId($fieldId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT e.etape_id, e.nom_etape
+                FROM etapes e
+                JOIN semestres s ON e.etape_id = s.etape_id
+                JOIN modules m ON s.semestre_id = m.semestre_id
+                WHERE m.field_id = ?
+                ORDER BY e.etape_id ASC
+            ");
+            $stmt->execute([$fieldId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getEtapesByFieldId: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les semestres uniques associés aux modules d'un département spécifique.
+     * Utile pour peupler les filtres d'un chef de département.
+     * @param int $departmentId L'ID du département.
+     * @return array Liste des semestres pertinents.
+     */
+    public function getSemestersByDepartmentId($departmentId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT s.semestre_id, s.nom
+                FROM semestres s
+                JOIN modules m ON s.semestre_id = m.semestre_id
+                JOIN filieres f ON m.field_id = f.field_id
+                WHERE f.department_id = ?
+                ORDER BY s.nom ASC
+            ");
+            $stmt->execute([$departmentId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getSemestersByDepartmentId: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les étapes uniques associées aux modules d'un département spécifique.
+     * @param int $departmentId L'ID du département.
+     * @return array Liste des étapes pertinentes.
+     */
+    public function getEtapesByDepartmentId($departmentId) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT DISTINCT e.etape_id, e.nom_etape
+                FROM etapes e
+                JOIN semestres s ON e.etape_id = s.etape_id
+                JOIN modules m ON s.semestre_id = m.semestre_id
+                JOIN filieres f ON m.field_id = f.field_id
+                WHERE f.department_id = ?
+                ORDER BY e.etape_id ASC
+            ");
+            $stmt->execute([$departmentId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getEtapesByDepartmentId: " . $e->getMessage());
             return [];
         }
     }

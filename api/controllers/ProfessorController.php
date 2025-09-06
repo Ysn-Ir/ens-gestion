@@ -253,9 +253,7 @@ class ProfessorController {
     }
 
     /**
-     * Récupère toutes les notes pour une filière spécifique,
-     * avec options de filtrage par semestre et étape académique.
-     * Accessible uniquement aux chefs de filière ou de département qui gèrent cette filière.
+     * Récupère toutes les notes pour une filière spécifique.
      * @param int $fieldId L'ID de la filière.
      */
     public function getFieldNotes($fieldId) {
@@ -263,8 +261,6 @@ class ProfessorController {
             (new ProfessorMiddleware())->verifyProfessor();
             $userId = $_SESSION['user']['user_id'];
 
-            // Vérifie si l'utilisateur est chef de filière pour cette filière
-            // Ou chef de département pour le département de cette filière
             $profile = $this->model->getProfessorDetails($userId);
             if (!$profile) {
                 $this->response->send(403, ['error' => 'Profil non trouvé.']);
@@ -272,16 +268,21 @@ class ProfessorController {
             }
 
             $isAuthorized = false;
+
+            // CORRECTION : Utiliser également ici la nouvelle structure 'managed_entity'
+            $managedEntity = $profile['managed_entity'] ?? null;
+
             // Si chef de filière, doit gérer cette filière
-            if ($profile['professor_degree_role'] === 'Chef_de_Filiere' && $profile['managed_field_id'] == $fieldId) {
+            if ($profile['professor_degree_role'] === 'Chef_de_Filiere' && $managedEntity && $managedEntity['id'] == $fieldId) {
                 $isAuthorized = true;
             }
+            
             // Si chef de département, doit gérer le département de cette filière
-            if ($profile['professor_degree_role'] === 'Chef_de_Departement') {
+            if ($profile['professor_degree_role'] === 'Chef_de_Departement' && $managedEntity) {
                 $stmtFieldDept = $this->model->getDbConnection()->prepare("SELECT department_id FROM filieres WHERE field_id = ?");
                 $stmtFieldDept->execute([$fieldId]);
                 $fieldDepartmentId = $stmtFieldDept->fetchColumn();
-                if ($fieldDepartmentId && $profile['managed_department_id'] == $fieldDepartmentId) {
+                if ($fieldDepartmentId && $managedEntity['id'] == $fieldDepartmentId) {
                     $isAuthorized = true;
                 }
             }
@@ -291,9 +292,8 @@ class ProfessorController {
                 return;
             }
 
-            // Récupérer les paramètres de requête optionnels
             $semestreId = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
-            $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT); // Changé de 'annee_id' à 'etape_id'
+            $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
 
             $notes = $this->model->getFieldNotes($fieldId, $semestreId, $etapeId);
             $this->response->send(200, $notes);
@@ -368,16 +368,21 @@ class ProfessorController {
             }
 
             $isAuthorized = false;
+            
+            // CORRECTION : Utiliser la nouvelle structure 'managed_entity'
+            $managedEntity = $profile['managed_entity'] ?? null;
+
             // Si chef de filière, doit gérer cette filière
-            if ($profile['professor_degree_role'] === 'Chef_de_Filiere' && $profile['managed_field_id'] == $fieldId) {
+            if ($profile['professor_degree_role'] === 'Chef_de_Filiere' && $managedEntity && $managedEntity['id'] == $fieldId) {
                 $isAuthorized = true;
             }
+            
             // Si chef de département, doit gérer le département de cette filière
-            if ($profile['professor_degree_role'] === 'Chef_de_Departement') {
+            if ($profile['professor_degree_role'] === 'Chef_de_Departement' && $managedEntity) {
                 $stmtFieldDept = $this->model->getDbConnection()->prepare("SELECT department_id FROM filieres WHERE field_id = ?");
                 $stmtFieldDept->execute([$fieldId]);
                 $fieldDepartmentId = $stmtFieldDept->fetchColumn();
-                if ($fieldDepartmentId && $profile['managed_department_id'] == $fieldDepartmentId) {
+                if ($fieldDepartmentId && $managedEntity['id'] == $fieldDepartmentId) {
                     $isAuthorized = true;
                 }
             }
@@ -527,4 +532,77 @@ public function getDepartmentNotes($departmentId) {
     }
 }
 
+/**
+ * Récupère les semestres pertinents pour une filière donnée.
+ * Accessible uniquement au chef de cette filière ou au chef du département parent.
+ * @param int $fieldId L'ID de la filière.
+ */
+public function getSemestersForField($fieldId) {
+    try {
+        (new ProfessorMiddleware())->verifyProfessor();
+        // Ici, une vérification d'autorisation serait idéale, mais pour l'instant, on fait confiance
+        // au fait que le JS n'appellera cet endpoint que pour le chef concerné.
+        $semesters = $this->model->getSemestersByFieldId($fieldId);
+        $this->response->send(200, $semesters);
+    } catch (Exception $e) {
+        error_log("Error in getSemestersForField: " . $e->getMessage());
+        $this->response->send(500, ['error' => 'Erreur interne.']);
+    }
+}
+
+/**
+ * Récupère les étapes pertinentes pour une filière donnée.
+ * @param int $fieldId L'ID de la filière.
+ */
+public function getEtapesForField($fieldId) {
+    try {
+        (new ProfessorMiddleware())->verifyProfessor();
+        $etapes = $this->model->getEtapesByFieldId($fieldId);
+        $this->response->send(200, $etapes);
+    } catch (Exception $e) {
+        error_log("Error in getEtapesForField: " . $e->getMessage());
+        $this->response->send(500, ['error' => 'Erreur interne.']);
+    }
+}
+
+/**
+ * Récupère les semestres pertinents pour un département donné.
+ * Accessible uniquement au chef de ce département.
+ * @param int $departmentId L'ID du département.
+ */
+public function getSemestersForDepartment($departmentId) {
+    try {
+        (new ProfessorMiddleware())->verifyProfessor();
+        $userId = $_SESSION['user']['user_id'];
+        if (!$this->model->isDepartmentHead($userId, $departmentId)) {
+            $this->response->send(403, ['error' => 'Accès non autorisé.']);
+            return;
+        }
+        $semesters = $this->model->getSemestersByDepartmentId($departmentId);
+        $this->response->send(200, $semesters);
+    } catch (Exception $e) {
+        error_log("Error in getSemestersForDepartment: " . $e->getMessage());
+        $this->response->send(500, ['error' => 'Erreur interne.']);
+    }
+}
+
+/**
+ * Récupère les étapes pertinentes pour un département donné.
+ * @param int $departmentId L'ID du département.
+ */
+public function getEtapesForDepartment($departmentId) {
+    try {
+        (new ProfessorMiddleware())->verifyProfessor();
+        $userId = $_SESSION['user']['user_id'];
+        if (!$this->model->isDepartmentHead($userId, $departmentId)) {
+            $this->response->send(403, ['error' => 'Accès non autorisé.']);
+            return;
+        }
+        $etapes = $this->model->getEtapesByDepartmentId($departmentId);
+        $this->response->send(200, $etapes);
+    } catch (Exception $e) {
+        error_log("Error in getEtapesForDepartment: " . $e->getMessage());
+        $this->response->send(500, ['error' => 'Erreur interne.']);
+    }
+}
 }

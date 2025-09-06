@@ -458,13 +458,43 @@
         <!-- Les sections de contenu sont maintenant masquées/affichées par le JavaScript de la sidebar -->
         <div id="profileSection" class="content-section">
             <div class="professor-info">
-                <h4>Informations du Professeur</h4>
-                <p>Nom: <span id="professorName">Chargement...</span></p>
-                <p>Rôle: <span id="professorRole">Chargement...</span></p>
-                <p>Degré: <span id="professorDegree">N/A</span></p>
+                <h4><i class="fas fa-user-tie me-2"></i>Informations Personnelles</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nom Complet:</strong> <span id="professorName">Chargement...</span></p>
+                        <p><strong>Email:</strong> <span id="professorEmail">Chargement...</span></p>
+                        <p><strong>Téléphone:</strong> <span id="professorPhone">N/A</span></p>
+                        <p><strong>CIN:</strong> <span id="professorCin">N/A</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Rôle Principal:</strong> <span id="professorRole">Chargement...</span></p>
+                        <p><strong>Département d'attache:</strong> <span id="professorDepartment">Chargement...</span></p>
+                        <p><strong>Statut de Responsabilité:</strong> <span id="professorDegree">N/A</span></p>
+                        <p id="managedEntityInfo" style="display:none;"><strong>Entité Gérée:</strong> <span id="managedEntityName" class="badge bg-success"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section mt-4" style="background-color: #f8f9fa;">
+                <h4><i class="fas fa-chart-bar me-2"></i>Statistiques d'Enseignement</h4>
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <div class="stat-card p-3 border rounded">
+                            <h5>Éléments Enseignés</h5>
+                            <p class="fs-2 fw-bold text-primary" id="elementsCount">0</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card p-3 border rounded">
+                            <h5>Modules Couverts</h5>
+                            <p class="fs-2 fw-bold text-info" id="modulesCount">0</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- SECTION 2 : PÉRIODE DE SAISIE (maintenant au même niveau que le profil) -->
         <div id="grade-periodSection" class="content-section d-none">
             <div class="period-status-section mb-4">
                 <h4>Gestion de la Période de Saisie des Notes Normales</h4>
@@ -486,10 +516,9 @@
             </div>
         </div>
 
+        <!-- SECTION 3 : GESTION CHEF (maintenant au même niveau) -->
         <div id="chef-managementSection" class="content-section d-none">
             <h3>Gestion des Notes (Chef)</h3>
-            
-            <!-- SECTION SPÉCIFIQUE AU CHEF DE FILIÈRE (HTML CORRIGÉ) -->
             <div id="fieldChefSection" class="mb-4 d-none">
                 <h4>Notes de ma Filière: <span id="managedFieldName"></span></h4>
                 
@@ -562,29 +591,8 @@
             </div>
         </div>
                 <!-- <button id="showAllDepartmentModulesNotesBtn" class="btn btn-primary mt-2">Afficher toutes les notes des modules de mon département</button> -->
-                
-                <div id="departmentFieldFilterSection" class="module-filter-section mt-3 d-none">
-                    <h5>Filtrer les notes par filière du département</h5>
-                    <div class="input-group mb-3">
-                        <label class="input-group-text rounded" for="departmentFieldSelect">Filière:</label>
-                        <select class="form-select rounded" id="departmentFieldSelect">
-                            <option value="" selected>Sélectionner une filière...</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="departmentModuleFilterSection" class="module-filter-section mt-3 d-none">
-                    <h5>Filtrer les notes par module de département</h5>
-                    <div class="input-group mb-3">
-                        <label class="input-group-text rounded" for="departmentModuleSelect">Module:</label>
-                        <select class="form-select rounded" id="departmentModuleSelect" disabled>
-                            <option value="" selected>Sélectionner un module...</option>
-                        </select>
-                        <button class="btn btn-primary rounded" id="showDepartmentModuleNotesBtn" disabled>Afficher les notes du module</button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
+        <!-- SECTION 4 : ÉLÉMENTS ENSEIGNÉS (maintenant au même niveau) -->
         <div id="teaching-elementsSection" class="content-section d-none">
             <h3>Mes Éléments Enseignés</h3>
             <!-- Filtres pour Mes Éléments -->
@@ -601,12 +609,12 @@
                         <option value="">Toutes les étapes</option>
                     </select>
                 </div>
-                <div class="col-md-4" id="professorFiliereFilterContainer" style="display: none;">
+            <!--    <div class="col-md-4" id="professorFiliereFilterContainer" style="display: none;">
                     <label for="professorFiliereFilter" class="form-label">Filtrer par Filière:</label>
                     <select class="form-select" id="professorFiliereFilter">
                         <option value="">Toutes les filières</option>
                     </select>
-                </div>
+                </div>      -->
             </div>
 
             <div id="elementsList" class="list-group mt-3">
@@ -628,9 +636,10 @@
             </div>
         </div>
 
-        <!-- Nouvelle section pour afficher les notes des chefs -->
+        <!-- SECTION 5 : VUE DES NOTES POUR LES CHEFS (maintenant au même niveau) -->
         <div id="chefNotesDisplaySection" class="content-section d-none">
             <h3 id="chefNotesDisplayTitle">Notes détaillées</h3>
+
             <div class="table-responsive mt-4">
                 <table class="table table-bordered table-hover">
                     <thead>
@@ -704,182 +713,101 @@
         let isResitGradePeriodActive = false; // Nouvelle variable pour la période de rattrapage
         let professorProfileData = null;
         let currentUser = null; // Variable globale pour stocker les données de l'utilisateur connecté
-        // Nouveau: Stocke les rôles d'enseignement du professeur pour chaque élément
         let elementTeachingRoles = {}; // Clé: element_id, Valeur: { is_main_prof: bool, is_tp_prof: bool }
 
         document.addEventListener('DOMContentLoaded', async () => {
-        console.log('DOMContentLoaded event fired.'); // Debug: Vérifie que l\'événement DOMContentLoaded est déclenché
+            console.log('DOMContentLoaded event fired.');
 
-        try {
-            currentUser = JSON.parse(localStorage.getItem('userData'));
-            if (!currentUser) {
-                console.warn('User data not found in localStorage. Redirecting to login.');
-                window.location.href = loginPage;
-                return;
-            }
-            await loadProfessorProfile( );
-            await updatePeriodStatuses();
+            try {
+                currentUser = JSON.parse(localStorage.getItem('userData'));
+                if (!currentUser) {
+                    window.location.href = loginPage;
+                    return;
+                }
 
-            // Références aux sections et liens
-            const profileSection = document.getElementById('profileSection');
-            const chefManagementSection = document.getElementById('chef-managementSection');
-            const profileLink = document.querySelector('#sidebar .nav-link[data-section="profile"]');
-            const chefManagementNavLinkContainer = document.getElementById('chefManagementNavLinkContainer');
-            const chefManagementNavLink = document.getElementById('chefManagementNavLink');
-            const chefNotesDisplaySection = document.getElementById('chefNotesDisplaySection');
+                // 1. Charger le profil et les statuts en premier.
+                await loadProfessorProfile();
+                await updatePeriodStatuses();
 
-            // Références aux boutons
-            const openPeriodBtn = document.getElementById('openPeriodBtn');
-            const closePeriodBtn = document.getElementById('closePeriodBtn');
-            const openResitPeriodBtn = document.getElementById('openResitPeriodBtn');
-            const closeResitPeriodBtn = document.getElementById('closeResitPeriodBtn');
-            const saveAllBtn = document.getElementById('saveAllBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const showFieldNotesBtn = document.getElementById('showFieldNotesBtn');
-            const showAllFieldModulesNotesBtn = document.getElementById('showAllFieldModulesNotesBtn');
-            const showFieldModuleNotesBtn = document.getElementById('showFieldModuleNotesBtn');
-            const showDepartmentNotesBtn = document.getElementById('showDepartmentNotesBtn');
-            const departmentFieldSelect = document.getElementById('departmentFieldSelect');
-            const departmentModuleSelect = document.getElementById('departmentModuleSelect');
-            const backToChefManagementBtn = document.getElementById('backToChefManagementBtn');
+                // 2. Charger les filtres UNIQUEMENT pour la section du professeur simple.
+                await fetchAndPopulateProfessorFilters();
 
-            // Logique d'affichage initiale
-            if (professorProfileData) {
-                const isChef = (professorProfileData.professor_degree_role === 'Chef_de_Filiere' && professorProfileData.managed_field_id) ||
-                               (professorProfileData.professor_degree_role === 'Chef_de_Departement' && professorProfileData.managed_department_id);
+                // 3. Charger les éléments du professeur.
+                loadTeachingElements();
 
-                if (isChef) {
-                    chefManagementNavLinkContainer.style.display = 'block';
-                    profileSection.classList.add('d-none');
-                    profileLink.classList.remove('active');
-                    chefManagementSection.classList.remove('d-none');
-                    chefManagementNavLink.classList.add('active');
+                // 4. Logique d'affichage et de chargement des filtres spécifiques aux chefs.
+                if (professorProfileData) {
+                    const role = professorProfileData.professor_degree_role;
+                    // CORRECTION : Utiliser la nouvelle structure 'managed_entity'
+                    const managedEntity = professorProfileData.managed_entity; 
 
-                    if (professorProfileData.professor_degree_role === 'Chef_de_Filiere') {
-                        document.getElementById('fieldChefSection').classList.remove('d-none');
-                        document.getElementById('departmentChefSection').classList.add('d-none');
-                        document.getElementById('managedFieldName').textContent = professorProfileData.managed_field_name || `ID: ${professorProfileData.managed_field_id}`;
-                        await loadModulesForChef('field', professorProfileData.managed_field_id, 'fieldModuleSelect');
-                        document.getElementById('fieldModuleFilterSection').classList.remove('d-none');
-                    } else if (professorProfileData.professor_degree_role === 'Chef_de_Departement') {
-                        document.getElementById('departmentChefSection').classList.remove('d-none');
-                        document.getElementById('fieldChefSection').classList.add('d-none');
-                        document.getElementById('managedDepartmentName').textContent = professorProfileData.managed_department_name || `ID: ${professorProfileData.managed_department_id}`;
-                        await loadDepartmentFields(professorProfileData.managed_department_id, 'departmentFieldSelect');
+                    if (role && managedEntity) { // On vérifie que le rôle et l'entité gérée existent
+                        document.getElementById('chefManagementNavLinkContainer').style.display = 'block';
+                        
+                        if (role === 'Chef_de_Filiere') {
+                            const managedId = managedEntity.id; // Utiliser managedEntity.id
+                            document.getElementById('fieldChefSection').classList.remove('d-none');
+                            document.getElementById('managedFieldName').textContent = managedEntity.name || `ID: ${managedId}`;
+                            
+                            await loadChefFilters(role, managedId);
+                            await loadModulesForChef('field', managedId, 'fieldModuleSelect');
+                            document.getElementById('fieldModuleFilterSection').classList.remove('d-none');
+
+                        } else if (role === 'Chef_de_Departement') {
+                            const managedId = managedEntity.id; // Utiliser managedEntity.id
+                            document.getElementById('departmentChefSection').classList.remove('d-none');
+                            document.getElementById('managedDepartmentName').textContent = managedEntity.name || `ID: ${managedId}`;
+                            
+                            await loadChefFilters(role, managedId);
+                            await loadDepartmentFields(managedId, 'departmentFieldSelect');
+                        }
                     }
                 }
+
+                // 5. Regrouper tous les écouteurs d'événements ici.
+                setupEventListeners(); // CORRECTION : Faute de frappe corrigée (etup -> setup)
+
+            } catch (error) {
+                console.error('An error occurred during DOMContentLoaded initialization:', error);
             }
+        });
 
-            await fetchAndPopulateFilters();
-            loadTeachingElements();
+    // *** Fonction renommée et simplifiée pour ne faire qu'une seule chose. ***
+        async function fetchAndPopulateProfessorFilters() {
+            console.log('[DEBUG] fetchAndPopulateProfessorFilters called.');
+            try {
+                const [mySemestersRes, etapesRes, filieresRes] = await Promise.all([
+                    fetch(adminURL + '/professor/my-semesters'),
+                    fetch(adminURL + '/professor/etapes'),
+                    fetch(adminURL + '/professor/filieres')
+                ]);
 
-            if (saveAllBtn) saveAllBtn.addEventListener('click', saveAllNotes);
-            if (logoutBtn) logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('userData');
-                window.location.href = loginPage;
-            } );
+                const mySemesters = await mySemestersRes.json();
+                const etapes = await etapesRes.json();
+                const filieres = await filieresRes.json();
 
-            // Le bouton "showFieldNotesBtn" déclenche maintenant la recherche pour la filière
-            if (showFieldNotesBtn) {
-                showFieldNotesBtn.addEventListener('click', () => displayChefNotes('Filière', professorProfileData.managed_field_id, professorProfileData.managed_field_name));
+                if (mySemestersRes.ok) {
+                    populateDropdown('professorSemestreFilter', mySemesters.data, 'semestre_id', 'nom', 'Tous les semestres');
+                }
+                if (etapesRes.ok) {
+                    populateDropdown('professorEtapeFilter', etapes.data, 'etape_id', 'nom_etape', 'Toutes les étapes');
+                }
+
+                if (professorProfileData && professorProfileData.professor_degree_role === 'Chef_de_Departement' && filieresRes.ok) {
+                    document.getElementById('professorFiliereFilterContainer').style.display = 'block';
+                    populateDropdown('professorFiliereFilter', filieres.data, 'field_id', 'nom', 'Toutes les filières');
+                } else {
+                    document.getElementById('professorFiliereFilterContainer').style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('[DEBUG] Error fetching professor-specific filter data:', error);
             }
+        }
 
-            if (showAllFieldModulesNotesBtn) {
-                showAllFieldModulesNotesBtn.addEventListener('click', () => displayAllFieldModulesNotes(professorProfileData.managed_field_id, professorProfileData.managed_field_name));
-            }
-            
-            if (showFieldModuleNotesBtn) {
-                showFieldModuleNotesBtn.addEventListener('click', () => {
-                    const moduleSelect = document.getElementById('fieldModuleSelect');
-                    const selectedModuleId = moduleSelect.value;
-                    if (selectedModuleId) {
-                        displayModuleNotes(selectedModuleId, moduleSelect.options[moduleSelect.selectedIndex].text);
-                    } else {
-                        alert("Veuillez sélectionner un module.");
-                    }
-                });
-            }
-
-            // Le bouton "showDepartmentNotesBtn" déclenche la recherche pour le département
-            if (showDepartmentNotesBtn) {
-                showDepartmentNotesBtn.addEventListener('click', () => displayAllDepartmentModulesNotes(professorProfileData.managed_department_id, professorProfileData.managed_department_name));
-            }
-            
-            // Le bouton "showDepartmentModuleNotesBtn" déclenche aussi la recherche, mais les filtres seront lus à l'intérieur de la fonction
-            if (showDepartmentModuleNotesBtn) {
-                showDepartmentModuleNotesBtn.addEventListener('click', () => {
-                    displayAllDepartmentModulesNotes(professorProfileData.managed_department_id, professorProfileData.managed_department_name);
-                });
-            }
-                
-               // On garde cet écouteur pour charger dynamiquement les modules quand une filière est choisie
-            if (departmentFieldSelect) {
-                departmentFieldSelect.addEventListener('change', async () => {
-                    const selectedFieldId = departmentFieldSelect.value;
-                    if (selectedFieldId) {
-                        await loadModulesForFieldInDepartment(selectedFieldId, 'departmentModuleSelect');
-                        departmentModuleSelect.disabled = false;
-                    } else {
-                        departmentModuleSelect.innerHTML = '<option value="">Sélectionner une filière d\'abord...</option>';
-                        departmentModuleSelect.disabled = true;
-                    }
-                });
-            }
-
-                if (departmentModuleSelect) departmentModuleSelect.addEventListener('change', () => {
-                    console.log('departmentModuleSelect changed');
-                    if (showDepartmentModuleNotesBtn) showDepartmentModuleNotesBtn.disabled = (departmentModuleSelect.value === "" || !departmentModuleSelect.value); // Changed from "Sélectionner un module..."
-                });
-
-                // Écouteur pour le bouton de retour
-                if (backToChefManagementBtn) {
-                backToChefManagementBtn.addEventListener('click', goBackToChefManagement);
-            }
-
-               // Les filtres de "Mes Éléments" continuent de fonctionner automatiquement
-                document.getElementById('professorSemestreFilter')?.addEventListener('change', loadTeachingElements);
-                document.getElementById('professorEtapeFilter')?.addEventListener('change', loadTeachingElements);
-                document.getElementById('professorFiliereFilter')?.addEventListener('change', loadTeachingElements);
-
-                // Event listeners for new filters in "Gestion Chef" - Field Head
-                /*document.getElementById('fieldSemestreFilter')?.addEventListener('change', () => {
-                    if (professorProfileData && professorProfileData.professor_degree_role === 'Chef_de_Filiere') {
-                        displayAllFieldModulesNotes(professorProfileData.managed_field_id, professorProfileData.managed_field_name);
-                    }
-                });*/
-                /*document.getElementById('fieldEtapeFilter')?.addEventListener('change', () => { // Changed from AnneeFilter
-                    if (professorProfileData && professorProfileData.professor_degree_role === 'Chef_de_Filiere') {
-                        displayAllFieldModulesNotes(professorProfileData.managed_field_id, professorProfileData.managed_field_name);
-                    }
-                });*/
-
-                // Event listeners for new filters in "Gestion Chef" - Department Head
-                /*document.getElementById('departmentSemestreFilter')?.addEventListener('change', () => {
-                    displayAllDepartmentModulesNotes(professorProfileData.managed_department_id, professorProfileData.managed_department_name);
-                });*/
-                /*document.getElementById('departmentEtapeFilter')?.addEventListener('change', () => {
-                    displayAllDepartmentModulesNotes(professorProfileData.managed_department_id, professorProfileData.managed_department_name);
-                });*/
-
-                // Pour la filière, on doit d'abord charger les modules, PUIS relancer la recherche
-                /*document.getElementById('departmentFieldSelect')?.addEventListener('change', async () => {
-                    const selectedFieldId = document.getElementById('departmentFieldSelect').value;
-                    if (selectedFieldId) {
-                        await loadModulesForFieldInDepartment(selectedFieldId, 'departmentModuleSelect');
-                    } else {
-                        // Si on sélectionne "Toutes les filières", on vide la liste des modules
-                        document.getElementById('departmentModuleSelect').innerHTML = '<option value="">Sélectionner un module...</option>';
-                    }
-                    // On lance la recherche avec le nouveau filtre de filière
-                    displayAllDepartmentModulesNotes(professorProfileData.managed_department_id, professorProfileData.managed_department_name);
-                });*/
-
-                // Pour le module, on relance simplement la recherche
-                /*document.getElementById('departmentModuleSelect')?.addEventListener('change', () => {
-                    displayAllDepartmentModulesNotes(professorProfileData.managed_department_id, professorProfileData.managed_department_name);
-                });*/
-
-                // Logique de navigation de la barre latérale (inchangée)
+        // *** CORRECTION : Ajout de la fonction manquante pour regrouper les écouteurs. ***
+        function setupEventListeners() {
+            // Sidebar navigation (inchangé)
             document.querySelectorAll('#sidebar .nav-link').forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -891,51 +819,129 @@
                         this.classList.add('active');
                     }
                     if (this.dataset.section === 'chef-management') {
-                        chefNotesDisplaySection.classList.add('d-none');
+                        document.getElementById('chefNotesDisplaySection').classList.add('d-none');
                     }
                 });
             });
+           // Filtres du professeur (inchangé)
+            document.getElementById('professorSemestreFilter')?.addEventListener('change', loadTeachingElements);
+            document.getElementById('professorEtapeFilter')?.addEventListener('change', loadTeachingElements);
+            document.getElementById('professorFiliereFilter')?.addEventListener('change', loadTeachingElements);
 
-        } catch (error) {
-            console.error('An error occurred during DOMContentLoaded initialization:', error);
-        }
-    });
+            // Boutons et actions (inchangé)
+            document.getElementById('saveAllBtn')?.addEventListener('click', saveAllNotes);
+            document.getElementById('logoutBtn')?.addEventListener('click', () => {
+                localStorage.removeItem('userData');
+                window.location.href = loginPage;
+            });
+            document.getElementById('backToChefManagementBtn')?.addEventListener('click', goBackToChefManagement);
+            // Actions des chefs
+                document.getElementById('showFieldNotesBtn')?.addEventListener('click', () => {
+                    const entity = professorProfileData.managed_entity;
+                    // On vérifie que l'entité existe et que c'est bien une filière
+                    if (entity && entity.type === 'Filière') {
+                        displayChefNotes(entity.type, entity.id, entity.name);
+                    }
+                });
+
+                document.getElementById('showAllFieldModulesNotesBtn')?.addEventListener('click', () => {
+                    const entity = professorProfileData.managed_entity;
+                    if (entity && entity.type === 'Filière') {
+                        displayAllFieldModulesNotes(entity.id, entity.name);
+                    }
+                });
+
+                document.getElementById('showFieldModuleNotesBtn')?.addEventListener('click', () => {
+                    const moduleSelect = document.getElementById('fieldModuleSelect');
+                    const selectedModuleId = moduleSelect.value;
+                    if (selectedModuleId) {
+                        displayModuleNotes(selectedModuleId, moduleSelect.options[moduleSelect.selectedIndex].text);
+                    } else {
+                        alert("Veuillez sélectionner un module.");
+                    }
+                });
+
+                document.getElementById('showDepartmentNotesBtn')?.addEventListener('click', () => {
+                    const entity = professorProfileData.managed_entity;
+                    if (entity && entity.type === 'Département') {
+                        displayAllDepartmentModulesNotes(entity.id, entity.name);
+                    }
+                });
+                
+                // Filtres dépendants du chef de département (inchangé)
+                document.getElementById('departmentFieldSelect')?.addEventListener('change', async () => {
+                    const selectedFieldId = document.getElementById('departmentFieldSelect').value;
+                    const moduleSelect = document.getElementById('departmentModuleSelect');
+                    if (selectedFieldId) {
+                        await loadModulesForFieldInDepartment(selectedFieldId, 'departmentModuleSelect');
+                        moduleSelect.disabled = false;
+                    } else {
+                        moduleSelect.innerHTML = '<option value="">Sélectionner une filière d\'abord...</option>';
+                        moduleSelect.disabled = true;
+                    }
+                });
+            }
+
 
         /**
-         * Charge et affiche les informations du profil du professeur.
+         * Charge et affiche les informations COMPLÈTES du profil du professeur.
          */
         async function loadProfessorProfile() {
-        try {
-            const response = await fetch(adminURL+'/professor/profile'  );
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Erreur chargement profil.');
-            professorProfileData = result.data;
-            document.getElementById('professorName').textContent = `${professorProfileData.prenom} ${professorProfileData.nom}`;
-            document.getElementById('professorRole').textContent = formatRole(professorProfileData.role);
-            document.getElementById('professorDegree').textContent = formatProfessorDegreeRole(professorProfileData.professor_degree_role);
-        } catch (error) {
-            console.error('Erreur chargement profil:', error);
-        }
-    }
-        /**
-         * Formate le rôle pour un affichage plus lisible.
-         * @param {string} role Le rôle brut de la base de données.
-         * @returns {string} Le rôle formaté.
-         */
-        function formatRole(role) {
-        const roles = { prof: 'Professeur', chef_dep: 'Chef de Département', chef_fill: 'Chef de Filière' };
-        return roles[role] || role;
-    }
+            try {
+                const response = await fetch(adminURL + '/professor/profile');
+                const result = await response.json();
 
-        /**
-         * Formate le rôle de "degré" pour un affichage plus lisible.
-         * @param {string|null} degreeRole Le rôle de degré brut de la base de données (ex: 'Regular', 'Chef_de_Departement').
-         * @returns {string} Le rôle formaté ou 'N/A'.
-         */
+                if (!response.ok) {
+                    throw new Error(result.error || 'Erreur lors du chargement du profil.');
+                }
+                
+                professorProfileData = result.data; // Stocker les données complètes
+
+                // Remplir les informations personnelles
+                document.getElementById('professorName').textContent = `${professorProfileData.prenom} ${professorProfileData.nom}`;
+                document.getElementById('professorEmail').textContent = professorProfileData.email || 'N/A';
+                document.getElementById('professorPhone').textContent = professorProfileData.telephone || 'N/A';
+                document.getElementById('professorCin').textContent = professorProfileData.cin || 'N/A';
+
+                // Remplir les informations de rôle et de département
+                document.getElementById('professorRole').textContent = formatRole(professorProfileData.user_role);
+                document.getElementById('professorDepartment').textContent = professorProfileData.department_name || 'Non spécifié';
+                document.getElementById('professorDegree').textContent = formatProfessorDegreeRole(professorProfileData.professor_degree_role);
+
+                // Afficher l'entité gérée si le professeur est un chef
+                const managedEntityInfo = document.getElementById('managedEntityInfo');
+                if (professorProfileData.managed_entity) {
+                    document.getElementById('managedEntityName').textContent = `${professorProfileData.managed_entity.type}: ${professorProfileData.managed_entity.name}`;
+                    managedEntityInfo.style.display = 'block';
+                } else {
+                    managedEntityInfo.style.display = 'none';
+                }
+
+                // Remplir les statistiques d'enseignement
+                if (professorProfileData.teaching_stats) {
+                    document.getElementById('elementsCount').textContent = professorProfileData.teaching_stats.elements_count || 0;
+                    document.getElementById('modulesCount').textContent = professorProfileData.teaching_stats.modules_count || 0;
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement profil:', error);
+                document.getElementById('profileSection').innerHTML = `<div class="alert alert-danger">Impossible de charger le profil. ${error.message}</div>`;
+            }
+        }
+
+                // La fonction formatRole doit être mise à jour pour utiliser la bonne clé
+        function formatRole(role) {
+            // La clé 'role' dans la session est 'prof', 'chef_dep', etc.
+            // La clé 'user_role' dans notre nouvelle réponse API est la même.
+            const roles = { prof: 'Professeur', chef_dep: 'Chef de Département', chef_fill: 'Chef de Filière' };
+            return roles[role] || role;
+        }
+
+                // La fonction formatProfessorDegreeRole reste inchangée, elle est correcte.
         function formatProfessorDegreeRole(degreeRole) {
-        const roles = { Regular: 'Professeur Régulier', Chef_de_Departement: 'Chef de Département', Chef_de_Filiere: 'Chef de Filière' };
-        return roles[degreeRole] || 'N/A';
-    }
+            const roles = { Regular: 'Professeur Régulier', Chef_de_Departement: 'Chef de Département', Chef_de_Filiere: 'Chef de Filière' };
+            return roles[degreeRole] || 'Professeur Régulier'; // On met une valeur par défaut
+        }
 
         /**
          * Met à jour les drapeaux globaux isGradePeriodActive et isResitGradePeriodActive
@@ -1849,6 +1855,51 @@
         }
     }
 
+    /**
+     * Charge et peuple les filtres de semestre et d'étape spécifiquement pour un chef.
+     * @param {string} role 'Chef_de_Filiere' ou 'Chef_de_Departement'.
+     * @param {int} managedId L'ID de la filière ou du département géré.
+     */
+    async function loadChefFilters(role, managedId) {
+        if (!role || !managedId) return;
+
+        let semesterUrl, etapeUrl;
+        let semesterSelectId, etapeSelectId;
+
+        if (role === 'Chef_de_Filiere') {
+            semesterUrl = `${adminURL}/professor/semesters-for-field/${managedId}`;
+            etapeUrl = `${adminURL}/professor/etapes-for-field/${managedId}`;
+            semesterSelectId = 'fieldSemestreFilter';
+            etapeSelectId = 'fieldEtapeFilter';
+        } else if (role === 'Chef_de_Departement') {
+            semesterUrl = `${adminURL}/professor/semesters-for-department/${managedId}`;
+            etapeUrl = `${adminURL}/professor/etapes-for-department/${managedId}`;
+            semesterSelectId = 'departmentSemestreFilter';
+            etapeSelectId = 'departmentEtapeFilter';
+        } else {
+            return; // Ne fait rien si le rôle n'est pas un chef
+        }
+
+        try {
+            // Charger et peupler les semestres
+            const semestersRes = await fetch(semesterUrl);
+            const semestersData = await semestersRes.json();
+            if (semestersRes.ok) {
+                populateDropdown(semesterSelectId, semestersData.data, 'semestre_id', 'nom', 'Tous les semestres');
+            }
+
+            // Charger et peupler les étapes
+            const etapesRes = await fetch(etapeUrl);
+            const etapesData = await etapesRes.json();
+            if (etapesRes.ok) {
+                populateDropdown(etapeSelectId, etapesData.data, 'etape_id', 'nom_etape', 'Toutes les étapes');
+            }
+        } catch (error) {
+            console.error(`Erreur lors du chargement des filtres pour ${role}:`, error);
+        }
+    }
+
+    
 
         //Fonction pour revenir à la section de gestion chef.
     function goBackToChefManagement() {
@@ -1869,6 +1920,10 @@
                 ]);
 
                 const semestersAll = await semestersResAll.json();
+                //const etapes = await etapesRes.json();
+                //const filieres = await filieresRes.json();
+
+                const mySemesters = await semestersProfRes.json();
                 const etapes = await etapesRes.json();
                 const filieres = await filieresRes.json();
 
@@ -1883,8 +1938,8 @@
                 populateDropdown('fieldEtapeFilter', etapes.data, 'etape_id', 'nom_etape', 'Toutes les étapes'); // Changed from AnneeFilter
 
                 // Populate Semester filters for Chef sections (all semesters)
-                populateDropdown('departmentSemestreFilter', semestersAll.data, 'semestre_id', 'nom', 'Tous les semestres');
-                populateDropdown('fieldSemestreFilter', semestersAll.data, 'semestre_id', 'nom', 'Tous les semestres');
+                populateDropdown('professorSemestreFilter', mySemesters.data, 'semestre_id', 'nom', 'Tous les semestres');
+                populateDropdown('professorEtapeFilter', etapes.data, 'etape_id', 'nom_etape', 'Toutes les étapes');
 
                 // Populate Filiere filter for Professor's Elements (only if Chef_de_Departement)
                 if (professorProfileData && professorProfileData.professor_degree_role === 'Chef_de_Departement') {
@@ -1893,6 +1948,7 @@
                 } else {
                     document.getElementById('professorFiliereFilterContainer').style.display = 'none';
                 }
+
 
                 // NEW: Fetch and populate semesters specific to the current professor
                 try {

@@ -231,6 +231,39 @@ try {
             (new ProfessorController())->getFilieres();
             break;
 
+        // 🔐 Professeur - Obtenir les semestres pour une filière spécifique
+        case preg_match('/^professor\/semesters-for-field\/(\d+)$/', $request, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor(); 
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getSemestersForField($matches[1]);
+            break;
+
+        // 🔐 Professeur - Obtenir les étapes pour une filière spécifique
+        case preg_match('/^professor\/etapes-for-field\/(\d+)$/', $request, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor(); 
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getEtapesForField($matches[1]);
+            break;
+
+        // 🔐 Professeur - Obtenir les semestres pour un département spécifique
+        case preg_match('/^professor\/semesters-for-department\/(\d+)$/', $request, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor(); 
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getSemestersForDepartment($matches[1]);
+            break;
+
+        // 🔐 Professeur - Obtenir les étapes pour un département spécifique
+        case preg_match('/^professor\/etapes-for-department\/(\d+)$/', $request, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            (new ProfessorMiddleware())->verifyProfessor(); 
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->getEtapesForDepartment($matches[1]);
+            break;
+        //////////////////////////////////////////////////////////////////////////////////////
+
         case 'getAdminProfile':
             require_once __DIR__ . '/controllers/AdminController3.php';
             $adminController = new AdminController3();
@@ -239,7 +272,7 @@ try {
 
         // Route non reconnue
         default:
-            (new Response())->send(404, ['error' => 'Endpoint not found']);
+            (new Response())->send(404, ['error' => 'Endpoint not found', 'request' => $request]);
     }
 
 } catch (Exception $e) {
