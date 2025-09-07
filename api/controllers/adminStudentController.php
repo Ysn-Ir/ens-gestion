@@ -1,0 +1,395 @@
+<?php
+require_once __DIR__ . '/../middlewares/AuthMiddleware.php';
+require_once __DIR__ . '/../middlewares/AdminMiddleware.php';
+require_once __DIR__ . '/../models/AdminStudentModel.php';
+require_once __DIR__ . '/../utils/Response.php';
+
+class AdminStudentController {
+    private $model;
+    private $authMiddleware;
+    private $adminMiddleware;
+    private $response;
+
+    public function __construct() {
+        $this->model = new AdminStudentModel();
+        $this->authMiddleware = new AuthMiddleware();
+        $this->adminMiddleware = new AdminMiddleware();
+        $this->response = new Response();
+    }
+
+///////////////////////////////////////STUDENT///////////////////////////////////////////////////
+    
+
+    public function getStudents() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    $students = $this->model->getAllStudents();
+    $this->response->send(200, [
+        'success' => true,
+        'count'   => count($students),
+        'students'=> $students
+    ]);
+}
+public function getStudentDetail($user_id) {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+        $result = $this->model->getStudentDetail($user_id);
+        if ($result['status']) {
+            $this->response->send(200, [
+                'success' => true,
+                'data' => $result['data']
+            ]);
+        } else {
+            $this->response->send(404, [
+                'success' => false,
+                'message' => $result['message']
+            ]);
+        }
+    }
+
+    public function createStudent() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    try {
+        $result = $this->model->createStudent($data);
+        if ($result) {
+            $this->response->send(201, ['message' => 'Student created successfully']);
+        } else {
+            $this->response->send(500, ['message' => 'Failed to create student']);
+        }
+    } catch (Exception $e) {
+        $this->response->send(400, ['message' => $e->getMessage()]);
+    }
+}
+
+    public function updateStudent($id) {
+        $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $result = $this->model->updateStudent($id, $data);
+        
+        if ($result) {
+            $this->response->send(200, ['message' => 'Student updated successfully']);
+        } else {
+            $this->response->send(500, ['message' => 'Failed to update student']);
+        }
+    }
+
+    public function deleteStudent($id) {
+        $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+
+        $result = $this->model->deleteStudent($id);
+        
+        if ($result) {
+            $this->response->send(200, ['message' => 'Student deleted successfully']);
+        } else {    
+            $this->response->send(500, ['message' => 'Failed to delete student']);
+        }
+    }
+   public function getFilteredStudents() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+
+    $field_id = filter_input(INPUT_GET, 'field_id', FILTER_VALIDATE_INT);
+    $section_id = filter_input(INPUT_GET, 'section_id', FILTER_VALIDATE_INT);
+    $group_id = filter_input(INPUT_GET, 'group_id', FILTER_VALIDATE_INT);
+    $annee_id = filter_input(INPUT_GET, 'annee_id', FILTER_SANITIZE_SPECIAL_CHARS);
+    $semestre_id = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
+    $etape_id = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
+    $cycle_id = filter_input(INPUT_GET, 'cycle_id', FILTER_VALIDATE_INT);
+    $department_id = filter_input(INPUT_GET, 'department_id', FILTER_VALIDATE_INT);
+    $search = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS);
+    $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;
+    $limit = filter_input(INPUT_GET, 'limit', FILTER_VALIDATE_INT) ?: 10;
+
+    try {
+        $result = (new AdminStudentModel())->getFilteredStudents(
+            $annee_id,
+            $field_id,
+            $semestre_id,
+            $section_id,
+            $etape_id,
+            $group_id,
+            $cycle_id,
+            $department_id,
+            false,
+            $search,
+            $page,
+            $limit
+        );
+
+        $students = isset($result['students']) && is_array($result['students']) ? $result['students'] : [];
+        $count = isset($result['count']) ? (int)$result['count'] : 0;
+
+        http_response_code(200);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 200,
+            'data' => [
+                'students' => array_values($students),
+                'count' => $count
+            ]
+        ]);
+    } catch (Exception $e) {
+        error_log("Error in getFilteredStudents controller: " . $e->getMessage());
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Erreur lors de la récupération des étudiants: ' . $e->getMessage(),
+            'code' => 500
+        ]);
+    }
+}
+ public function getAllCycles() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $cycles = $this->model->getAllCycles();
+        // Send data directly, don't wrap inside 'status' and 'data' keys
+        $this->response->send(200, $cycles);
+    } catch (Exception $e) {
+        $this->response->send(500, ['message' => 'Erreur lors du chargement des cycles', 'error' => $e->getMessage()]);
+    }
+}
+public function getAllFilieres(){
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $fields = $this->model->getAllFilieres();
+        $this->response->send(200, $fields);   //  ← send RAW array
+
+    } catch (Exception $e) {
+        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des fields', 'error' => $e->getMessage()]);
+    }
+}
+public function getAllSections() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $sections = $this->model->getAllSections();
+        $this->response->send(200, $sections);   //  ← send RAW array
+
+    } catch (Exception $e) {
+        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des Sections', 'error' => $e->getMessage()]);
+    }
+}
+
+public function getAllGroups() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $groups = $this->model->getAllGroups();
+        $this->response->send(200, $groups);   //  ← send RAW array
+
+    } catch (Exception $e) {
+        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des Groups', 'error' => $e->getMessage()]);
+    }
+}
+public function getAllEtapes() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $sections = $this->model->getAllEtapes();
+        $this->response->send(200, $sections);   //  ← send RAW array
+
+    } catch (Exception $e) {
+        $this->response->send(500, ['status' => 'error', 'message' => 'Erreur lors du chargement des Etapes', 'error' => $e->getMessage()]);
+    }
+}
+public function getAllSemestres() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $field_id =filter_input(INPUT_GET, 'field_id',  FILTER_VALIDATE_INT);
+        $etape_id =filter_input(INPUT_GET, 'etape_id',  FILTER_VALIDATE_INT);
+        $sections = $this->model->getAllSemesteres($field_id,$etape_id);
+        $this->response->send(200, $sections);   //  ← send RAW array
+
+    } catch (Exception $e) {
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des Semesters', 'error' => $e->getMessage()]);
+    }
+}
+
+    public function getFilteredFilieres(){
+        $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+    try {
+        $departementId =filter_input(INPUT_GET, var_name: 'department_id', filter: FILTER_VALIDATE_INT);
+        $filieres = $this->model->getFilierByDepartement($departementId);
+        // Send data directly, don't wrap inside 'status' and 'data' keys
+        $this->response->send(200, $filieres);
+    } catch (Exception $e) {
+        $this->response->send(500, ['message' => 'Erreur lors du chargement des filières', 'error' => $e->getMessage()]);
+    }
+    }
+public function getSectionsByFiliere() {
+    $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+       
+    try {
+        $field_id =filter_input(INPUT_GET, 'field_id',  FILTER_VALIDATE_INT);
+        $etape_id =filter_input(INPUT_GET, 'etape_id',  FILTER_VALIDATE_INT);
+       $sections = $this->model->getSectionsByFiliere($field_id,$etape_id);
+        $this->response->send(200, $sections);
+    } catch (Exception $e) {
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des sections', 'error' => $e->getMessage()]);
+    }
+   
+}
+
+public function getGroupesBySection() {
+   $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+       
+    try {
+        $section_id =filter_input(INPUT_GET, 'section_id', filter: FILTER_VALIDATE_INT);
+       $groupes = $this->model->getGroupesBySection($section_id);
+        $this->response->send(200, $groupes);
+    } catch (Exception $e) {
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des groupes', 'error' => $e->getMessage()]);
+    }
+}
+
+public function getGroupesByFiliere() {
+   $this->authMiddleware->verifySession();
+    $this->adminMiddleware->verifyAdmin();
+       
+    try {
+        $fieldId =filter_input(INPUT_GET, 'fieldId', filter: FILTER_VALIDATE_INT);
+       $groupes = $this->model->getGroupesByFiliere($fieldId);
+        $this->response->send(200, $groupes);
+    } catch (Exception $e) {
+        $this->response->send(500, data: [ 'message' => 'Erreur lors du chargement des groupes', 'error' => $e->getMessage()]);
+    }
+}
+    public function getAllYears() {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+
+        try {
+            $years = $this->model->getAllYears();
+            $this->response->send(200, [
+                'status' => 'success',
+                'data' => $years
+            ]);
+        } catch (Exception $e) {
+            $this->response->send(500, [
+                'status' => 'error',
+                'message' => 'Error loading years',
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getAllDepartments() {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+
+        try {
+            $departments = $this->model->getAllDepartments();
+            $this->response->send(200,$departments);
+        } catch (Exception $e) {
+            $this->response->send(500, [
+                'status' => 'error',
+                'message' => 'Error loading departments',
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+        public function getAllElements() {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+        $elements = $this->model->getAllElements();
+        $this->response->send(200, $elements);
+    }
+   public function getStudentInfo($user_id) {
+    try {
+        $this->authMiddleware->verifySession();
+        $this->adminMiddleware->verifyAdmin();
+        $student = $this->model->getStudentInfo($user_id);
+        if ($student) {
+            $this->response->send(200, [
+                'success' => true,
+                'student' => $student
+            ]);
+        } else {
+            $this->response->send(404, ['message' => 'Student not found']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500); // Use a valid HTTP status code
+        $this->response->send(500, [
+            'success' => false,
+            'message' => 'Database error: ' . $e->getMessage() . ' (MySQL Code: ' . $e->getCode() . ')'
+        ]);
+    }
+}
+   public function importStudents()
+    {
+        // Check if a file was uploaded
+        if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] === UPLOAD_ERR_NO_FILE) {
+            $this->sendResponse(400, ['message' => 'No file uploaded']);
+            return;
+        }
+
+        $file = $_FILES['csv_file'];
+        
+        // Validate file type
+        $allowedTypes = ['text/csv', 'application/csv', 'text/plain'];
+        $fileType = mime_content_type($file['tmp_name']);
+        if (!in_array($fileType, $allowedTypes)) {
+            $this->sendResponse(400, ['message' => 'Invalid file type. Please upload a CSV file']);
+            return;
+        }
+
+        // Validate file size (e.g., max 5MB)
+        $maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if ($file['size'] > $maxSize) {
+            $this->sendResponse(400, ['message' => 'File size exceeds 5MB limit']);
+            return;
+        }
+
+        try {
+            $result = $this->model->importStudentsFromCSV($file['tmp_name']);
+            
+            // Prepare response
+            $response = [
+                'message' => sprintf(
+                    'Import completed: %d students imported successfully',
+                    $result['success_count']
+                ),
+                'success_count' => $result['success_count'],
+                'errors' => $result['errors']
+            ];
+
+            $status = $result['success_count'] > 0 ? 200 : 400;
+            if (!empty($result['errors'])) {
+                $status = 207; // Partial success
+            }
+
+            $this->sendResponse($status, $response);
+        } catch (Exception $e) {
+            error_log("Student import error: " . $e->getMessage());
+            $this->sendResponse(500, ['message' => 'Server error during student import: ' . $e->getMessage()]);
+        }
+    }
+ /**
+     * Send JSON response
+     * @param int $status HTTP status code
+     * @param array $data Response data
+     * @return void
+     */
+    private function sendResponse($status, $data)
+    {
+        http_response_code($status);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
+    }
+
+
+}

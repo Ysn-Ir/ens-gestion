@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connexion - ENS Gestion</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="../../route.js"></script>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --secondary-color: #1e40af;
+      --accent-color: #dbeafe;
+    }
+    body {
+      background: linear-gradient(145deg, #e2e8f0 0%, #bfdbfe 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-container {
+      background: white;
+      border-radius: 1.25rem;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 420px;
+      padding: 2.5rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .login-container:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    }
+    .form-control {
+      transition: all 0.3s ease;
+    }
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--accent-color);
+      outline: none;
+    }
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+      transform: translateY(-2px);
+    }
+    .btn-primary:disabled {
+      background-color: #93c5fd;
+      border-color: #93c5fd;
+      cursor: not-allowed;
+    }
+    .logo img {
+      height: 200px;
+      transition: transform 0.3s ease;
+    }
+    .logo img:hover {
+      transform: scale(1.3);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .error-alert {
+      animation: shake 0.4s;
+    }
+    .forgot-password {
+      transition: color 0.2s ease;
+    }
+    .forgot-password:hover {
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo text-center mb-8">
+      <img src="LOGO_ENSF_.png"  class="mx-auto" />
+    </div>
+    <h2 class="text-3xl font-semibold text-center text-gray-900 mb-8">Connexion</h2>
+    <form id="loginForm" class="space-y-6" novalidate>
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Nom d'utilisateur</label>
+        <input type="text" class="form-control w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" id="username" name="username" required autocomplete="username" />
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+        <input type="password" class="form-control w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" id="password" name="password" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn-primary w-full py-3 rounded-lg text-white font-medium flex items-center justify-center space-x-2 text-base" id="submitBtn">
+        <span id="btnText">Se connecter</span>
+        <span id="spinner" class="spinner-border spinner-border-sm hidden" role="status" aria-hidden="true"></span>
+      </button>
+      <div class="alert alert-danger mt-4 hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3" id="errorAlert" role="alert"></div>
+    </form>
+  </div>
+
+  <script>
+    const API_BASE_URL = url+'/api';
+    const LOGIN_ENDPOINT = `${API_BASE_URL}/auth/login`;
+
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const spinner = document.getElementById('spinner');
+    const errorAlert = document.getElementById('errorAlert');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.classList.add('hidden');
+      submitBtn.disabled = true;
+      btnText.textContent = 'Connexion en cours...';
+      spinner.classList.remove('hidden');
+
+      const username = loginForm.username.value.trim();
+      const password = loginForm.password.value;
+
+      if (!username || !password) {
+        showError('Veuillez remplir tous les champs');
+        resetButton();
+        return;
+      }
+
+      try {
+        const response = await fetch(LOGIN_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          throw new Error(responseData.data?.message || 'Échec de la connexion');
+        }
+
+        if (responseData.data && responseData.data.user) {
+          const userData = responseData.data.user;
+          localStorage.setItem('userData', JSON.stringify(userData));
+          redirectUser(userData.role);
+        } else {
+          throw new Error('Structure de réponse inattendue');
+        }
+      } catch (error) {
+        showError(error.message || 'Une erreur est survenue');
+        console.error('Erreur de connexion:', error);
+      } finally {
+        resetButton();
+      }
+    });
+
+    function resetButton() {
+      submitBtn.disabled = false;
+      btnText.textContent = 'Se connecter';
+      spinner.classList.add('hidden');
+    }
+
+    function showError(message) {
+      errorAlert.textContent = message;
+      errorAlert.classList.remove('hidden');
+      errorAlert.classList.add('error-alert');
+      setTimeout(() => {
+        errorAlert.classList.remove('error-alert');
+      }, 400);
+    }
+
+    function redirectUser(role) {
+      const routes = {
+        'admin': url+'/app/src/pages/admin/dashboard.html',
+        'prof': url+'/app/src/pages/professor/dashboard.html',
+        'student': url+'/app/src/pages/student/dashboard.html'
+      };
+
+      if (routes[role]) {
+        window.location.href = routes[role];
+      } else {
+        showError('Rôle utilisateur non reconnu');
+      }
+    }
+  </script>
+</body>
+</html>
