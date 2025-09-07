@@ -422,7 +422,7 @@ class ReinscriptionModel {
                 
                 $stmt_get_elements = $this->conn->prepare("SELECT element_id FROM elements WHERE module_id = ?");
                 $stmt_insert_note_element = $this->conn->prepare("INSERT IGNORE INTO notes (student_id, element_id, semestre_id, annee_id) VALUES (?, ?, ?, ?)");
-
+ 
                 foreach ($modulesToRetake as $module) {
                     // On crée l'enregistrement dans note_modules pour le module à repasser
                     $stmt_report_module->execute([$studentId, $module['module_id'], $module['semestre_id'], $nextAcademicYear]);

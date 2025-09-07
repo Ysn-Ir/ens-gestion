@@ -13,7 +13,7 @@ ini_set('display_errors', 0);
 
 // ===================================================================
 // FIN DE LA CORRECTION
-// ===================================================================
+// ========================================== =========================
 
 
 // Headers pour autoriser les requêtes cross-origin (CORS) et définir le type de contenu
