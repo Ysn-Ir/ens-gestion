@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Filières</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    <script src="../../route.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #4e73df;
+      --secondary-color: #6f42c1;
+      --success-color: #1cc88a;
+      --info-color: #36b9cc;
+      --warning-color: #f6c23e;
+      --danger-color: #e74a3b;
+      --light-bg: #f8f9fc;
+      --dark-bg: #2e59d9;
+      --text-dark: #5a5c69;
+      --text-light: #b7b9cc;
+      --border-color: #e3e6f0;
+    }
+    
+    body {
+      margin: 0;
+      background-color: var(--light-bg);
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+    
+    .content {
+      padding: 30px;
+      min-height: 100vh;
+      background-color: var(--light-bg);
+    }
+    
+    .page-header {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+    
+    .card {
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+      margin-bottom: 25px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+    }
+    
+    .card-header {
+      background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      border-radius: 10px 10px 0 0 !important;
+      font-weight: 700;
+      border: none;
+      padding: 15px 20px;
+    }
+    
+    .filter-card {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+      margin-bottom: 25px;
+    }
+    
+    .filter-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-responsive {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+    }
+    
+    .table thead {
+      background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+    }
+    
+    .table th {
+      border: none;
+      padding: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+    
+    .table td {
+      padding: 15px;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table tbody tr {
+      transition: background-color 0.3s;
+    }
+    
+    .table tbody tr:hover {
+      background-color: rgba(78, 115, 223, 0.05);
+    }
+    
+    .btn {
+      border-radius: 6px;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      transition: all 0.3s;
+    }
+    
+    .btn-success {
+      background: var(--success-color);
+      border: none;
+    }
+    
+    .btn-success:hover {
+      background: #17a673;
+      transform: translateY(-2px);
+      box-shadow: 0 0.5rem 1rem rgba(28, 200, 138, 0.2);
+    }
+    
+    .btn-primary {
+      background: var(--primary-color);
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      background: #2e59d9;
+      transform: translateY(-2px);
+      box-shadow: 0 0.5rem 1rem rgba(78, 115, 223, 0.2);
+    }
+    
+    .btn-danger {
+      background: var(--danger-color);
+      border: none;
+    }
+    
+    .btn-danger:hover {
+      background: #be2617;
+      transform: translateY(-2px);
+      box-shadow: 0 0.5rem 1rem rgba(231, 74, 59, 0.2);
+    }
+    .btn-warning:hover {
+      background: #afb254;
+      transform: translateY(-2px);
+      box-shadow: 0 0.5rem 1rem rgba(231, 74, 59, 0.2);
+    }
+    
+    .form-control, .form-select {
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      transition: all 0.3s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    /* Animation for table rows */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .table tbody tr {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary-color);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary-color);
+    }
+    
+    /* Status badges */
+    .status-badge {
+      padding: 0.35rem 0.65rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .status-active {
+      background-color: rgba(28, 200, 138, 0.2);
+      color: #1cc88a;
+    }
+    
+    .status-inactive {
+      background-color: rgba(231, 74, 59, 0.2);
+      color: #e74a3b;
+    }
+    
+    /* Loading animation */
+    .loading-spinner {
+      display: inline-block;
+      width: 2rem;
+      height: 2rem;
+      vertical-align: text-bottom;
+      border: 0.25em solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spinner-border 0.75s linear infinite;
+    }
+    
+    @keyframes spinner-border {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .content {
+        padding: 15px;
+      }
+      
+      .table-responsive {
+        overflow-x: auto;
+      }
+      
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+
+    <!-- Filter Section -->
+    <div class="filter-card p-3 shadow-sm rounded bg-white mb-4">
+  <h5 class="filter-title mb-3">
+    <i class="bi bi-funnel me-2 text-primary"></i>Filtrer les filières
+  </h5>
+  
+  <div class="row g-3">
+    <!-- Cycle -->
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Cycle</label>
+      <select class="form-select" id="cycle" onchange="filtrerFilieres()">
+        <option value="" selected>Tous les cycles</option>
+      </select>
+    </div>
+
+    <!-- Département -->
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Département</label>
+      <select class="form-select" id="departement" onchange="filtrerFilieres()">
+        <option value="" selected>Tous les départements</option>
+      </select>
+    </div>
+
+    <!-- Diplôme -->
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Diplôme</label>
+      <select class="form-select" id="diplome" onchange="filtrerFilieres()">
+        <option value="" selected>Tous les diplômes</option>
+      </select>
+    </div>
+
+    <!-- Statut -->
+    <div class="col-md-3">
+      <label class="form-label fw-semibold">Statut</label>
+      <select class="form-select" id="status" onchange="filtrerFilieres()">
+        <option value="" selected>Tous les statuts</option>
+        <option value="actif" selected>Actif</option>
+        <option value="inactif">Inactif</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Boutons d’action -->
+  <div class="d-flex justify-content-end mt-3">
+    <button class="btn btn-outline-secondary btn-sm me-2" onclick="resetFiltre()">
+      <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+    </button>
+    
+  </div>
+</div>
+
+
+
+    <!-- Table Section -->
+    <div class="card">
+      <div class="card-header">
+
+        <div class="d-flex justify-content-between mb-3">
+          <div class="p-2 align-self-center">     
+        <h5 class="mb-0 align-self-center"><i class="bi bi-list-ul me-2"></i>Liste des Filières</h5>
+      </div>
+          <div class="p-2 ">     
+<button type="button" class="btn btn-success" onclick="AjouterFiliere()">
+          <i class="bi bi-plus-circle me-2"></i>Ajouter une filière
+        </button>      </div>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <!-- <th>ID Filière</th> -->
+                <th>Nom Filière</th>
+                <th>Département</th>
+                <th>Diplome</th>
+                <th>Cycle</th>
+                <th>Chef de Filière</th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="filiereTableBody">
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <div class="loading-spinner text-primary me-2"></div>
+                  Chargement en cours...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Details Filiere -->
+<div class="modal fade" id="filiereDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title text-center"><b>Full Description</b></h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body" id="filiereDetailsContent">
+        <!-- Contenu injecté en JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <script>
+    function resetFiltre() {
+      document.getElementById("cycle").value = "";
+      document.getElementById("departement").value = "";
+      document.getElementById("diplome").value = "";
+      document.getElementById("status").value = "";
+
+      filtrerFilieres(); // Recharge la liste complète
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+     
+       function objectToArray(obj) {
+      return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+    }
+
+    // Fetch Departments
+      fetch(adminURL+'/admin2.php?action=GetAllDepartment')
+        .then(res => res.json())
+        .then(data => {
+          const departs = objectToArray(data);
+          departs.forEach(depart => {
+            const option = document.createElement('option');
+            option.value = depart.department_id;
+            option.textContent = depart.nom;
+            document.getElementById('departement').appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des departements"));
+
+      // Fetch Diplome
+      fetch(adminURL+'/admin2.php?action=GetAllDiplome')
+        .then(res => res.json())
+        .then(data => {
+          const diplomes = objectToArray(data);
+          diplomes.forEach(diplome => {
+            const option = document.createElement('option');
+            option.value = diplome.nom;
+            option.textContent = diplome.nom;
+            document.getElementById('diplome').appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des diplomes"));
+
+      // Charger les cycles
+      fetch(adminURL+'/admin2.php?action=GetAllCycle')
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
+
+          // Remove http_code and get only cycle objects
+          const cycles = Object.values(data).filter(item => typeof item === 'object' && item.cycle_id);
+          document.getElementById("cycle").innerHTML = ''; // Clear old options
+
+          // Ajouter l'option "Tous les cycles"
+          const defaultOption = document.createElement('option');
+          defaultOption.value = '';  // Important : valeur vide = tous
+          defaultOption.textContent = 'Toutes les Cycles';
+          defaultOption.selected = true;
+          document.getElementById("cycle").appendChild(defaultOption);
+
+          cycles.forEach(cycle => {
+            const option = document.createElement('option');
+            option.value = cycle.cycle_id;
+            option.textContent = cycle.nom;
+            document.getElementById("cycle").appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des cycles"));
+
+              filtrerFilieres();
+
+    });
+                  let allFilieres = [];
+
+
+    function filtrerFilieres() {
+              const selectedCycle = document.getElementById("cycle").value;
+              const selectedDiplome = document.getElementById("diplome").value;
+              const selectedDepartement = document.getElementById("departement").value;
+              const selectedStatus = document.getElementById("status").value;
+
+              // Construire l’URL avec paramètres dynamiques
+              let url = adminURL+`/admin2.php?action=getFilieres`;
+              let params = [];
+
+              if (selectedCycle) params.push(`cycle_id=${selectedCycle}`);
+              if (selectedDiplome) params.push(`diplome_id=${selectedDiplome}`);
+              if (selectedDepartement) params.push(`departement_id=${selectedDepartement}`);
+              if (selectedStatus) params.push(`status=${selectedStatus}`);
+
+              if (params.length > 0) url += "&" + params.join("&");
+
+              console.log(selectedDiplome);
+
+              // Loader
+              const filiereTableBody = document.getElementById('filiereTableBody');
+              filiereTableBody.innerHTML = `
+                <tr>
+                  <td colspan="7" class="text-center py-4">
+                    <div class="loading-spinner text-primary me-2"></div>
+                    Chargement des données...
+                  </td>
+                </tr>
+              `;
+              console.log(params);
+              // Fetch API
+              fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                  console.log(data);
+                  filiereTableBody.innerHTML = '';
+
+                  if (data.status === "success" && Array.isArray(data.data)) {
+
+                    allFilieres=data.data;
+                    data.data.forEach((filiere, index) => {
+                      const row = document.createElement('tr');
+                      row.innerHTML = `
+                        <td class="fw-semibold">${filiere.nom_filiere ?? ""}</td>
+                        <td>${filiere.nom_departement ?? ""}</td>
+                        <td>${filiere.nom_diplome ?? ""}</td>
+                        <td>${filiere.nom_cycle ?? ""}</td>
+                        <td>${filiere.nom_professeur_responsable ?? ""}</td>
+                        <td class="text-center">
+                          <button class="btn btn-sm btn-primary me-2" onclick="modifierFiliere(${index})">
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                          <button class="btn btn-sm btn-danger" onclick="supprimerFiliere('${filiere.field_id}')">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                          <button class="btn btn-sm btn-warning" onclick="showDetails('${filiere.field_id}')">
+                            <i class="bi bi-card-heading"></i>
+                          </button>
+                        </td>
+                      `;
+                      filiereTableBody.appendChild(row);
+                    });
+                  } else {
+                    filiereTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Aucune filière trouvée</td></tr>';
+                  }
+                })
+                .catch(error => {
+                  console.error("Erreur:", error);
+                  filiereTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Erreur lors du filtrage des filières</td></tr>';
+                });
+}
+
+
+  
+          function modifierFiliere(index) {
+            const filiere = allFilieres[index]; // récupérer depuis tableau global
+            localStorage.setItem("filiereToUpdate", JSON.stringify(filiere));
+            console.log("Filière stockée :", filiere);
+
+            window.location.href = "UpdateFiliere.html";
+          }
+
+
+    function supprimerFiliere(id) {
+      if (confirm("Voulez-vous vraiment supprimer la filière ID " + id + " ?")) {
+        fetch(adminURL+`/admin2.php?action=deleteFili&field_id=${id}`, {
+          method: 'GET',
+          credentials: 'include'
+        })
+          .then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              alert("Filière supprimée avec succès.");
+              location.reload();
+            } else {
+              alert("Erreur lors de la suppression.");
+            }
+          })
+          .catch(error => {
+            console.error("Erreur:", error);
+            alert("Erreur de suppression.");
+          });
+      }
+    }
+
+
+    function showDetails(fieldId) {
+      const filiere = allFilieres.find(f => f.field_id == fieldId);
+      if (!filiere) return;
+
+      // Construire le contenu (sans IDs)
+      const content = `
+        <p><strong>Nom de la filière :</strong> ${filiere.nom_filiere ?? ""}</p>
+        <p><strong>Département :</strong> ${filiere.nom_departement ?? ""}</p>
+        <p><strong>Diplôme :</strong> ${filiere.nom_diplome ?? ""}</p>
+        <p><strong>Cycle :</strong> ${filiere.nom_cycle ?? ""}</p>
+        <p><strong>Année d’accréditation :</strong> ${filiere.annee_accreditation ?? ""}</p>
+        <p><strong>Année fin accréditation :</strong> ${filiere.annee_fin_accrediation ?? ""}</p>
+        <p><strong>Chef de filière :</strong> ${filiere.nom_professeur_responsable ?? ""}</p>
+        <p><strong>Date de début d’affectation :</strong> ${filiere.debut_affectation ?? ""}</p>
+        <p><strong>Date de fin d’affectation :</strong> ${filiere.fin_affectation ?? ""}</p>
+        <p><strong>Status :</strong> ${filiere.status ?? ""}</p>
+      `;
+
+      document.getElementById("filiereDetailsContent").innerHTML = content;
+
+      // Ouvrir le modal Bootstrap
+      const modal = new bootstrap.Modal(document.getElementById("filiereDetailsModal"));
+      modal.show();
+    }
+
+
+    function AjouterFiliere() {
+      window.location.href = "AjouterFiliere.html";
+    }
+  </script>
+  <!-- Bootstrap Bundle avec Popper (nécessaire pour les modals) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

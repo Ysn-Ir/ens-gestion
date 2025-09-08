@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestion des Modules </title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <script src="../../route.js"></script>
+
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #34495e;
+      --accent: #3498db;
+      --light: #f8f9fa;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --border: #e0e0e0;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: #f5f7f9;
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* Header Styles */
+    .dashboard-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: var(--card-shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+
+    .logo i {
+      margin-right: 10px;
+      font-size: 1.6rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+
+    .form-container {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 2rem;
+      border-top: 4px solid var(--accent);
+    }
+
+    .form-title {
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 1.8rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+
+    .form-title i {
+      margin-right: 12px;
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+
+    .btn {
+      border-radius: 6px;
+      font-weight: 600;
+      padding: 0.6rem 1.5rem;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-dark {
+      background: var(--dark);
+    }
+
+    .btn-dark:hover {
+      background: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-success {
+      background: var(--success);
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+    }
+
+    .btn-success:hover {
+      background: #219653;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #2980b9;
+      transform: translateY(-2px);
+    }
+
+    /* Filière Info Card */
+    .info-card {
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--card-shadow);
+    }
+
+    .info-card h5 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .info-card h5 i {
+      margin-right: 10px;
+      color: var(--accent);
+    }
+
+    .info-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      color: var(--dark);
+      font-weight: 500;
+    }
+
+    /* Module Container Styles */
+    .modules-section {
+      margin-top: 2rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .section-title {
+      color: var(--primary);
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-title i {
+      margin-right: 10px;
+      color: var(--accent);
+    }
+
+    .etape-container {
+      background-color: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border);
+    }
+
+    .etape-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+    }
+
+    .etape-title i {
+      margin-right: 10px;
+      color: var(--accent);
+    }
+
+    .semestre-container {
+      background-color: #f9fafb;
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid var(--border);
+    }
+
+    .semestre-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+
+    .semestre-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .semestre-title i {
+      margin-right: 8px;
+      color: var(--accent);
+    }
+
+    .semestre-toggle {
+      color: #6c757d;
+      transition: all 0.3s;
+    }
+
+    .semestre-content {
+      transition: all 0.3s ease;
+    }
+
+    .semestre-closed .semestre-content {
+      display: none;
+    }
+
+    .module-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .module-card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .module-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .module-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--primary);
+    }
+
+    .btn-remove {
+      color: var(--danger);
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .btn-remove:hover {
+      background-color: rgba(231, 76, 60, 0.1);
+    }
+
+    .module-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .module-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-label {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-label i {
+      margin-right: 8px;
+      color: var(--accent);
+    }
+
+    .has-elements-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 1.2rem 0;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .module-coefficients {
+      background-color: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--success);
+    }
+
+    .coefficient-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .coefficient-title {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    .titles {
+      font-weight: 600;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+    }
+
+    .coefficient-title i {
+      margin-right: 8px;
+      color: var(--success);
+    }
+
+    .coefficient-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .coefficient-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .alert-coeff {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .professeurs-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--accent);
+    }
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--dark);
+    }
+
+    .horaire-container {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--warning);
+    }
+
+    .horaire-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+    }
+
+    .horaire-title i {
+      margin-right: 8px;
+      color: var(--warning);
+    }
+
+    .elements-main-container {
+      display: none;
+      margin-top: 1.5rem;
+    }
+
+    .element-container {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      border-left: 4px solid #6f42c1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .element-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .add-element-btn {
+      margin-top: 1rem;
+    }
+
+    .total-coeff-alert {
+      margin-top: 1rem;
+    }
+
+    .add-module-btn-container {
+      margin-top: 1.2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Toast Alert */
+    .alert-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+      min-width: 300px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Animation for dynamic content */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .module-card, .element-container {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 0 1rem;
+      }
+      
+      .form-container {
+        padding: 1.5rem;
+      }
+      
+      .coefficient-inputs {
+        grid-template-columns: 1fr;
+      }
+      
+      .info-details {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-graduation-cap"></i>
+        <span>Gestion des Modules</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button type="button" class="btn btn-dark" onclick="retourner()">
+        <i class="fas fa-arrow-left me-2"></i>Retourner à la liste des modules
+      </button>
+    </div>
+
+    <div class="form-container">
+      <h3 class="form-title"><i class="fas fa-book me-2"></i>Ajouter des Modules à la Filière</h3>
+      
+      <form id="moduleForm">
+        <!-- Filière Selection -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label for="filiere" class="form-label fw-bold"><i class="fas fa-list-alt me-2"></i>Sélectionner une Filière</label>
+            <select class="form-select form-select-lg" id="filiere" required>
+              <option value="" disabled selected>Choisissez une filière</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Filière Information -->
+        <div id="filiereInfo" class="info-card" style="display: none;">
+          <h5><i class="fas fa-info-circle me-2"></i>Informations de la Filière</h5>
+          <div class="info-details">
+            <div class="info-item">
+              <span class="info-label">Nom de la filière</span>
+              <span class="info-value" id="info-nom">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Cycle</span>
+              <span class="info-value" id="info-cycle">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Département</span>
+              <span class="info-value" id="info-departement">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Responsable</span>
+              <span class="info-value" id="info-responsable">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modules Container -->
+        <div id="modulesContainer" class="modules-section" style="display: none;">
+          <div class="section-header">
+            <h4 class="section-title"><i class="fas fa-cubes me-2"></i>Gestion des Modules</h4>
+          </div>
+          
+          <div id="etapesContainer"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button type="submit" class="btn btn-success btn-lg">
+            <i class="fas fa-save me-2"></i>Enregistrer les Modules
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Toast Alert -->
+  <div class="toast align-items-center text-white bg-danger border-0 alert-toast" role="alert" aria-live="assertive" aria-atomic="true" id="errorToast">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span id="toastMessage"></span>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <!-- Template pour un conteneur de module -->
+  <template id="moduleTemplate">
+    <div class="module-card">
+      <div class="module-card-header">
+        <h5 class="module-card-title"><i class="fas fa-cube me-2"></i>Module <span class="module-number"></span></h5>
+        <button type="button" class="btn-remove" title="Supprimer le module">×</button>
+      </div>
+      
+      <div class="module-section">
+        <div class="section-label"><i class="fas fa-info-circle me-2"></i>Informations de base</div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Code</label>
+            <input type="text" class="form-control module-code" placeholder="Code de module" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Nom</label>
+            <input type="text" class="form-control module-name" placeholder="Nom du module" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Chef de module</label>
+            <select class="form-select module-chef prof-select" required>
+              <option value="">Sélectionner un chef de module</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label titles">Langue d'enseignement</label>
+            <select class="form-select module-langue" required>
+              <option value="">Sélectionner une langue</option>
+              <option value="français">Français</option>
+              <option value="anglais">Anglais</option>
+              <option value="arabe">Arabe</option>
+              <option value="espagnol">Espagnol</option>
+              <option value="allemand">Allemand</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label titles">Type de module</label>
+            <select class="form-select module-type" required>
+              <option value="">Sélectionner un type</option>
+              <option value="Soft Skills">Soft Skills</option>
+              <option value="Module d'éducation">Module d'éducation</option>
+              <option value="Module de spécialité">Module de spécialité</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="module-section">
+        <!-- MODIFICATION IMPORTANTE: Utiliser un nom unique pour chaque groupe de boutons radio -->
+        <div class="has-elements-group">
+          <span class="form-label">Le module est-il composé d'éléments ?</span>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input has-elements-yes" type="radio" name="hasElements-template" value="yes">
+            <label class="form-check-label">Oui</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input has-elements-no" type="radio" name="hasElements-template" value="no" checked>
+            <label class="form-check-label">Non</label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Conteneur pour les coefficients du module (affiché quand "Non" est sélectionné) -->
+      <div class="module-coefficients">
+         <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de Projet</label>
+              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div> 
+        
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de Cours</label>
+              <select class="form-select prof-cours prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Chef d'élément</label>
+              <select class="form-select chef-element prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="horaire-container">
+          <h6 class="horaire-title">
+            <i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité :
+          </h6>
+          <div class="row">
+            
+            <div class="col-md-2 mb-3">
+              <label class="form-label titles">Cours</label>
+              <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
+            </div>
+            <div class="col-md-2 mb-3">
+              <label class="form-label titles">TD</label>
+              <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
+            </div>
+            <div class="col-md-2 mb-3">
+              <label class="form-label titles">TP</label>
+              <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+            </div>
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Pratique</label>
+              <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Évaluation</label>
+              <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="horaire-container">
+          <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label titles">En présentiel</label>
+              <input type="number" class="form-control volume-presentiel" min="0" value="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label titles">A distance</label>
+              <input type="number" class="form-control volume-distance" min="0" value="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label titles">En alternance</label>
+              <input type="number" class="form-control volume-alternance" min="0" value="0">
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Conteneur principal qui s'affiche seulement si Oui est sélectionné -->
+      <div class="elements-main-container" style="display: none;">
+        <!-- Conteneur pour les éléments ajoutés dynamiquement -->
+        <div class="dynamic-elements-container"></div>
+        
+        <!-- Bouton pour ajouter un nouvel élément -->
+        <div class="mt-3">
+          <button type="button" class="btn btn-primary add-element-btn">
+            <i class="fas fa-plus me-1"></i>Ajouter élément
+          </button>
+        </div>
+        
+        <!-- Alert for total coefficients -->
+        <div class="alert alert-danger mt-3 total-coeff-alert" style="display: none;">
+          <i class="fas fa-exclamation-circle me-2"></i>La somme des coefficients de tous les éléments doit être égale à 1.
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Template pour un conteneur d'élément -->
+  <template id="elementTemplate">
+    <div class="element-container">
+      <div class="element-header">
+        <h5><i class="fas fa-puzzle-piece me-2"></i>Élément</h5>
+        <button type="button" class="btn-remove" title="Supprimer l'élément">×</button>
+      </div>
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <label class="form-label titles">Nom de l'élément</label>
+          <input type="text" class="form-control element-name" placeholder="Nom de l'élément" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label titles">Coefficient de l'élément</label>
+          <input type="number" class="form-control element-coeff" min="0" max="1" step="0.01" required>
+        </div>
+      </div>
+      
+      <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de Projet</label>
+              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
+            </div>
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div>
+        
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de Cours</label>
+              <select class="form-select prof-cours prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+              <label class="form-label titles">Chef d'élément</label>
+              <select class="form-select chef-element prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      
+      <div class="horaire-container">
+        <h6 class="horaire-title">
+          <i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité :
+        </h6>
+        
+        
+        <div class="row">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+          </div>
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="horaire-container">
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En présentiel</label>
+            <input type="number" class="form-control volume-presentiel" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">A distance</label>
+            <input type="number" class="form-control volume-distance" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En alternance</label>
+            <input type="number" class="form-control volume-alternance" min="0" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Variables globales
+    let allProfs = [];
+    let elementCounter = 0;
+    let moduleCounter = 0;
+    let currentEtape = 1;
+    let currentSemestre = 1;
+    let etapesCount = 0;
+    let allFilieres = [];
+    let filiereData = null;
+    
+    // Charger les professeurs
+    function loadProfs() {
+      fetch(adminURL+'/admin2.php?action=GetAllProffessors')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            allProfs = data.data;
+            populateProfessorDropdowns();
+          } else {
+            alert("Erreur: " + data.message);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          // Données simulées pour la démonstration en cas d'erreur
+          allProfs = [
+            { user_id: 1, nom: "Dupont", prenom: "Jean" },
+            { user_id: 2, nom: "Martin", prenom: "Marie" },
+            { user_id: 3, nom: "Durand", prenom: "Pierre" },
+            { user_id: 4, nom: "Leroy", prenom: "Sophie" }
+          ];
+          
+          populateProfessorDropdowns();
+        });
+    }
+    
+    // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
+    function populateProfessorDropdowns() {
+      document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
+        // Garder l'option par défaut "Aucun prof"
+        while (dropdown.options.length > 1) {
+          dropdown.remove(1);
+        }
+        
+        // Ajouter les professeurs
+        allProfs.forEach(prof => {
+          const option = document.createElement('option');
+          option.value = prof.user_id;
+          option.textContent = `${prof.prenom} ${prof.nom}`;
+          dropdown.appendChild(option);
+        });
+      });
+    }
+    
+    // Remplir les dropdowns d'un élément spécifique
+    function populateElementDropdowns(elementContainer) {
+      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours, .chef-element');
+      
+      dropdowns.forEach(dropdown => {
+        // Garder l'option par défaut "Aucun prof"
+        while (dropdown.options.length > 1) {
+          dropdown.remove(1);
+        }
+        
+        // Ajouter les professeurs
+        allProfs.forEach(prof => {
+          const option = document.createElement('option');
+          option.value = prof.user_id;
+          option.textContent = `${prof.prenom} ${prof.nom}`;
+          dropdown.appendChild(option);
+        });
+      });
+    }
+      
+    // Vérifier que la somme des coefficients est égale à 1
+    function validateCoefficients(inputs, alertElement) {
+      // FIX: Check if alertElement exists before accessing its style property
+      if (!alertElement) {
+        console.warn("Alert element not found for coefficient validation");
+        return true; // Assume valid if we can't find the alert element
+      }
+      
+      let sum = 0;
+      inputs.forEach(input => {
+        sum += parseFloat(input.value) || 0;
+      });
+      
+      if (Math.abs(sum - 1) > 0.001) { // Tolérance de 0.01 pour les erreurs d'arrondi
+        alertElement.style.display = 'block';
+        return false;
+      } else {
+        alertElement.style.display = 'none';
+        return true;
+      }
+    }
+    
+    // Valider les coefficients d'un élément
+    function validateElementCoefficients(elementContainer) {
+      const coeffInputs = elementContainer.querySelectorAll('.coefficient-input');
+      const alertElement = elementContainer.querySelector('.alert-coeff');
+      return validateCoefficients(coeffInputs, alertElement);
+    }
+    
+    // Valider les coefficients du module
+    function validateModuleCoefficients(moduleContainer) {
+      const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+      const alertElement = moduleContainer.querySelector('.alert-coeff');
+      return validateCoefficients(coeffInputs, alertElement);
+    }
+    
+    // Valider la somme des coefficients de tous les éléments
+    function validateTotalElementCoefficients(moduleContainer) {
+      const elementCoeffInputs = moduleContainer.querySelectorAll('.element-coeff');
+      let total = 0;
+      
+      elementCoeffInputs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+      });
+      
+      const totalAlert = moduleContainer.querySelector('.total-coeff-alert');
+      
+      // FIX: Check if totalAlert exists before accessing its style property
+      if (!totalAlert) {
+        console.warn("Total alert element not found");
+        return Math.abs(total - 1) <= 0.01; // Return validation result without UI update
+      }
+      
+      if (Math.abs(total - 1) > 0.01) {
+        totalAlert.style.display = 'block';
+        return false;
+      } else {
+        totalAlert.style.display = 'none';
+        return true;
+      }
+    }
+    
+    // Afficher une alerte toast
+    function showToast(message) {
+      const toastElement = document.getElementById('errorToast');
+      const toastMessage = document.getElementById('toastMessage');
+      
+      // FIX: Check if elements exist before using them
+      if (!toastElement || !toastMessage) {
+        console.error("Toast elements not found");
+        alert(message); // Fallback to standard alert
+        return;
+      }
+      
+      toastMessage.textContent = message;
+      
+      if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+      } else {
+        toastElement.style.display = 'block';
+        setTimeout(() => {
+          toastElement.style.display = 'none';
+        }, 3000);
+      } 
+    }
+    
+    // Créer la structure des étapes et semestres
+    function createEtapeSemestreStructure(cycleId,nbre_semstre) {
+    console.log(cycleId,nbre_semstre);
+
+      const etapesContainer = document.getElementById('etapesContainer');
+      
+      // FIX: Check if etapesContainer exists
+      if (!etapesContainer) {
+        console.error("etapesContainer not found");
+        return;
+      }
+      
+      etapesContainer.innerHTML = '';
+      
+  
+      // Créer les conteneurs pour chaque étape et semestre
+      for (let etape = 1; etape <= nbre_semstre / 2; etape++) {
+        const etapeDiv = document.createElement('div');
+        etapeDiv.className = 'etape-container';
+        etapeDiv.innerHTML = `<h4 class="etape-title"><i class="fas fa-layer-group me-2"></i>Étape ${etape}</h4>`;
+        
+        for (let semestre = 1; semestre <= 2; semestre++) {
+          const semestreDiv = document.createElement('div');
+          semestreDiv.className = 'semestre-container';
+          semestreDiv.id = `semestre-${etape}-${semestre}`;
+          
+          // Ajouter le bouton pour ajouter des modules à ce semestre
+          semestreDiv.innerHTML = `
+            <div class="semestre-header">
+              <h5 class="semestre-title"><i class="fas fa-book me-2"></i>Semestre ${semestre}</h5>
+              <span class="semestre-toggle" data-semestre="semestre-${etape}-${semestre}">
+                <i class="fas fa-chevron-up"></i>
+              </span>
+            </div>
+            <div class="semestre-content">
+              <div class="modules-container"></div>
+              <div class="add-module-btn-container">
+                <button type="button" class="btn btn-primary add-module-semestre-btn" data-semestre="semestre-${etape}-${semestre}">
+                  <i class="fas fa-plus me-1"></i>Ajouter Module
+                </button>
+              </div>
+            </div>
+          `;
+          
+          etapeDiv.appendChild(semestreDiv);
+        }
+        
+        etapesContainer.appendChild(etapeDiv);
+      }
+      
+      // Ajouter les écouteurs d'événements pour les boutons d'ajout de module par semestre
+      document.querySelectorAll('.add-module-semestre-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const semestreId = this.dataset.semestre;
+          addNewModule(semestreId);
+        });
+      });
+      
+      // Ajouter les écouteurs d'événements pour les boutons de toggle des semestres
+      document.querySelectorAll('.semestre-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+          const semestreId = this.dataset.semestre;
+          const semestreContainer = document.getElementById(semestreId);
+          
+          // FIX: Check if semestreContainer exists
+          if (!semestreContainer) return;
+          
+          semestreContainer.classList.toggle('semestre-closed');
+          
+          const icon = this.querySelector('i');
+          if (semestreContainer.classList.contains('semestre-closed')) {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+          } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+          }
+        });
+      });
+    }
+    
+    // Fonction pour retourner
+    function retourner() {
+      window.location.href = "modules.html";
+    }
+    
+    // Fonction pour charger les informations de la filière
+    function loadFiliereInfo(filiereId) {
+      const filiere = allFilieres.find(f => f.field_id == filiereId);
+      if (!filiere) return;
+      
+      filiereData = filiere;
+      
+      // Afficher les informations de la filière
+      const filiereInfo = document.getElementById('filiereInfo');
+      
+      // FIX: Check if elements exist before using them
+      if (filiereInfo) {
+        const infoNom = document.getElementById('info-nom');
+        const infoCycle = document.getElementById('info-cycle');
+        const infoDepartement = document.getElementById('info-departement');
+        const infoResponsable = document.getElementById('info-responsable');
+        
+        if (infoNom) infoNom.textContent = filiere.nom_filiere || '-';
+        if (infoCycle) infoCycle.textContent = filiere.nom_cycle || '-';
+        if (infoDepartement) infoDepartement.textContent = filiere.nom_departement || '-';
+        if (infoResponsable) infoResponsable.textContent = filiere.nom_professeur_responsable|| '-';
+        
+        filiereInfo.style.display = 'block';
+      }
+      
+      const modulesContainer = document.getElementById('modulesContainer');
+      if (modulesContainer) modulesContainer.style.display = 'block';
+      
+      createEtapeSemestreStructure(filiere.cycle_id,filiere.Nombre_semestre);
+    }
+    
+    // Valider un module complet
+    function validateModule(moduleContainer) {
+      // FIX: Check if moduleContainer exists
+      if (!moduleContainer) return false;
+      
+      // Get the selected radio button for this module
+      const uniqueName = `hasElements-${moduleContainer.dataset.moduleId}`;
+      const selectedRadio = moduleContainer.querySelector(`input[name="${uniqueName}"]:checked`);
+      
+      // FIX: Check if selectedRadio exists
+      if (!selectedRadio) {
+        console.warn("Radio button not found for module", moduleContainer.dataset.moduleId);
+        return false;
+      }
+      
+      const hasElements = selectedRadio.value === 'yes';
+      
+      if (hasElements) {
+        // Valider chaque élément
+        const elementContainers = moduleContainer.querySelectorAll('.element-container');
+        let allElementsValid = true;
+        
+        elementContainers.forEach(container => {
+          if (!validateElementCoefficients(container)) {
+            allElementsValid = false;
+          }
+        });
+        
+        // Valider la somme totale des coefficients d'éléments
+        if (!validateTotalElementCoefficients(moduleContainer)) {
+          showToast("La somme des coefficients de tous les éléments doit être égale à 1.");
+          return false;
+        }
+        
+        if (!allElementsValid) {
+          showToast("Veuillez corriger les coefficients des éléments.");
+          return false;
+        }
+      } else {
+        // Valider les coefficients du module
+        if (!validateModuleCoefficients(moduleContainer)) {
+          showToast("La somme des coefficients du module doit être égale à 1.");
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    // Ajouter un nouvel élément
+    function addNewElement(moduleContainer) {
+      // FIX: Check if moduleContainer exists
+      if (!moduleContainer) return;
+      
+      const template = document.getElementById('elementTemplate');
+      
+      // FIX: Check if template exists
+      if (!template) {
+        console.error("Element template not found");
+        return;
+      }
+      
+      const newElement = template.content.cloneNode(true);
+      const elementContainer = newElement.querySelector('.element-container');
+      
+      // Ajouter un identifiant unique
+      elementContainer.dataset.elementId = ++elementCounter;
+      
+      // Configurer les écouteurs d'événements pour les coefficients
+      const coeffInputs = elementContainer.querySelectorAll('.coefficient-input');
+      coeffInputs.forEach(input => {
+        input.addEventListener('change', () => validateElementCoefficients(elementContainer));
+      });
+      
+      // Configurer l'écouteur pour le coefficient de l'élément
+      const elementCoeffInput = elementContainer.querySelector('.element-coeff');
+      if (elementCoeffInput) {
+        elementCoeffInput.addEventListener('change', () => validateTotalElementCoefficients(moduleContainer));
+      }
+      
+      // Configurer le bouton de suppression
+      const removeBtn = elementContainer.querySelector('.btn-remove');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+          elementContainer.remove();
+          validateTotalElementCoefficients(moduleContainer);
+        });
+      }
+      
+      // Remplir les dropdowns des professeurs
+      populateElementDropdowns(elementContainer);
+      
+      // Ajouter au conteneur
+      const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
+      if (dynamicContainer) {
+        dynamicContainer.appendChild(newElement);
+      }
+      
+      // Valider les coefficients
+      validateElementCoefficients(elementContainer);
+      validateTotalElementCoefficients(moduleContainer);
+    }
+    
+    // Mettre à jour la numérotation des modules dans un semestre
+    function updateModuleNumbers(semestreContainer) {
+      // FIX: Check if semestreContainer exists
+      if (!semestreContainer) return;
+      
+      const modules = semestreContainer.querySelectorAll('.module-card');
+      modules.forEach((module, index) => {
+        const moduleNumber = module.querySelector('.module-number');
+        if (moduleNumber) {
+          moduleNumber.textContent = index + 1;
+        }
+      });
+    }
+    
+    // Ajouter un nouveau module
+    function addNewModule(semestreId) {
+      const template = document.getElementById('moduleTemplate');
+      
+      // FIX: Check if template exists
+      if (!template) {
+        console.error("Module template not found");
+        return;
+      }
+      
+      const newModule = template.content.cloneNode(true);
+      const moduleContainer = newModule.querySelector('.module-card');
+      
+      // Ajouter un identifiant unique
+      moduleCounter++;
+      moduleContainer.dataset.moduleId = moduleCounter;
+      
+      // MODIFICATION IMPORTANTE: Donner un nom unique aux boutons radio
+      const uniqueName = `hasElements-${moduleCounter}`;
+      const yesRadio = moduleContainer.querySelector('.has-elements-yes');
+      const noRadio = moduleContainer.querySelector('.has-elements-no');
+      
+      if (yesRadio && noRadio) {
+        yesRadio.name = uniqueName;
+        noRadio.name = uniqueName;
+      }
+      
+      // Remplir les dropdowns du module
+      if (moduleContainer) {
+        const profDropdowns = moduleContainer.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element');
+        
+        if (profDropdowns && profDropdowns.length > 0) {
+          profDropdowns.forEach(dropdown => {
+            // Garder l'option par défaut
+            if (dropdown && dropdown.options) {
+              while (dropdown.options.length > 1) {
+                dropdown.remove(1);
+              }
+              
+              // Ajouter les professeurs
+              allProfs.forEach(prof => {
+                const option = document.createElement('option');
+                option.value = prof.user_id;
+                option.textContent = `${prof.prenom} ${prof.nom}`;
+                dropdown.appendChild(option);
+              });
+            }
+          });
+        }
+      }
+      
+      // Configurer les écouteurs d'événements pour les coefficients du module
+      const moduleCoeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+      moduleCoeffInputs.forEach(input => {
+        input.addEventListener('change', () => validateModuleCoefficients(moduleContainer));
+      });
+      
+      // Configurer le bouton de suppression
+      const removeBtn = moduleContainer.querySelector('.btn-remove');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+          moduleContainer.remove();
+          // Mettre à jour la numérotation après suppression
+          const semestreContainer = document.getElementById(semestreId);
+          updateModuleNumbers(semestreContainer);
+        });
+      }
+      
+      // Configurer les radios pour afficher/masquer les éléments
+      const elementRadios = moduleContainer.querySelectorAll(`input[name="${uniqueName}"]`);
+      elementRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          if (this.value === 'yes') {
+            const elementsContainer = moduleContainer.querySelector('.elements-main-container');
+            const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
+            
+            if (elementsContainer) elementsContainer.style.display = 'block';
+            if (coefficientsContainer) coefficientsContainer.style.display = 'none';
+            
+            // Ajouter le premier élément
+            const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
+            if (dynamicContainer && dynamicContainer.children.length === 0) {
+              addNewElement(moduleContainer);
+            }
+          } else {
+            const elementsContainer = moduleContainer.querySelector('.elements-main-container');
+            const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
+            
+            if (elementsContainer) elementsContainer.style.display = 'none';
+            if (coefficientsContainer) coefficientsContainer.style.display = 'block';
+            
+            // Vider le conteneur d'éléments
+            const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
+            if (dynamicContainer) dynamicContainer.innerHTML = '';
+          }
+        });
+      });
+      
+      // Configurer le bouton d'ajout d'élément
+      const addElementBtn = moduleContainer.querySelector('.add-element-btn');
+      if (addElementBtn) {
+        addElementBtn.addEventListener('click', () => addNewElement(moduleContainer));
+      }
+      
+      // Ajouter au conteneur du semestre spécifié
+      const semestreContainer = document.getElementById(semestreId);
+      if (semestreContainer) {
+        const modulesContainer = semestreContainer.querySelector('.modules-container');
+        if (modulesContainer) {
+          modulesContainer.appendChild(newModule);
+        }
+      }
+      
+      // Mettre à jour la numérotation des modules
+      const semestreContainerForUpdate = document.getElementById(semestreId);
+      updateModuleNumbers(semestreContainerForUpdate);
+      
+      // Valider les coefficients du module au chargement
+      validateModuleCoefficients(moduleContainer);
+    }
+    
+    // Fonction pour ajouter les modules
+    function AjouterModules(e) {
+      e.preventDefault();
+      
+      if (!filiereData) {
+        showToast("Veuillez d'abord sélectionner une filière");
+        return;
+      }
+      
+      // Valider tous les modules
+      let allModulesValid = true;
+      const moduleContainers = document.querySelectorAll('.module-card');
+      
+      if (moduleContainers.length === 0) {
+        showToast("Veuillez ajouter au moins un module");
+        return;
+      }
+      
+      moduleContainers.forEach(moduleContainer => {
+        if (!validateModule(moduleContainer)) {
+          allModulesValid = false;
+        }
+      });
+      
+      if (!allModulesValid) {
+        showToast("Veuillez corriger les erreurs dans les modules avant de continuer.");
+        return;
+      }
+      
+      // Récupérer les données des modules
+      const modules = [];
+      document.querySelectorAll('.module-card').forEach(moduleContainer => {
+        const semestreContainer = moduleContainer.closest('.semestre-container');
+        
+        // FIX: Check if semestreContainer exists
+        if (!semestreContainer) return;
+        
+        const semestreId = semestreContainer.id;
+        const match = semestreId.match(/semestre-(\d+)-(\d+)/);
+        
+        // FIX: Check if match is valid
+        if (!match) return;
+        
+        const [_, etape, semestre] = match;
+        
+        // Récupérer la valeur du bouton radio "hasElements"
+        const uniqueName = `hasElements-${moduleContainer.dataset.moduleId}`;
+        const selectedRadio = moduleContainer.querySelector(`input[name="${uniqueName}"]:checked`);
+        
+        // FIX: Check if selectedRadio exists
+        if (!selectedRadio) return;
+        
+        const hasElements = selectedRadio.value === 'yes';
+        
+        const moduleData = {
+          code: moduleContainer.querySelector('.module-code').value,
+          nom: moduleContainer.querySelector('.module-name').value,
+          chef_id: moduleContainer.querySelector('.module-chef').value,
+          langue: moduleContainer.querySelector('.module-langue').value,
+          type: moduleContainer.querySelector('.module-type').value,
+          has_elements: hasElements,
+          etape: parseInt(etape),
+          semestre: parseInt(semestre),
+          elements: [],
+          volume_tp: moduleContainer.querySelector('.volume-tp').value || 0,
+          volume_td: moduleContainer.querySelector('.volume-td').value || 0,
+          volume_cours: moduleContainer.querySelector('.volume-cours').value || 0,
+          volume_pratique: moduleContainer.querySelector('.volume-pratique').value || 0,
+          volume_evaluation: moduleContainer.querySelector('.volume-evaluation').value || 0,
+          volume_presentiel: moduleContainer.querySelector('.volume-presentiel').value || 0,
+          volume_distance: moduleContainer.querySelector('.volume-distance').value || 0,
+          volume_alternance: moduleContainer.querySelector('.volume-alternance').value || 0
+        };
+        
+        // Si le module a des éléments
+        if (hasElements) {
+          moduleContainer.querySelectorAll('.element-container').forEach(elementContainer => {
+            const elementData = {
+                nom: elementContainer.querySelector('.element-name').value,
+                coeff_element: elementContainer.querySelector('.element-coeff').value || 0,
+                coeff_td: elementContainer.querySelector('.coeff-td').value || 0,
+                coeff_tp: elementContainer.querySelector('.coeff-tp').value || 0,
+                coeff_cc: elementContainer.querySelector('.coeff-cc').value || 0,
+                coeff_projet: elementContainer.querySelector('.coeff-projet').value || 0,
+                coeff_ecrit: elementContainer.querySelector('.coeff-ecrit').value || 0,
+
+                // Professors
+                Ref_prof_element: elementContainer.querySelector('.chef-element').value || null,
+                Ref_prof_tp: elementContainer.querySelector('.prof-tp').value || null,
+                Ref_prof_td: elementContainer.querySelector('.prof-td').value || null,
+                Ref_prof_cours: elementContainer.querySelector('.prof-cours').value || null,
+
+                // Volumes
+                horraire_tp: elementContainer.querySelector('.volume-tp').value || 0,
+                horraire_td: elementContainer.querySelector('.volume-td').value || 0,
+                horraire_cours: elementContainer.querySelector('.volume-cours').value || 0,
+                horraire_activite_pratique: elementContainer.querySelector('.volume-pratique').value || 0,
+                horraire_evaluation: elementContainer.querySelector('.volume-evaluation').value || 0,
+                presentiel: elementContainer.querySelector('.volume-presentiel').value || 0,
+                a_distance: elementContainer.querySelector('.volume-distance').value || 0,
+                en_alternance: elementContainer.querySelector('.volume-alternance').value || 0
+
+
+            };
+            moduleData.elements.push(elementData);
+          });
+        } else {
+          // Si le module n'a pas d'éléments
+          const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+          moduleData.coeff_tp = coeffInputs[0]?.value || 0;
+          moduleData.coeff_td = coeffInputs[1]?.value || 0;
+          moduleData.coeff_ecrit = coeffInputs[2]?.value || 0;
+          moduleData.coeff_cc = coeffInputs[3]?.value || 0;
+          moduleData.coeff_projet = coeffInputs[4]?.value || 0;
+          moduleData.coeff_element = 1; // ou un champ input si tu veux le laisser configurable
+          moduleData.prof_tp = moduleContainer.querySelector('.prof-tp').value || null;
+          moduleData.prof_td = moduleContainer.querySelector('.prof-td').value || null;
+          moduleData.prof_cours = moduleContainer.querySelector('.prof-cours').value || null;
+          moduleData.chef_element = moduleContainer.querySelector('.chef-element').value || null;
+        }
+        
+        modules.push(moduleData);
+      });
+
+      const data = {
+        filiere_id: filiereData.field_id,
+        modules: modules
+      };
+      
+      console.log("Données envoyées:", data);
+      
+      // Envoyer les données au serveur
+      fetch(adminURL+'/admin2.php?action=AjouterModules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.status === "success") {
+          alert("Modules ajoutés avec succès!");
+          window.location.href="modules.html";
+        } else {
+          console.log(result);
+          alert("Erreur : " + result.message);
+        }
+      })
+      .catch(error => {
+        console.error("Erreur détaillée:", error);
+        alert("Erreur lors de l'ajout des modules: " + error.message);
+      });
+    }
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+      const filiereSelect = document.getElementById('filiere');
+      
+      // FIX: Check if filiereSelect exists
+      if (!filiereSelect) {
+        console.error("filiereSelect element not found");
+        return;
+      }
+      
+      // Charger les filières
+      fetch(adminURL+'/admin2.php?action=getFilieres', {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success" && Array.isArray(data.data)) {
+          allFilieres = data.data;
+          
+          data.data.forEach(filiere => {
+            const option = document.createElement('option');
+            option.value = filiere.field_id;
+            option.textContent = filiere.nom_filiere || filiere.nom || "Nom inconnu";
+            filiereSelect.appendChild(option);
+          });
+        } else {
+          const option = document.createElement('option');
+          option.textContent = "Aucune filière disponible";
+          option.disabled = true;
+          filiereSelect.appendChild(option);
+        }
+      })
+      .catch(error => {
+        console.error("Erreur lors du chargement des filières :", error);
+        filiereSelect.innerHTML = '';
+        const option = document.createElement('option');
+        option.textContent = "Erreur de chargement";
+        option.disabled = true;
+        filiereSelect.appendChild(option);
+      });
+      
+      // Charger les professeurs
+      loadProfs();
+      
+      // Configurer le changement de filière
+      filiereSelect.addEventListener("change", function() {
+        loadFiliereInfo(this.value);
+      });
+      
+      // Configurer le formulaire d'ajout de modules
+      const moduleForm = document.getElementById('moduleForm');
+      if (moduleForm) {
+        moduleForm.addEventListener('submit', AjouterModules);
+      }
+    });
+  </script>
+</body>
+</html>

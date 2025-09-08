@@ -21,7 +21,7 @@ class SectionController {
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
 
-        if (!isset($_SESSION['user']) ||( $_SESSION['user']['role'] !== 'admin' && $_SESSION['user']['role'] !== 'superadmin')) {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
             $this->response->send(403, [
                 'status' => 'error',
                 'message' => 'Accès refusé'

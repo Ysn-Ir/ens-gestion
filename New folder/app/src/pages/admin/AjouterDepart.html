@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ajouter un Département</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+      <script src="../../route.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --light-color: #f8f9fa;
+      --dark-color: #343a40;
+      --border-color: #dee2e6;
+      --success-color: #28a745;
+      --card-bg: #ffffff;
+      --input-bg: #f8f9fa;
+    }
+    
+    body {
+      margin: 0;
+      background-color: #f5f7f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+    
+    .dashboard-container {
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .header-section {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .welcome-message {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 5px;
+    }
+    
+    .user-role-badge {
+      background-color: var(--light-color);
+      color: var(--secondary-color);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: inline-block;
+    }
+    
+    .form-container {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      margin-bottom: 30px;
+    }
+    
+    .form-title {
+      color: var(--secondary-color);
+      font-weight: 600;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 8px;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 6px;
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      background-color: var(--input-bg);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+      background-color: white;
+    }
+    
+    .info-section {
+      background-color: rgba(52, 152, 219, 0.05);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .info-item label {
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+    
+    .btn-submit {
+      background-color: var(--success-color);
+      border: none;
+      padding: 12px 25px;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      /* width: 100%; */
+      margin-top: 20px;
+    }
+    
+    .btn-submit:hover {
+      background-color: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-back {
+      background-color: var(--secondary-color);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+    
+    .btn-back:hover {
+      background-color: #1e2a38;
+      transform: translateY(-2px);
+    }
+    
+    .alert-validation {
+      display: none;
+      background-color: rgba(231, 76, 60, 0.1);
+      border: 1px solid rgba(231, 76, 60, 0.2);
+      color: var(--accent-color);
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+    
+    /* Animation for form elements */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-container > * {
+      animation: fadeIn 0.4s ease-out;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 15px;
+      }
+      
+      .header-section, .form-container {
+        padding: 20px;
+      }
+      
+      .welcome-message {
+        font-size: 1.5rem;
+      }
+      
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      
+    }
+    
+    /* Custom styling for date inputs */
+    input[type="date"] {
+      position: relative;
+    }
+    
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      background: transparent;
+      bottom: 0;
+      color: transparent;
+      cursor: pointer;
+      height: auto;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: auto;
+    }
+    
+    .date-container {
+      position: relative;
+    }
+    
+    .date-container::after {
+      content: "\f073";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      position: absolute;
+      right: 15px;
+      top: 42px;
+      color: #6c757d;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- Header Section -->
+    
+    <!-- Back Button -->
+    <button type="button" class="btn btn-back text-white" onclick="retourner()">
+      <i class="fas fa-arrow-left me-2"></i>Retour à la liste des departements
+    </button>
+
+    <!-- Form Section -->
+    <div class="form-container">
+      <h2 class="form-title"><i class="fas fa-building me-2"></i>Nouveau Département</h2>
+      
+      <form id="departForm">
+        <!-- Department Name -->
+        <div class="mb-4">
+          <label for="nom" class="form-label">Nom du département</label>
+          <input type="text" class="form-control form-control-lg" id="nom" placeholder="Ex: Informatique" required>
+        </div>
+
+        <!-- Chef de Département Section -->
+        <div class="info-section">
+          <h4 class="mb-4"><i class="fas fa-user-tie me-2"></i>Chef de Département</h4>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <label for="professeur">Nom complet</label>
+              <select class="form-select" id="professeur" required>
+                <option value="">Prof disponible</option>
+              </select>
+            </div>
+            
+            <div class="info-item date-container">
+              <label for="date_debut">Date de début d'affectation</label>
+              <input type="text" class="form-control" placeholder="JJ/MM/AAAA" id="date_debut" onfocus="this.type='date'" onblur="if(!this.value) this.type='text'" required>
+            </div>
+            
+            <div class="info-item date-container">
+              <label for="date_fin">Date de fin d'affectation</label>
+              <input type="text" class="form-control" placeholder="JJ/MM/AAAA" id="date_fin" onfocus="this.type='date'" onblur="if(!this.value) this.type='text'" required>
+            </div>
+          </div>
+          
+          <div class="alert-validation" id="dateError">
+            <i class="fas fa-exclamation-circle me-2"></i>La date de fin doit être postérieure à la date de début.
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-submit text-white">
+          <i class="fas fa-plus-circle me-2"></i>Ajouter le département
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function retourner() {
+      window.location.href = "depart.html";
+    }
+    
+    const profSelect = document.getElementById('professeur');
+    const nomDepart = document.getElementById('nom');
+    const date_debut = document.getElementById('date_debut');
+    const date_fin = document.getElementById('date_fin');
+    const dateError = document.getElementById('dateError');
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Helper to convert numeric-keyed objects to arrays
+      function objectToArray(obj) {
+        return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+      }
+
+      // Fetch Professors
+      fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement')
+        .then(res => res.json())
+        .then(data => {
+          const profs = objectToArray(data);
+          profs.forEach(prof => {
+                console.log(prof);
+
+            const option = document.createElement('option');
+            option.value = prof.user_id;
+            option.textContent = `${prof.nom} ${prof.prenom}`;
+            profSelect.appendChild(option);
+          });
+        })
+        .catch(() => {
+          alert("Erreur lors du chargement des professeurs");
+        });
+        
+      // Add event listeners for date validation
+      date_debut.addEventListener('change', validateDates);
+      date_fin.addEventListener('change', validateDates);
+    });
+    
+    function validateDates() {
+      if (date_debut.value && date_fin.value) {
+        const startDate = new Date(date_debut.value);
+        const endDate = new Date(date_fin.value);
+        
+        if (endDate <= startDate) {
+          dateError.style.display = 'block';
+          return false;
+        } else {
+          dateError.style.display = 'none';
+          return true;
+        }
+      }
+      return true;
+    }
+              
+    function AjouterDepart() {
+      const prof = profSelect.value;
+      const nom = nomDepart.value;
+      const dateD = date_debut.value;
+      const dateF = date_fin.value;
+      
+      // Basic validation
+      if (!prof || !nom || !dateD || !dateF) {
+        alert("Veuillez remplir tous les champs.");
+        return;
+      }
+      
+      // Date validation
+      if (!validateDates()) {
+        return;
+      }
+      
+      // API call
+      fetch(adminURL+`/admin2.php?action=AjouterDepart&nomDepart=${encodeURIComponent(nom)}&prof_id=${prof}&dateDebut=${dateD}&dateFin=${dateF}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log(result);
+        if (result.message === "Département créée avec succès") {
+          alert("Département créé avec succès !");
+          window.location.href = "depart.html";
+        } else {
+          alert("Erreur : " + (result.message || "Une erreur s'est produite"));
+        }
+      })
+      .catch(error => {
+        console.error("Erreur:", error);
+        alert("Erreur lors de l'ajout du département.");
+      });
+    }
+
+    document.getElementById("departForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      AjouterDepart();
+    });
+  </script>
+</body>
+</html>

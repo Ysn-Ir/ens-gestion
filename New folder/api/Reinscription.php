@@ -1,4 +1,3 @@
-
 <?php
 // --- Point d'entrée pour la ressource "reinscription" ---
 
@@ -44,4 +43,3 @@ try {
     Response::sendError("Une erreur interne est survenue: " . $e->getMessage(), 500);
     error_log("Erreur API reinscription.php: " . $e->getMessage());
 }
-    
