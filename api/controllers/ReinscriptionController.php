@@ -40,7 +40,7 @@ class ReinscriptionController {
                 case 'get_graduated_students':
                     $this->getGraduatedStudents();
                     break;
-
+ 
                 default:
                     Response::sendError("Action GET non valide ou manquante.", 400);
                     break;

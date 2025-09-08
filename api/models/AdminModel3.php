@@ -14,11 +14,10 @@ class AdminModel3
 
      /////////////////////////////////////profs_Model/////////////////////////////////////////////////////////
 
-     public function addProfessor($userData, $profData, $roles = [])
-    {
+     public function addProfessor($userData, $profData, $roles = []) {
         $this->db->beginTransaction();
         try {
-            // Input validation
+            // Validation des données
             if (
                 empty($userData['username']) ||
                 empty($userData['password']) ||
@@ -30,18 +29,20 @@ class AdminModel3
             if (
                 empty($profData['cin']) ||
                 empty($profData['nom']) ||
-                empty($profData['prenom']) 
+                empty($profData['prenom']) ||
+                empty($profData['department_id'])
             ) {
                 throw new Exception("Professor data is incomplete");
             }
-            // Check for duplicate email
+
+            // Vérification de l'email unique
             $stmt = $this->db->prepare("SELECT user_id FROM utilisateurs WHERE email = ?");
             $stmt->execute([$userData['email']]);
             if ($stmt->fetch()) {
                 throw new Exception("Email déjà utilisé");
             }
-            
-            // Get current academic year
+
+            // Récupération de l'année académique courante
             $stmt = $this->db->prepare("SELECT annee_id FROM annees_academiques WHERE current_flag = 1");
             $stmt->execute();
             $annee = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -49,7 +50,8 @@ class AdminModel3
                 throw new Exception("Aucune année académique courante trouvée");
             }
             $anneeId = $annee['annee_id'];
-            // Insert user with role
+
+            // Insertion dans utilisateurs
             $stmt = $this->db->prepare("
                 INSERT INTO utilisateurs (username, password_hash, email, role, actuel)
                 VALUES (?, ?, ?, ?, ?)
@@ -59,14 +61,15 @@ class AdminModel3
                 $userData['username'],
                 $passwordHash,
                 $userData['email'],
-                $userData['role'], // Role is now stored in utilisateurs
+                $userData['role'],
                 1
             ]);
             $userId = $this->db->lastInsertId();
             if (!$userId || $userId == 0) {
                 throw new Exception("Échec lors de la récupération de l'identifiant utilisateur");
             }
-            // Insert professor
+
+            // Insertion dans professeurs
             $stmt = $this->db->prepare("
                 INSERT INTO professeurs (user_id, cin, nom, prenom, telephone, department_id, annee_id, actuel)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -77,32 +80,55 @@ class AdminModel3
                 $profData['nom'],
                 $profData['prenom'],
                 $profData['telephone'] ?? null,
-                $profData['department_id']??null,
+                $profData['department_id'],
                 $anneeId,
                 1
             ]);
-            // Insert additional roles into professor_roles
-        if (!empty($roles)) {
+
+            // Insertion dans professor_roles
+            $roleMapping = [
+                'prof' => 'Regular',
+                'chef_dep' => 'Chef_de_Departement',
+                'chef_fill' => 'Chef_de_Filiere',
+                'chef_module' => 'Chef_de_Module',
+                'chef_element' => 'Chef_de_Element'
+            ];
+            $primaryRole = $roleMapping[$userData['role']] ?? 'Regular';
             $stmt = $this->db->prepare("
-                INSERT INTO professor_roles (user_id, role_id)
-                VALUES (?, ?)
+                INSERT INTO professor_roles (user_id, role, date_role, date_debut_affectation, date_fin_affectation)
+                VALUES (?, ?, ?, ?, ?)
             ");
-            foreach ($roles as $roleId) {
-                // Validate role_id (assuming role_id is a string or numeric ID)
-                if (empty($roleId)) {
-                    throw new Exception("Invalid role ID provided");
+            $stmt->execute([
+                $userId,
+                $primaryRole,
+                date('Y-m-d H:i:s'), // date_role = date actuelle
+                !empty($profData['date_debut_affectation']) ? $profData['date_debut_affectation'] : null,
+                !empty($profData['date_fin_affectation']) ? $profData['date_fin_affectation'] : null
+            ]);
+
+            // Insertion des rôles supplémentaires, si fournis
+            foreach ($roles as $role) {
+                if (isset($roleMapping[$role])) {
+                    $stmt->execute([
+                        $userId,
+                        $roleMapping[$role],
+                        date('Y-m-d H:i:s'),
+                        !empty($profData['date_debut_affectation']) ? $profData['date_debut_affectation'] : null,
+                        !empty($profData['date_fin_affectation']) ? $profData['date_fin_affectation'] : null
+                    ]);
                 }
-                $stmt->execute([$userId, $roleId]);
             }
-        }
-            // Update department or filiere head if applicable
+
+            // Mise à jour du chef de département, si applicable
             if ($userData['role'] === 'chef_dep') {
                 $stmt = $this->db->prepare("
                     UPDATE departements SET head_professor_id = ?
                     WHERE department_id = ?
                 ");
-                $stmt->execute([$userId, $profData['department_id']??null]);
+                $stmt->execute([$userId, $profData['department_id']]);
             }
+
+            // Mise à jour du chef de filière, si applicable
             if ($userData['role'] === 'chef_fill' && !empty($profData['field_id'])) {
                 $stmt = $this->db->prepare("
                     UPDATE filieres SET head_professor_id = ?
@@ -110,6 +136,7 @@ class AdminModel3
                 ");
                 $stmt->execute([$userId, $profData['field_id']]);
             }
+
             $this->db->commit();
             return [
                 'status' => 201,
@@ -188,134 +215,187 @@ class AdminModel3
 }
 
     public function updateProfessor($userId, $profData, $roles = [])
-    {
-        $this->db->beginTransaction();
-        try {
-            if (
-                empty($profData['cin']) ||
-                empty($profData['nom']) ||
-                empty($profData['prenom']) ||
-                empty($profData['department_id'])
-            ) {
-                throw new Exception("Professor data is incomplete");
-            }
-            if (!empty($profData['email'])) {
-                $stmt = $this->db->prepare("SELECT user_id FROM utilisateurs WHERE email = ? AND user_id != ?");
-                $stmt->execute([$profData['email'], $userId]);
-                if ($stmt->fetch()) {
-                    throw new Exception("Email déjà utilisé par un autre utilisateur");
-                }
-            }
-            $stmt = $this->db->prepare("SELECT user_id FROM utilisateurs WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            if (!$stmt->fetch()) {
-                throw new Exception("Utilisateur non trouvé");
-            }
-            $anneeId = $profData['annee_id'] ?? null;
-            if (empty($anneeId)) {
-                $stmt = $this->db->prepare("SELECT annee_id FROM annees_academiques WHERE current_flag = 1");
-                $stmt->execute();
-                $annee = $stmt->fetch(PDO::FETCH_ASSOC);
-                if (!$annee) {
-                    throw new Exception("Aucune année académique courante trouvée");
-                }
-                $anneeId = $annee['annee_id'];
-            }
-            // Update utilisateurs
-            if (!empty($profData['email']) && !empty($profData['role'])) {
-                if (!empty($profData['password'])) {
-                    $passwordHash = password_hash($profData['password'], PASSWORD_BCRYPT);
-                    $stmt = $this->db->prepare("
-                        UPDATE utilisateurs
-                        SET email = ?, role = ?, password_hash = ?, actuel = ?
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([
-                        $profData['email'],
-                        $profData['role'],
-                        $passwordHash,
-                        1,
-                        $userId
-                    ]);
-                } else {
-                    $stmt = $this->db->prepare("
-                        UPDATE utilisateurs
-                        SET email = ?, role = ?, actuel = ?
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([
-                        $profData['email'],
-                        $profData['role'],
-                        1,
-                        $userId
-                    ]);
-                }
-            }
-            // Update professeurs
-            $stmt = $this->db->prepare("
-                UPDATE professeurs
-                SET cin = ?, nom = ?, prenom = ?, telephone = ?, department_id = ?, annee_id = ?, actuel = ?
-                WHERE user_id = ?
-            ");
-            $stmt->execute([
-                $profData['cin'],
-                $profData['nom'],
-                $profData['prenom'],
-                $profData['telephone'] ?? null,
-                $profData['department_id'],
-                $anneeId,
-                1,
-                $userId
-            ]);
-            // Clear and update department or filiere head
-            if ($profData['role'] === 'chef_dep') {
-                $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
-                $stmt->execute([$userId]);
-                $stmt = $this->db->prepare("
-                    UPDATE departements SET head_professor_id = ?
-                    WHERE department_id = ?
-                ");
-                $stmt->execute([$userId, $profData['department_id']]);
-            } else {
-                $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
-                $stmt->execute([$userId]);
-            }
-            if ($profData['role'] === 'chef_fill' && !empty($profData['field_id'])) {
-                $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
-                $stmt->execute([$userId]);
-                $stmt = $this->db->prepare("
-                    UPDATE filieres SET head_professor_id = ?
-                    WHERE field_id = ?
-                ");
-                $stmt->execute([$userId, $profData['field_id']]);
-            } else {
-                $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
-                $stmt->execute([$userId]);
-            }
-            $this->db->commit();
-            return [
-                'status' => 200,
-                'data' => [
-                    'message' => 'Professor updated successfully',
-                    'user_id' => $userId
-                ]
-            ];
-        } catch (PDOException $e) {
-            $this->db->rollBack();
-            error_log("updateProfessor[userId=$userId]: " . $e->getMessage());
-            return [
-                'status' => 500,
-                'data' => ['message' => 'SQL Error: ' . $e->getMessage()]
-            ];
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("updateProfessor[userId=$userId]: " . $e->getMessage());
-            return [
-                'status' => 400,
-                'data' => ['message' => 'Application Error: ' . $e->getMessage()]
-            ];
+{
+    $this->db->beginTransaction();
+    try {
+        // Validation des données
+        if (
+            empty($profData['cin']) ||
+            empty($profData['nom']) ||
+            empty($profData['prenom']) ||
+            empty($profData['department_id'])
+        ) {
+            throw new Exception("Professor data is incomplete");
         }
+
+        // Vérification de l'email unique, si fourni
+        if (!empty($profData['email'])) {
+            $stmt = $this->db->prepare("SELECT user_id FROM utilisateurs WHERE email = ? AND user_id != ?");
+            $stmt->execute([$profData['email'], $userId]);
+            if ($stmt->fetch()) {
+                throw new Exception("Email déjà utilisé par un autre utilisateur");
+            }
+        }
+
+        // Vérification de l'existence de l'utilisateur
+        $stmt = $this->db->prepare("SELECT user_id FROM utilisateurs WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        if (!$stmt->fetch()) {
+            throw new Exception("Utilisateur non trouvé");
+        }
+
+        // Récupération de l'année académique courante, si non fournie
+        $anneeId = $profData['annee_id'] ?? null;
+        if (empty($anneeId)) {
+            $stmt = $this->db->prepare("SELECT annee_id FROM annees_academiques WHERE current_flag = 1");
+            $stmt->execute();
+            $annee = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$annee) {
+                throw new Exception("Aucune année académique courante trouvée");
+            }
+            $anneeId = $annee['annee_id'];
+        }
+
+        // Mise à jour de la table utilisateurs
+        if (!empty($profData['email']) && !empty($profData['role'])) {
+            if (!empty($profData['password'])) {
+                $passwordHash = password_hash($profData['password'], PASSWORD_BCRYPT);
+                $stmt = $this->db->prepare("
+                    UPDATE utilisateurs
+                    SET email = ?, role = ?, password_hash = ?, actuel = ?
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([
+                    $profData['email'],
+                    $profData['role'],
+                    $passwordHash,
+                    1,
+                    $userId
+                ]);
+            } else {
+                $stmt = $this->db->prepare("
+                    UPDATE utilisateurs
+                    SET email = ?, role = ?, actuel = ?
+                    WHERE user_id = ?
+                ");
+                $stmt->execute([
+                    $profData['email'],
+                    $profData['role'],
+                    1,
+                    $userId
+                ]);
+            }
+        }
+
+        // Mise à jour de la table professeurs
+        $stmt = $this->db->prepare("
+            UPDATE professeurs
+            SET cin = ?, nom = ?, prenom = ?, telephone = ?, department_id = ?, annee_id = ?, actuel = ?
+            WHERE user_id = ?
+        ");
+        $stmt->execute([
+            $profData['cin'],
+            $profData['nom'],
+            $profData['prenom'],
+            $profData['telephone'] ?? null,
+            $profData['department_id'],
+            $anneeId,
+            1,
+            $userId
+        ]);
+
+        // Mappage des rôles pour professor_roles
+        $roleMapping = [
+            'prof' => 'Regular',
+            'chef_dep' => 'Chef_de_Departement',
+            'chef_fill' => 'Chef_de_Filiere',
+            'chef_module' => 'Chef_de_Module',
+            'chef_element' => 'Chef_de_Element'
+        ];
+
+        // Supprimer les anciens rôles pour cet utilisateur
+        $stmt = $this->db->prepare("DELETE FROM professor_roles WHERE user_id = ?");
+        $stmt->execute([$userId]);
+
+        // Insérer le rôle principal
+        $primaryRole = $roleMapping[$profData['role']] ?? 'Regular';
+        $stmt = $this->db->prepare("
+            INSERT INTO professor_roles (user_id, role, date_role, date_debut_affectation, date_fin_affectation)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $userId,
+            $primaryRole,
+            date('Y-m-d H:i:s'), // date_role = date actuelle
+            !empty($profData['date_debut_affectation']) ? $profData['date_debut_affectation'] : null,
+            !empty($profData['date_fin_affectation']) ? $profData['date_fin_affectation'] : null
+        ]);
+
+        // Insérer les rôles supplémentaires, si fournis
+        foreach ($roles as $role) {
+            if (isset($roleMapping[$role])) {
+                $stmt->execute([
+                    $userId,
+                    $roleMapping[$role],
+                    date('Y-m-d H:i:s'),
+                    !empty($profData['date_debut_affectation']) ? $profData['date_debut_affectation'] : null,
+                    !empty($profData['date_fin_affectation']) ? $profData['date_fin_affectation'] : null
+                ]);
+            }
+        }
+
+        // Mise à jour du chef de département, si applicable
+        if ($profData['role'] === 'chef_dep') {
+            $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+            $stmt = $this->db->prepare("
+                UPDATE departements SET head_professor_id = ?
+                WHERE department_id = ?
+            ");
+            $stmt->execute([$userId, $profData['department_id']]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+        }
+
+        // Mise à jour du chef de filière, si applicable
+        if ($profData['role'] === 'chef_fill' && !empty($profData['field_id'])) {
+            $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+            $stmt = $this->db->prepare("
+                UPDATE filieres SET head_professor_id = ?
+                WHERE field_id = ?
+            ");
+            $stmt->execute([$userId, $profData['field_id']]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+        }
+
+        $this->db->commit();
+        return [
+            'status' => 200,
+            'data' => [
+                'message' => 'Professor updated successfully',
+                'user_id' => $userId
+            ]
+        ];
+    } catch (PDOException $e) {
+        $this->db->rollBack();
+        error_log("updateProfessor[userId=$userId]: " . $e->getMessage());
+        return [
+            'status' => 500,
+            'data' => ['message' => 'SQL Error: ' . $e->getMessage()]
+        ];
+    } catch (Exception $e) {
+        $this->db->rollBack();
+        error_log("updateProfessor[userId=$userId]: " . $e->getMessage());
+        return [
+            'status' => 400,
+            'data' => ['message' => 'Application Error: ' . $e->getMessage()]
+        ];
     }
+}
 
     public function deleteProfessor($userId)
     {
@@ -538,6 +618,13 @@ class AdminModel3
         return ['data' => [], 'total' => 0];
     }
 }
+
+    public function getfiliereByDepartment($departmentId)
+    {
+        $stmt = $this->db->prepare("SELECT field_id, nom FROM filieres WHERE department_id = ? ORDER BY nom");
+        $stmt->execute([$departmentId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
      ///////////////////////////////profile admin functions////////////////////////////////////
 

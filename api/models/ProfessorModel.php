@@ -1101,4 +1101,68 @@ public function getAllCycles() {
         return [];
     }
 }
+public function getProfessorNotesForModuleCSV($userId, $moduleId, $fieldId, $semestreId = null, $etapeId = null) {
+        try {
+           
+
+            // Vérifier que le module appartient à la filière spécifiée
+            $stmtCheckField = $this->db->prepare("SELECT 1 FROM modules WHERE module_id = ? AND field_id = ?");
+            $stmtCheckField->execute([$moduleId, $fieldId]);
+            if ($stmtCheckField->fetch() === false) {
+                return []; // Le module n'appartient pas à cette filière
+            }
+
+            $sql = "
+                SELECT
+                    et.nom AS student_nom,
+                    et.prenom AS student_prenom,
+                    et.user_id AS student_id, -- ID étudiant pour référence
+                    el.nom AS element_name,
+                    m.nom AS module_name,
+                    f.nom AS filiere_nom,
+                    n.note_tp,
+                    n.note_td,
+                    n.note_cc,
+                    n.note_exam,
+                    n.note_rattrapage,
+                    n.note_finale,
+                    s.nom AS semestre_nom,
+                    eta.nom_etape AS etape_nom
+                FROM notes n
+                JOIN etudiants et ON n.student_id = et.user_id
+                JOIN elements el ON n.element_id = el.element_id
+                JOIN modules m ON el.module_id = m.module_id
+                JOIN filieres f ON m.field_id = f.field_id
+                LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
+                LEFT JOIN etapes eta ON s.etape_id = eta.etape_id
+                WHERE m.module_id = :moduleId
+                  AND m.field_id = :fieldId
+                  AND (el.Ref_prof_element = :userId OR el.Ref_prof_tp = :userId)
+            ";
+            $params = [
+                ':moduleId' => $moduleId,
+                ':fieldId' => $fieldId,
+                ':userId' => $userId
+            ];
+
+            if ($semestreId !== null && $semestreId !== '') {
+                $sql .= " AND m.semestre_id = :semestreId";
+                $params[':semestreId'] = $semestreId;
+            }
+            if ($etapeId !== null && $etapeId !== '') {
+                $sql .= " AND s.etape_id = :etapeId";
+                $params[':etapeId'] = $etapeId;
+            }
+
+            $sql .= " ORDER BY student_nom, student_prenom, element_name";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getProfessorNotesForModuleCSV: " . $e->getMessage());
+            return [];
+        }
+    }
+    
 }

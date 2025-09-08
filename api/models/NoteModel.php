@@ -149,7 +149,7 @@
                     SELECT m.module_id, m.semestre_id, e.element_id
                     FROM modules m
                     LEFT JOIN elements e ON m.module_id = e.module_id
-                    WHERE m.semestre_id = :semestre_id AND  m.field_id = :field_id
+                    WHERE m.semestre_id = :semestre_id AND  m.field_id = :field_id AND m.annee_id = :annee_id
                 ";
                 $moduleStmt = $this->db->prepare($moduleQuery);
                 $moduleStmt->execute(['semestre_id' => $semestre_id, 'annee_id' => $annee_id, 'field_id' => $field_id]);

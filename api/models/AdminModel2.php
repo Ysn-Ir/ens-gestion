@@ -1462,11 +1462,6 @@ public function infoModules(){
 
             $insertRole($data['prof_id'], "Chef_de_Filiere", $data['date_debut_affectation'] ?? null, $data['date_fin_affectation'] ?? null);
         }
-
-
-      
-        
-
         // --- 3. Ajouter les nouveaux modules (sans supprimer les anciens) ---
         if (!empty($data['modules']) && is_array($data['modules'])) {
                                                        // Get all semestres once

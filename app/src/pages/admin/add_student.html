@@ -218,19 +218,18 @@
             let csrfToken = localStorage.getItem('csrfToken') || '';
 
             init();
-
             function init() {
                 const userData = JSON.parse(localStorage.getItem("userData") || '{"username":"admin","role":"Administrateur"}');
                 loadDepartments();
                 loadYears();
                 loadCycles();
                 loadEtapes();
-                loadSemesters();
-                loadSections();
-                loadGroupes();
+                // Do not load semesters, sections, or groupes initially since they depend on field_id and etape_id
+                // loadSemesters();
+                // loadSections();
+                // loadGroupes();
                 loadFilieres();
-            }
-
+}
             togglePassword.addEventListener('click', () => {
                 const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
@@ -264,7 +263,7 @@
                 notificationToast.show();
             }
 
-            async function handleStudentFormSubmit(e) {
+           async function handleStudentFormSubmit(e) {
                 e.preventDefault();
                 document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 let isValid = true;
@@ -279,10 +278,23 @@
                     document.getElementById('email').classList.add('is-invalid');
                     isValid = false;
                 }
+                const fieldId = document.getElementById('filiere').value;
+                if (!fieldId) {
+                    document.getElementById('filiere').classList.add('is-invalid');
+                    showNotification('Veuillez sélectionner une filière', false);
+                    isValid = false;
+                }
+                const semesterId = document.getElementById('semester_id').value;
+                if (!semesterId) {
+                    document.getElementById('semester_id').classList.add('is-invalid');
+                    showNotification('Veuillez sélectionner un semestre', false);
+                    isValid = false;
+                }
                 if (!isValid) {
                     showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
                     return;
                 }
+                const groupeId = document.getElementById('groupe_id').value;
                 const formData = {
                     username: document.getElementById('username').value.trim(),
                     email: email,
@@ -291,13 +303,13 @@
                     prenom: document.getElementById('firstName').value.trim(),
                     telephone: document.getElementById('phone').value.trim() || null,
                     department_id: document.getElementById('department').value,
-                    field_id: document.getElementById('filiere').value,
+                    field_id: fieldId,
                     annee_id: document.getElementById('year').value,
                     cycle_id: document.getElementById('cycle_id').value,
                     etape_id: document.getElementById('etape_id').value,
-                    semester_id: document.getElementById('semester_id').value,
-                    section_id: document.getElementById('section_id').value,
-                    groupe_id: document.getElementById('groupe_id').value,
+                    semester_id: semesterId,
+                    section_id: document.getElementById('section_id').value || null,
+                    groupe_id: groupeId ? groupeId : null, // Convert empty string to null
                     cin: document.getElementById('cin').value.trim() || null,
                     date_naissance: document.getElementById('birthdate').value || "2000-01-01",
                     nationalite: document.getElementById('nationality').value || 'Marocaine',
@@ -330,7 +342,6 @@
                     document.getElementById('saveSpinner').classList.add('d-none');
                 }
             }
-
             async function loadDepartments() {
                 try {
                     const response = await fetch(API_ENDPOINTS.departments, { headers: { 'X-CSRF-Token': csrfToken } });
@@ -371,65 +382,64 @@
                     showNotification('Erreur lors du chargement des filières: ' + error.message, false);
                 }
             }
-            async function updateSemestersDropdown(fieldId,etape_id) {
-                try {
-                    semesterSelect.innerHTML = '<option value="">Sélectionner une semester</option>';
-                    if (!fieldId & !etape_id) return;
-                    if(etape_id===undefined ) etape_id=null;
-                    const response = await fetch(`${API_ENDPOINTS.semesters}&field_id=${fieldId}&etape_id=${etape_id}`, {
-                        headers: { 'X-CSRF-Token': csrfToken }
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const semesters = data.data || [];
-                    semesters.forEach(sec => {
-                        const option = document.createElement('option');
-                        option.value = sec.section_id;
-                        option.textContent = sec.nom;
-                        semesterSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des sections:', error);
-                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
-                }
-            }
-            async function updateSectionsDropdown(fieldId,etape_id) {
-                try {
-                    sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                    if (!fieldId & !etape_id) return;
-                    if(etape_id===undefined ) etape_id=null;
-                    const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}&etape_id=${etape_id}`, {
-                        headers: { 'X-CSRF-Token': csrfToken }
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const sections = data.data || [];
-                    sections.forEach(sec => {
-                        const option = document.createElement('option');
-                        option.value = sec.section_id;
-                        option.textContent = sec.nom;
-                        sectionSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des sections:', error);
-                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
-                }
-            }
+            async function updateSemestersDropdown(fieldId, etapeId) {
+    try {
+        semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+        if (!fieldId || !etapeId) return; // Use logical OR
+        const response = await fetch(`${API_ENDPOINTS.semesters}&field_id=${fieldId}&etape_id=${etapeId || ''}`, {
+            headers: { 'X-CSRF-Token': csrfToken }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+        const semesters = data.data || [];
+        semesters.forEach(sem => {
+            const option = document.createElement('option');
+            option.value = sem.semestre_id || sem.semester_id || ''; // Handle both key names
+            option.textContent = sem.nom || 'Semestre inconnu';
+            semesterSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erreur lors du chargement des semestres:', error);
+        showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+    }
+}
+            async function updateSectionsDropdown(fieldId, etapeId) {
+    try {
+        sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
+        if (!fieldId || !etapeId) return; // Use logical OR
+        const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}&etape_id=${etapeId || ''}`, {
+            headers: { 'X-CSRF-Token': csrfToken }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+        const sections = data.data || [];
+        sections.forEach(sec => {
+            const option = document.createElement('option');
+            option.value = sec.section_id;
+            option.textContent = sec.nom;
+            sectionSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erreur lors du chargement des sections:', error);
+        showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+    }
+}
 
             async function updateGroupesDropdown(sectionId) {
                 try {
                     groupeSelect.innerHTML = '<option value="">Sélectionner un groupe</option>';
-                    if (!sectionId) return;
+                    if (!sectionId) return; // Exit if no sectionId
                     const response = await fetch(`${API_ENDPOINTS.groupes}&section_id=${sectionId}`, {
                         headers: { 'X-CSRF-Token': csrfToken }
                     });
                     const data = await response.json();
+                    console.log('Groupes API Response:', data); // Log the response
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
                     const groupes = data.data || [];
                     groupes.forEach(grp => {
                         const option = document.createElement('option');
-                        option.value = grp.groupe_id;
-                        option.textContent = grp.nom;
+                        option.value = grp.groupe_id || ''; // Ensure valid groupe_id
+                        option.textContent = grp.nom || 'Groupe inconnu';
                         groupeSelect.appendChild(option);
                     });
                 } catch (error) {
@@ -498,25 +508,53 @@
                 }
             }
 
-            async function loadSemesters() {
-                try {
-                    const response = await fetch(API_ENDPOINTS.semesters, { headers: { 'X-CSRF-Token': csrfToken } });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const semesters = data.data || data;
-                    const semesterSelect = document.getElementById('semester_id');
-                    semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
-                    semesters.forEach(sem => {
-                        const option = document.createElement('option');
-                        option.value = sem.semestre_id;
-                        option.textContent = sem.nom;
-                        semesterSelect.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des semestres:', error);
-                    showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
-                }
-            }
+           async function loadSemesters(fieldId = null, etapeId = null) {
+    try {
+        let url = API_ENDPOINTS.semesters;
+        if (fieldId && etapeId) {
+            url += `&field_id=${fieldId}&etape_id=${etapeId}`;
+        }
+        const response = await fetch(url, { headers: { 'X-CSRF-Token': csrfToken } });
+        const data = await response.json();
+        console.log('Semesters API Response:', data); // Log the response
+        if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+        const semesters = data.data || data;
+        const semesterSelect = document.getElementById('semester_id');
+        semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+        semesters.forEach(sem => {
+            const option = document.createElement('option');
+            option.value = sem.semestre_id || sem.semester_id || '';
+            option.textContent = sem.nom || 'Semestre inconnu';
+            semesterSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erreur lors du chargement des semestres:', error);
+        showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+    }
+}
+
+async function updateSemestersDropdown(fieldId, etapeId) {
+    try {
+        semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+        if (!fieldId || !etapeId) return;
+        const response = await fetch(`${API_ENDPOINTS.semesters}&field_id=${fieldId}&etape_id=${etapeId || ''}`, {
+            headers: { 'X-CSRF-Token': csrfToken }
+        });
+        const data = await response.json();
+        console.log('Update Semesters API Response:', data); // Log the response
+        if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+        const semesters = data.data || [];
+        semesters.forEach(sem => {
+            const option = document.createElement('option');
+            option.value = sem.semestre_id || sem.semester_id || '';
+            option.textContent = sem.nom || 'Semestre inconnu';
+            semesterSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Erreur lors du chargement des semestres:', error);
+        showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+    }
+}
 
             async function loadSections() {
                 try {
@@ -572,7 +610,7 @@
                 } catch (error) {
                     console.error('Erreur lors du chargement des filières:', error);
                     showNotification('Erreur lors du chargement des filières: ' + error.message, false);
-                }
+         async       }
             }
         });
     </script>

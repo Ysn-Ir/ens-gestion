@@ -6,27 +6,25 @@
     <title>Modifier un Étudiant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />   
-     <script src="../../route.js"></script>
+    <script src="../../route.js"></script>
 
     <style>
+        /* Votre CSS existant */
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
         .content {
             padding: 20px;
             min-height: 100vh;
             background-color: #ffffff;
         }
-
         .logout-btn {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 999;
         }
-
         .student-form-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -35,7 +33,6 @@
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
-
         .student-form-header {
             background-color: #343a40;
             color: white;
@@ -44,24 +41,19 @@
             border-top-right-radius: 10px;
             margin: -20px -20px 20px -20px;
         }
-
         .form-label {
             font-weight: 500;
         }
-
         .required::after {
             content: " *";
             color: #dc3545;
         }
-
         .btn {
             transition: all 0.3s ease;
         }
-
         .btn:hover {
             transform: translateY(-2px);
         }
-
         .toast {
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
             border-radius: 8px;
@@ -329,75 +321,82 @@
             }
 
             async function loadStudentDetails() {
-                try {
-                    document.getElementById('saveBtn').disabled = true;
-                    document.getElementById('saveSpinner').classList.remove('d-none');
-                    const response = await fetch(`${API_ENDPOINTS.studentDetails}&user_id=${studentId}`, {
-                        headers: { 'X-CSRF-Token': csrfToken }
-                    });
-                    const data = await response.json();
-                    const studentData = data.data?.students || data.data?.data?.students;
-                    if (data.status && studentData) {
-                        currentStudent = studentData;
-                        originalStudentData = {
-                            username: studentData.username || '',
-                            email: studentData.email || '',
-                            cne: studentData.cne || '',
-                            nom: studentData.nom || '',
-                            prenom: studentData.prenom || '',
-                            telephone: studentData.telephone || null,
-                            department_id: studentData.department_id || '',
-                            field_id: studentData.field_id || '',
-                            annee_id: studentData.annee_id || '',
-                            cycle_id: studentData.cycle_id || '',
-                            etape_id: studentData.etape_id || '',
-                            semestre_id: studentData.semestre_id || '',
-                            section_id: studentData.section_id || '',
-                            group_id: studentData.group_id || '',
-                            cin: studentData.cin || null,
-                            date_naissance: studentData.date_naissance || '2000-01-01',
-                            nationalite: studentData.nationalite || 'Marocaine',
-                            adresse: studentData.adresse || null
-                        };
-                        document.getElementById('studentId').value = studentData.user_id || '';
-                        document.getElementById('cne').value = studentData.cne || '';
-                        document.getElementById('lastName').value = studentData.nom || '';
-                        document.getElementById('firstName').value = studentData.prenom || '';
-                        document.getElementById('email').value = studentData.email || '';
-                        document.getElementById('phone').value = studentData.telephone || '';
-                        document.getElementById('cin').value = studentData.cin || '';
-                        document.getElementById('birthdate').value = studentData.date_naissance || '';
-                        document.getElementById('nationality').value = studentData.nationalite || 'Marocaine';
-                        document.getElementById('address').value = studentData.adresse || '';
-                        // Populate dropdowns with student data as fallback
-                        populateDropdown('department', studentData.department_id, studentData.departement_nom);
-                        populateDropdown('filiere', studentData.field_id, studentData.filiere_nom);
-                        populateDropdown('year', studentData.annee_id, studentData.annee_nom);
-                        populateDropdown('cycle_id', studentData.cycle_id, studentData.cycle_nom);
-                        populateDropdown('etape_id', studentData.etape_id, studentData.etape_nom);
-                        populateDropdown('semester_id', studentData.semestre_id, studentData.semestre_nom);
-                        populateDropdown('section_id', studentData.section_id, studentData.section_nom);
-                        populateDropdown('group_id', studentData.group_id, studentData.groupe_nom);
-                        // Load full dropdown data from APIs
-                        loadDepartments();
-                        loadFilieres(studentData.department_id);
-                        loadYears();
-                        loadCycles();
-                        loadEtapes();
-                        loadSemesters();
-                        loadSections(studentData.field_id);
-                        loadGroupes(studentData.section_id);
-                    } else {
-                        throw new Error(data.message || 'Étudiant introuvable');
-                    }
-                } catch (error) {
-                    console.error('Erreur lors du chargement des détails de l\'étudiant:', error);
-                    showNotification('Erreur lors du chargement des détails: ' + error.message, false);
-                } finally {
-                    document.getElementById('saveBtn').disabled = false;
-                    document.getElementById('saveSpinner').classList.add('d-none');
-                }
-            }
+    try {
+        document.getElementById('saveBtn').disabled = true;
+        document.getElementById('saveSpinner').classList.remove('d-none');
+        const response = await fetch(`${API_ENDPOINTS.studentDetails}&user_id=${studentId}`, {
+            headers: { 'X-CSRF-Token': csrfToken }
+        });
+        const data = await response.json();
+        const studentData = data.data?.students || data.data?.data?.students;
+
+        if (data.status && studentData) {
+            currentStudent = studentData;
+            originalStudentData = {
+                username: studentData.username || '',
+                email: studentData.email || '',
+                cne: studentData.cne || '',
+                nom: studentData.nom || '',
+                prenom: studentData.prenom || '',
+                telephone: studentData.telephone || null,
+                department_id: studentData.department_id || '',
+                field_id: studentData.field_id || '',
+                annee_id: studentData.annee_id || '',
+                cycle_id: studentData.cycle_id || '',
+                etape_id: studentData.etape_id || '',
+                // Ensure semestre_id is not set to "undefined"
+                semestre_id: studentData.semestre_id || studentData.semester_id || null,
+                section_id: studentData.section_id || '',
+                group_id: studentData.group_id || '',
+                cin: studentData.cin || null,
+                date_naissance: studentData.date_naissance || '2000-01-01',
+                nationalite: studentData.nationalite || 'Marocaine',
+                adresse: studentData.adresse || null
+            };
+
+            // Populate form fields
+            document.getElementById('studentId').value = studentData.user_id || '';
+            document.getElementById('cne').value = studentData.cne || '';
+            document.getElementById('lastName').value = studentData.nom || '';
+            document.getElementById('firstName').value = studentData.prenom || '';
+            document.getElementById('email').value = studentData.email || '';
+            document.getElementById('phone').value = studentData.telephone || '';
+            document.getElementById('cin').value = studentData.cin || '';
+            document.getElementById('birthdate').value = studentData.date_naissance || '';
+            document.getElementById('nationality').value = studentData.nationalite || 'Marocaine';
+            document.getElementById('address').value = studentData.adresse || '';
+
+            // Populate dropdowns with student data as fallback
+            populateDropdown('department', studentData.department_id, studentData.departement_nom);
+            populateDropdown('filiere', studentData.field_id, studentData.filiere_nom);
+            populateDropdown('year', studentData.annee_id, studentData.annee_nom);
+            populateDropdown('cycle_id', studentData.cycle_id, studentData.cycle_nom);
+            populateDropdown('etape_id', studentData.etape_id, studentData.etape_nom);
+            // Populate semester dropdown with proper ID and name
+            populateDropdown('semester_id', originalStudentData.semestre_id, studentData.semestre_nom || studentData.semester_nom);
+            populateDropdown('section_id', studentData.section_id, studentData.section_nom);
+            populateDropdown('group_id', studentData.group_id, studentData.groupe_nom);
+
+            // Load full dropdown data from APIs
+            await loadDepartments();
+            await loadFilieres(studentData.department_id);
+            await loadYears();
+            await loadCycles();
+            await loadEtapes();
+            await loadSemesters(studentData.field_id, studentData.etape_id); // Ensure this is called with valid params
+            await loadSections(studentData.field_id, studentData.etape_id);
+            await loadGroupes(studentData.section_id);
+        } else {
+            throw new Error(data.message || 'Étudiant introuvable');
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des détails de l\'étudiant:', error);
+        showNotification('Erreur lors du chargement des détails: ' + error.message, false);
+    } finally {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveSpinner').classList.add('d-none');
+    }
+}
 
             function populateDropdown(elementId, value, label) {
                 const select = document.getElementById(elementId);
@@ -412,86 +411,94 @@
             }
 
             async function handleStudentFormSubmit(e) {
-    e.preventDefault();
-    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    let isValid = true;
-    document.querySelectorAll('#studentForm [required]').forEach(input => {
-        if (!input.value.trim()) {
-            input.classList.add('is-invalid');
-            isValid = false;
-        }
-    });
-    const email = document.getElementById('email').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        document.getElementById('email').classList.add('is-invalid');
-        isValid = false;
-    }
-    const fieldId = document.getElementById('filiere').value;
-    if (!fieldId) {
-        document.getElementById('filiere').classList.add('is-invalid');
-        showNotification('Veuillez sélectionner une filière', false);
-        isValid = false;
-    }
-    if (!isValid) {
-        showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
-        return;
-    }
-    const formData = { ...originalStudentData };
-    formData.email = document.getElementById('email').value.trim() || formData.email;
-    formData.cne = document.getElementById('cne').value.trim() || formData.cne;
-    formData.nom = document.getElementById('lastName').value.trim() || formData.nom;
-    formData.prenom = document.getElementById('firstName').value.trim() || formData.prenom;
-    formData.telephone = document.getElementById('phone').value.trim() || formData.telephone;
-    formData.department_id = document.getElementById('department').value || formData.department_id;
-    formData.field_id = fieldId; // Ensure field_id is always set
-    formData.annee_id = document.getElementById('year').value || formData.annee_id;
-    formData.cycle_id = document.getElementById('cycle_id').value || formData.cycle_id;
-    formData.etape_id = document.getElementById('etape_id').value || formData.etape_id;
-    formData.semestre_id = document.getElementById('semester_id').value || formData.semestre_id||1;
-    console.log("here it is "+formData.semestre_id);
-    formData.section_id = document.getElementById('section_id').value || formData.section_id;
-    formData.group_id = document.getElementById('group_id').value || formData.group_id;
-    formData.cin = document.getElementById('cin').value.trim() || formData.cin;
-    formData.date_naissance = document.getElementById('birthdate').value || formData.date_naissance;
-    formData.nationalite = document.getElementById('nationality').value || formData.nationalite;
-    formData.adresse = document.getElementById('address').value || formData.adresse;
-    formData.username = `${formData.prenom}.${formData.nom}`.toLowerCase().replace(/\s+/g, '');
-    formData.user_id = studentId;
-    const password = document.getElementById('password').value;
-    if (password) {
-        if (password.length < 8) {
-            document.getElementById('password').classList.add('is-invalid');
-            showNotification('Le mot de passe doit contenir au moins 8 caractères', false);
-            return;
-        }
-        formData.password = password;
-    }
-    try {
-        const saveBtn = document.getElementById('saveBtn');
-        saveBtn.disabled = true;
-        document.getElementById('saveSpinner').classList.remove('d-none');
-        const response = await fetch(`${API_ENDPOINTS.updateStudent}&id=${studentId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-            body: JSON.stringify(formData)
-        });
-        const result = await response.json();
-        if (result.status) {
-            showNotification('Étudiant mis à jour avec succès', true);
-            setTimeout(() => {
-                window.location.href = 'students.html';
-            }, 1500);
-        } else {
-            throw new Error(result.message || 'Échec de la mise à jour');
-        }
-    } catch (error) {
-        console.error('Erreur:', error);
-        showNotification('Erreur lors de la mise à jour: ' + error.message, false);
-    } finally {
-        document.getElementById('saveBtn').disabled = false;
-        document.getElementById('saveSpinner').classList.add('d-none');
-    }
-}
+                e.preventDefault();
+                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                let isValid = true;
+                document.querySelectorAll('#studentForm [required]').forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('is-invalid');
+                        isValid = false;
+                    }
+                });
+                const email = document.getElementById('email').value.trim();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    document.getElementById('email').classList.add('is-invalid');
+                    isValid = false;
+                }
+                const fieldId = document.getElementById('filiere').value;
+                if (!fieldId) {
+                    document.getElementById('filiere').classList.add('is-invalid');
+                    showNotification('Veuillez sélectionner une filière', false);
+                    isValid = false;
+                }
+                if (!isValid) {
+                    showNotification('Veuillez remplir correctement tous les champs obligatoires', false);
+                    return;
+                }
+                
+                const formData = { ...originalStudentData };
+                formData.email = document.getElementById('email').value.trim() || formData.email;
+                formData.cne = document.getElementById('cne').value.trim() || formData.cne;
+                formData.nom = document.getElementById('lastName').value.trim() || formData.nom;
+                formData.prenom = document.getElementById('firstName').value.trim() || formData.prenom;
+                formData.telephone = document.getElementById('phone').value.trim() || formData.telephone;
+                formData.department_id = document.getElementById('department').value || formData.department_id;
+                formData.field_id = fieldId;
+                formData.annee_id = document.getElementById('year').value || formData.annee_id;
+                formData.cycle_id = document.getElementById('cycle_id').value || formData.cycle_id;
+                formData.etape_id = document.getElementById('etape_id').value || formData.etape_id;
+                
+                // CORRECTION: Récupération correcte du semester_id
+                const semesterSelect = document.getElementById('semester_id');
+                formData.semestre_id = semesterSelect.value || formData.semestre_id || null;
+                
+                formData.section_id = document.getElementById('section_id').value || formData.section_id;
+                formData.group_id = document.getElementById('group_id').value || formData.group_id;
+                formData.cin = document.getElementById('cin').value.trim() || formData.cin;
+                formData.date_naissance = document.getElementById('birthdate').value || formData.date_naissance;
+                formData.nationalite = document.getElementById('nationality').value || formData.nationalite;
+                formData.adresse = document.getElementById('address').value || formData.adresse;
+                formData.username = `${formData.prenom}.${formData.nom}`.toLowerCase().replace(/\s+/g, '');
+                formData.user_id = studentId;
+                
+                const password = document.getElementById('password').value;
+                if (password) {
+                    if (password.length < 8) {
+                        document.getElementById('password').classList.add('is-invalid');
+                        showNotification('Le mot de passe doit contenir au moins 8 caractères', false);
+                        return;
+                    }
+                    formData.password = password;
+                }
+                
+                try {
+                    const saveBtn = document.getElementById('saveBtn');
+                    saveBtn.disabled = true;
+                    document.getElementById('saveSpinner').classList.remove('d-none');
+                    
+                    const response = await fetch(`${API_ENDPOINTS.updateStudent}&id=${studentId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+                        body: JSON.stringify(formData)
+                    });
+                    const result = await response.json();
+                    
+                    if (result.status) {
+                        showNotification('Étudiant mis à jour avec succès', true);
+                        setTimeout(() => {
+                            window.location.href = 'students.html';
+                        }, 1500);
+                    } else {
+                        throw new Error(result.message || 'Échec de la mise à jour');
+                    }
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    showNotification('Erreur lors de la mise à jour: ' + error.message, false);
+                } finally {
+                    document.getElementById('saveBtn').disabled = false;
+                    document.getElementById('saveSpinner').classList.add('d-none');
+                }
+            }
 
             async function loadDepartments() {
                 try {
@@ -628,36 +635,55 @@
                 }
             }
 
-            async function loadSemesters() {
-                try {
-                    const response = await fetch(API_ENDPOINTS.semesters, { headers: { 'X-CSRF-Token': csrfToken } });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Erreur réseau');
-                    const semesters = data.data || data;
-                    const select = document.getElementById('semester_id');
-                    select.innerHTML = '<option value="">Sélectionner un semestre</option>';
-                    semesters.forEach(sem => {
-                        const option = document.createElement('option');
-                        option.value = sem.semestre_id;
-                        option.textContent = sem.nom;
-                        if (currentStudent && sem.semestre_id == currentStudent.semestre_id) {
-                            option.selected = true;
-                        }
-                        select.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Erreur lors du chargement des semestres:', error);
-                    showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
-                    if (currentStudent && currentStudent.semestre_id && currentStudent.semestre_nom) {
-                        populateDropdown('semester_id', currentStudent.semestre_id, currentStudent.semestre_nom);
-                    }
-                }
-            }
+           async function loadSemesters(fieldId = null, etapeId = null) {
+    try {
+        let url = API_ENDPOINTS.semesters;
+        if (fieldId && etapeId) {
+            url += `&field_id=${fieldId}&etape_id=${etapeId}`;
+        }
 
-            async function loadSections(fieldId,etape_id) {
+        const response = await fetch(url, { headers: { 'X-CSRF-Token': csrfToken } });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+
+        const semesters = data.data || data;
+        const select = document.getElementById('semester_id');
+        select.innerHTML = '<option value="">Sélectionner un semestre</option>';
+
+        semesters.forEach(sem => {
+            const option = document.createElement('option');
+            // Ensure valid semester ID
+            const semesterId = sem.semestre_id || sem.semester_id || '';
+            option.value = semesterId;
+            option.textContent = sem.nom || 'Semestre inconnu';
+            if (currentStudent && semesterId && (semesterId == currentStudent.semestre_id || semesterId == currentStudent.semester_id)) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        // If no semesters are loaded, ensure a fallback
+        if (semesters.length === 0 && currentStudent && (currentStudent.semestre_id || currentStudent.semester_id)) {
+            const semesterId = currentStudent.semestre_id || currentStudent.semester_id;
+            const semesterName = currentStudent.semestre_nom || currentStudent.semester_nom || 'Semestre inconnu';
+            populateDropdown('semester_id', semesterId, semesterName);
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement des semestres:', error);
+        showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
+        // Fallback to student data if available
+        if (currentStudent && (currentStudent.semestre_id || currentStudent.semester_id)) {
+            const semesterId = currentStudent.semestre_id || currentStudent.semester_id;
+            const semesterName = currentStudent.semestre_nom || currentStudent.semester_nom;
+            populateDropdown('semester_id', semesterId, semesterName);
+        }
+    }
+}
+
+            async function loadSections(fieldId, etape_id) {
                 try {
                     sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                    if (!fieldId&etape_id) return;
+                    if (!fieldId) return;
                     if(etape_id===undefined) etape_id=null;
                     const response = await fetch(`${API_ENDPOINTS.sections}&field_id=${fieldId}&etape_id=${etape_id}`, {
                         headers: { 'X-CSRF-Token': csrfToken }
@@ -725,37 +751,43 @@
                 }
                 await loadFilieres(departmentId);
             }
-             async function updateSemestersDropdown(fieldId,etape_id) {
+            
+            async function updateSemestersDropdown(fieldId, etape_id) {
                 try {
-                    semesterSelect.innerHTML = '<option value="">Sélectionner une semester</option>';
-                    if (!fieldId & !etape_id) return;
-                    if(etape_id===undefined ) etape_id=null;
+                    semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                    if (!fieldId && !etape_id) return;
+                    if(etape_id===undefined) etape_id=null;
+                    
                     const response = await fetch(`${API_ENDPOINTS.semesters}&field_id=${fieldId}&etape_id=${etape_id}`, {
                         headers: { 'X-CSRF-Token': csrfToken }
                     });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Erreur réseau');
+                    
                     const semesters = data.data || [];
-                    semesters.forEach(sec => {
+                    semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                    
+                    semesters.forEach(sem => {
                         const option = document.createElement('option');
-                        option.value = sec.section_id;
-                        option.textContent = sec.nom;
+                        option.value = sem.semestre_id || sem.semester_id; // Gestion des deux formats
+                        option.textContent = sem.nom;
                         semesterSelect.appendChild(option);
                     });
                 } catch (error) {
-                    console.error('Erreur lors du chargement des sections:', error);
-                    showNotification('Erreur lors du chargement des sections: ' + error.message, false);
+                    console.error('Erreur lors du chargement des semestres:', error);
+                    showNotification('Erreur lors du chargement des semestres: ' + error.message, false);
                 }
             }
-            async function updateSectionsDropdown(fieldId,etape_id) {
+            
+            async function updateSectionsDropdown(fieldId, etape_id) {
                 sectionSelect.innerHTML = '<option value="">Sélectionner une section</option>';
-                if (!fieldId&!etape_id) {
+                if (!fieldId && !etape_id) {
                     if (currentStudent && currentStudent.section_id && currentStudent.section_nom) {
                         populateDropdown('section_id', currentStudent.section_id, currentStudent.section_nom);
                     }
                     return;
                 }
-                await loadSections(fieldId,etape_id);
+                await loadSections(fieldId, etape_id);
             }
 
             async function updateGroupesDropdown(sectionId) {

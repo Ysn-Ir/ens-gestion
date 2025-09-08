@@ -104,90 +104,101 @@
   </div>
 
   <script>
-    const API_BASE_URL = url+'/api';
-    const LOGIN_ENDPOINT = `${API_BASE_URL}/auth/login`;
+   const API_BASE_URL = `${url}/api`; // Ensure `url` is defined in route.js
+const LOGIN_ENDPOINT = `${API_BASE_URL}/auth/login`;
 
-    const loginForm = document.getElementById('loginForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const btnText = document.getElementById('btnText');
-    const spinner = document.getElementById('spinner');
-    const errorAlert = document.getElementById('errorAlert');
+const loginForm = document.getElementById('loginForm');
+const submitBtn = document.getElementById('submitBtn');
+const btnText = document.getElementById('btnText');
+const spinner = document.getElementById('spinner');
+const errorAlert = document.getElementById('errorAlert');
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorAlert.classList.add('hidden');
-      submitBtn.disabled = true;
-      btnText.textContent = 'Connexion en cours...';
-      spinner.classList.remove('hidden');
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errorAlert.classList.add('hidden');
+  submitBtn.disabled = true;
+  btnText.textContent = 'Connexion en cours...';
+  spinner.classList.remove('hidden');
 
-      const username = loginForm.username.value.trim();
-      const password = loginForm.password.value;
+  const username = loginForm.username.value.trim();
+  const password = loginForm.password.value;
 
-      if (!username || !password) {
-        showError('Veuillez remplir tous les champs');
-        resetButton();
-        return;
-      }
+  if (!username || !password) {
+    showError('Veuillez remplir tous les champs');
+    resetButton();
+    return;
+  }
 
-      try {
-        const response = await fetch(LOGIN_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ username, password })
-        });
-
-        const responseData = await response.json();
-
-        if (!response.ok) {
-          throw new Error(responseData.data?.message || 'Échec de la connexion');
-        }
-
-        if (responseData.data && responseData.data.user) {
-          const userData = responseData.data.user;
-          localStorage.setItem('userData', JSON.stringify(userData));
-          redirectUser(userData.role);
-        } else {
-          throw new Error('Structure de réponse inattendue');
-        }
-      } catch (error) {
-        showError(error.message || 'Une erreur est survenue');
-        console.error('Erreur de connexion:', error);
-      } finally {
-        resetButton();
-      }
+  try {
+    const response = await fetch(LOGIN_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
     });
 
-    function resetButton() {
-      submitBtn.disabled = false;
-      btnText.textContent = 'Se connecter';
-      spinner.classList.add('hidden');
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      const message = responseData.data?.message || {
+        401: 'Nom d’utilisateur ou mot de passe incorrect',
+        500: 'Erreur serveur, veuillez réessayer plus tard',
+      }[response.status] || 'Échec de la connexion';
+      throw new Error(message);
     }
 
-    function showError(message) {
-      errorAlert.textContent = message;
-      errorAlert.classList.remove('hidden');
-      errorAlert.classList.add('error-alert');
-      setTimeout(() => {
-        errorAlert.classList.remove('error-alert');
-      }, 400);
+    if (!responseData.data || !responseData.data.user) {
+      throw new Error('Structure de réponse inattendue');
     }
 
-    function redirectUser(role) {
-      const routes = {
-        'admin': url+'/app/src/pages/admin/dashboard.html',
-        'prof': url+'/app/src/pages/professor/dashboard.html',
-        'student': url+'/app/src/pages/student/dashboard.html'
-      };
+    const userData = responseData.data.user;
+    localStorage.setItem('userData', JSON.stringify(userData));
+    redirectUser(userData.role);
+  } catch (error) {
+    showError(error.message || 'Une erreur est survenue');
+    console.error('Erreur de connexion:', error);
+  } finally {
+    resetButton();
+  }
+});
 
-      if (routes[role]) {
-        window.location.href = routes[role];
-      } else {
-        showError('Rôle utilisateur non reconnu');
-      }
-    }
+function resetButton() {
+  submitBtn.disabled = false;
+  btnText.textContent = 'Se connecter';
+  spinner.classList.add('hidden');
+}
+
+function showError(message) {
+  errorAlert.textContent = message;
+  errorAlert.classList.remove('hidden');
+  errorAlert.classList.add('error-alert');
+  setTimeout(() => {
+    errorAlert.classList.remove('error-alert');
+  }, 400);
+  setTimeout(() => {
+    errorAlert.classList.add('hidden');
+    errorAlert.textContent = '';
+  }, 5000);
+}
+
+function redirectUser(role) {
+  const routes = {
+    admin: `${url}/app/src/pages/admin/dashboard.html`,
+    superadmin:`${url}/app/src/pages/admin/dashboard.html`,
+    prof: `${url}/app/src/pages/professor/dashboard.html`,
+    chef_fill: `${url}/app/src/pages/professor/dashboard.html`,
+    chef_dep: `${url}/app/src/pages/professor/dashboard.html`,
+    student: `${url}/app/src/pages/student/dashboard.html`,
+  };
+
+  if (routes[role]) {
+    window.location.href = routes[role];
+  } else {
+    showError('Rôle utilisateur non reconnu');
+  }
+}
   </script>
 </body>
 </html>
