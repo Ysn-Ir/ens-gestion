@@ -47,56 +47,45 @@ class ReinscriptionModel {
 
     public function getStudentsToReEnroll(): array {
     $current_year = $this->getCurrentAcademicYear();
-    if (!$current_year) throw new Exception("Année académique actuelle non définie.");
-
-    // La requête est maintenant divisée en deux pour plus de clarté et de précision.
-    $classified = [
-        'annee_non_valide' => [],
-        'modules_restants' => []
-    ];
-
-    // Requête 1 : Étudiants en redoublement (année non validée)
-    $query_failed = "
-        SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
-               GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
-        FROM etudiants e
-        INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
-        LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
-        LEFT JOIN etapes et ON se.etape_id = et.etape_id
-        LEFT JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.decision <> 'V'
-        LEFT JOIN modules m ON nm.module_id = m.module_id
-        WHERE e.actuel = 1 AND na.decision_annee IN ('F', 'NV')
-        GROUP BY e.user_id ORDER BY e.nom;
-    ";
-    $stmt_failed = $this->conn->prepare($query_failed);
-    $stmt_failed->execute([':cy' => $current_year]);
-    $classified['annee_non_valide'] = $stmt_failed->fetchAll(PDO::FETCH_ASSOC);
-
-    // Requête 2 : Étudiants passant avec dette (année validée par compensation)
-    $query_debt = "
-        SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
-               GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
-        FROM etudiants e
-        INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
-        LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
-        LEFT JOIN etapes et ON se.etape_id = et.etape_id
-        INNER JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.retake_status = 'scheduled'
-        INNER JOIN modules m ON nm.module_id = m.module_id
-        WHERE e.actuel = 1 AND na.decision_annee IN ('V', 'VPC')
-        GROUP BY e.user_id
-        ORDER BY e.nom;
-    ";
-    $stmt_debt = $this->conn->prepare($query_debt);
-    $stmt_debt->execute([':cy' => $current_year]);
-    $classified['modules_restants'] = $stmt_debt->fetchAll(PDO::FETCH_ASSOC);
-
-    return $classified;
-}
+        if (!$current_year) throw new Exception("Année académique actuelle non définie.");
+        $classified = ['annee_non_valide' => [], 'modules_restants' => []];
+        $query_failed = "
+            SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
+                   GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
+            FROM etudiants e
+            INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
+            LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
+            LEFT JOIN etapes et ON se.etape_id = et.etape_id
+            LEFT JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.decision <> 'V'
+            LEFT JOIN modules m ON nm.module_id = m.module_id
+            WHERE e.actuel = 1 AND na.decision_annee IN ('F', 'NV')
+            GROUP BY e.user_id ORDER BY e.nom;
+        ";
+        $stmt_failed = $this->conn->prepare($query_failed);
+        $stmt_failed->execute([':cy' => $current_year]);
+        $classified['annee_non_valide'] = $stmt_failed->fetchAll(PDO::FETCH_ASSOC);
+        $query_debt = "
+            SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
+                   GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
+            FROM etudiants e
+            INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
+            LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
+            LEFT JOIN etapes et ON se.etape_id = et.etape_id
+            INNER JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.retake_status = 'scheduled'
+            INNER JOIN modules m ON nm.module_id = m.module_id
+            WHERE e.actuel = 1 AND na.decision_annee IN ('V', 'VPC')
+            GROUP BY e.user_id
+            ORDER BY e.nom;
+        ";
+        $stmt_debt = $this->conn->prepare($query_debt);
+        $stmt_debt->execute([':cy' => $current_year]);
+        $classified['modules_restants'] = $stmt_debt->fetchAll(PDO::FETCH_ASSOC);
+        return $classified;
+    }
 
     public function getStudentsReadyForNextCycle(): array {
         $current_year = $this->getCurrentAcademicYear();
         if (!$current_year) return [];
-
         $query = "
             SELECT e.user_id, e.nom, e.prenom, e.cne, c.nom as current_cycle_nom, se.cycle_id as current_cycle_id
             FROM etudiants e
@@ -111,7 +100,6 @@ class ReinscriptionModel {
         $stmt = $this->conn->prepare($query);
         $stmt->execute([':current_year' => $current_year]);
         $potentialStudents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         $readyStudents = [];
         foreach ($potentialStudents as $student) {
             if ($this->isLastStepOfCycle($student['user_id'], $current_year)) {
@@ -548,12 +536,17 @@ class ReinscriptionModel {
     }
 }
 
-    /**
+   /**
      * Crée les enregistrements de notes vierges pour les nouveaux modules et les modules en dette.
+     * MODIFIÉ : La signature de la fonction accepte maintenant un tableau de modules en dette.
      */
     private function createInitialGradeRecords(int $studentId, string $academicYear, array $modulesForNewStep, array $modulesToRetake = []): void {
         $allModules = array_merge($modulesForNewStep, $modulesToRetake);
-        if (empty($allModules)) return;
+        if (empty($allModules)) {
+             // Ce n'est plus une erreur critique si on reporte des notes, on peut juste logger un avertissement.
+            error_log("Avertissement: Aucun nouveau module ou module en dette à inscrire pour l'étudiant {$studentId} pour l'année {$academicYear}. Seuls les modules validés seront reportés.");
+            return;
+        }
 
         $stmt_insert_note_semestre = $this->conn->prepare("INSERT IGNORE INTO note_semestres (student_id, semestre_id, annee_id) VALUES (?, ?, ?)");
         $stmt_insert_note_module = $this->conn->prepare("INSERT IGNORE INTO note_modules (student_id, module_id, semestre_id, annee_id) VALUES (?, ?, ?, ?)");
@@ -569,9 +562,7 @@ class ReinscriptionModel {
                 $stmt_insert_note_semestre->execute([$studentId, $semestreId, $academicYear]);
                 $processedSemesters[] = $semestreId;
             }
-
             $stmt_insert_note_module->execute([$studentId, $moduleId, $semestreId, $academicYear]);
-
             $stmt_get_elements->execute([$moduleId]);
             $elements = $stmt_get_elements->fetchAll(PDO::FETCH_COLUMN);
             foreach ($elements as $elementId) {
@@ -672,13 +663,11 @@ public function processStudentProgression(int $studentId, ?int $newFieldId = nul
             $currentAcademicYear = $this->getCurrentAcademicYear();
             if (!$currentAcademicYear) throw new Exception("Année académique actuelle non définie.");
 
-            // 1. Récupérer l'état complet de l'étudiant
             $studentInfo = $this->getStudentState($studentId, $currentAcademicYear);
             if (!$studentInfo) {
                 throw new Exception("Données de base de l'étudiant manquantes pour l'année en cours.");
             }
 
-            // 2. Décider de l'action à entreprendre
             $hasPassedYear = in_array($studentInfo['decision_annee'], ['V', 'VPC']);
             $hasDebt = $studentInfo['modules_en_dette'] > 0;
             $isLastStep = $this->isLastStepOfCycle($studentId, $currentAcademicYear);
@@ -686,19 +675,17 @@ public function processStudentProgression(int $studentId, ?int $newFieldId = nul
             $message = "";
 
             if (!$hasPassedYear) {
-                // CAS 1 : REDOUBLEMENT (Année non validée)
                 $message = $this->enrollRedoublement($studentId, $studentInfo);
             } elseif ($isLastStep) {
                 if ($hasDebt) {
-                    // CAS 2 : REDOUBLEMENT (Dernière année du cycle avec dette)
                     $message = $this->enrollRedoublement($studentId, $studentInfo);
                 } else {
-                    // CAS 3 : PASSAGE AU CYCLE SUIVANT
-                    if ($newFieldId === null) throw new Exception("Le choix d'une nouvelle filière est obligatoire pour passer au cycle suivant.");
+                    if ($newFieldId === null && $studentInfo['cycle_id'] < 4) { // Ne pas demander pour le doctorat
+                        throw new Exception("Le choix d'une nouvelle filière est obligatoire pour passer au cycle suivant.");
+                    }
                     $message = $this->enrollNextCycle($studentId, $studentInfo, $newFieldId);
                 }
             } else {
-                // CAS 4 : PASSAGE SIMPLE (à l'année suivante dans le même cycle)
                 $message = $this->enrollSimplePassage($studentId, $studentInfo);
             }
 
@@ -707,93 +694,130 @@ public function processStudentProgression(int $studentId, ?int $newFieldId = nul
 
         } catch (Exception $e) {
             $this->conn->rollBack();
-            throw $e; // L'exception sera gérée par le contrôleur
+            throw $e;
         }
     }
 
     /**
-     * Cas 1 & 2 : Inscrit l'étudiant en redoublement.
+     * CAS 1 & 2 : REDOUBLEMENT
+     * MODIFIÉ : Appelle copyValidatedResults pour reporter les notes déjà acquises.
      */
     private function enrollRedoublement(int $studentId, array $studentInfo): string {
-        if ($studentInfo['fail_count'] >= 2) { // Seuil de redoublement
+        if ($studentInfo['fail_count'] >= 2) {
             throw new Exception("Réinscription bloquée : nombre maximum de redoublements atteint.");
         }
         
-        $nextAcademicYear = $this->getNextAcademicYear($studentInfo['annee_id']);
-        $nextEtapeId = $studentInfo['current_etape_id']; // On reste à la même étape
-        $nextFieldId = $studentInfo['field_id'];
-        $nextCycleId = $studentInfo['cycle_id'];
+        $currentAcademicYear = $studentInfo['annee_id'];
+        $nextAcademicYear = $this->getNextAcademicYear($currentAcademicYear);
+        $etapeId = $studentInfo['current_etape_id'];
+        $fieldId = $studentInfo['field_id'];
+        $cycleId = $studentInfo['cycle_id'];
 
-        // Inscription administrative pour tous les semestres de l'étape
-        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $nextFieldId, $nextCycleId);
+        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $etapeId, $fieldId, $cycleId);
 
-        // Création des enregistrements de notes vierges
-        $modules = $this->getModulesForStep($nextFieldId, $nextEtapeId);
+        $modules = $this->getModulesForStep($fieldId, $etapeId);
         $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modules);
         
-        // Mise à jour de la note année avec incrémentation du compteur d'échec
+        // **AJOUT CLÉ** : Copie les résultats déjà validés de l'année précédente.
+        $this->copyValidatedResults($studentId, $currentAcademicYear, $nextAcademicYear);
+
         $newFailCount = $studentInfo['fail_count'] + 1;
         $this->createOrUpdateNoteAnnee($studentId, $nextAcademicYear, $newFailCount);
 
-        return "Étudiant inscrit en redoublement pour l'année {$nextAcademicYear}.";
+        return "Étudiant inscrit en redoublement pour l'année {$nextAcademicYear}. Les modules déjà validés ont été reportés.";
     }
 
     /**
-     * Cas 3 : Inscrit l'étudiant au cycle suivant.
+     * CAS 3 : PASSAGE AU CYCLE SUIVANT
      */
-    private function enrollNextCycle(int $studentId, array $studentInfo, int $newFieldId): string {
+    private function enrollNextCycle(int $studentId, array $studentInfo, ?int $newFieldId): string {
         $nextAcademicYear = $this->getNextAcademicYear($studentInfo['annee_id']);
-        $nextCycleId = $studentInfo['cycle_id'] + 1; // Passage au cycle supérieur
-        $nextEtapeId = 1; // On commence à la première étape du nouveau cycle
+        $nextCycleId = $studentInfo['cycle_id'] + 1;
+        $nextEtapeId = 1;
 
-        // Inscription administrative
+        if ($nextCycleId > 4) { // Supposons que 4 est le dernier cycle (Doctorat)
+             return "Félicitations ! L'étudiant a terminé son cursus et est prêt pour la diplomation.";
+        }
+
         $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $newFieldId, $nextCycleId);
-
-        // Création des enregistrements de notes
         $modules = $this->getModulesForStep($newFieldId, $nextEtapeId);
         $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modules);
-        
-        // Mise à jour de la note année
         $this->createOrUpdateNoteAnnee($studentId, $nextAcademicYear);
 
-        // Mise à jour du profil de l'étudiant avec son nouveau cycle et sa nouvelle filière
         $stmt = $this->conn->prepare("UPDATE etudiants SET cycle_id = ?, field_id = ? WHERE user_id = ?");
         $stmt->execute([$nextCycleId, $newFieldId, $studentId]);
 
         return "Étudiant inscrit avec succès dans le nouveau cycle pour l'année {$nextAcademicYear}.";
     }
 
-    /**
-     * Cas 4 : Inscrit l'étudiant à l'étape suivante du même cycle.
+   /**
+     * CAS 4 : PASSAGE SIMPLE (AVEC OU SANS DETTE)
+     * MODIFIÉ : Appelle copyValidatedResults pour reporter les notes déjà acquises.
      */
     private function enrollSimplePassage(int $studentId, array $studentInfo): string {
-        $nextAcademicYear = $this->getNextAcademicYear($studentInfo['annee_id']);
-        $nextEtapeId = $studentInfo['current_etape_id'] + 1; // On passe à l'étape suivante
-        $nextFieldId = $studentInfo['field_id']; // On reste dans la même filière
-        $nextCycleId = $studentInfo['cycle_id']; // On reste dans le même cycle
+        $currentAcademicYear = $studentInfo['annee_id'];
+        $nextAcademicYear = $this->getNextAcademicYear($currentAcademicYear);
+        $nextEtapeId = $studentInfo['current_etape_id'] + 1;
+        $fieldId = $studentInfo['field_id'];
+        $cycleId = $studentInfo['cycle_id'];
 
-        // Inscription administrative
-        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $nextFieldId, $nextCycleId);
+        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $fieldId, $cycleId);
 
-        // Récupérer les modules de la nouvelle étape
-        $modulesNewStep = $this->getModulesForStep($nextFieldId, $nextEtapeId);
+        $modulesNewStep = $this->getModulesForStep($fieldId, $nextEtapeId);
         
-        // Récupérer les modules en dette de l'année précédente
         $modulesInDebt = [];
         if ($studentInfo['modules_en_dette'] > 0) {
             $stmt = $this->conn->prepare("SELECT module_id, semestre_id FROM note_modules WHERE student_id = ? AND annee_id = ? AND retake_status = 'scheduled'");
-            $stmt->execute([$studentId, $studentInfo['annee_id']]);
+            $stmt->execute([$studentId, $currentAcademicYear]);
             $modulesInDebt = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        // Création des enregistrements de notes (nouveaux modules + modules en dette)
         $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modulesNewStep, $modulesInDebt);
         
-        // Mise à jour de la note année
+        // **AJOUT CLÉ** : Copie les résultats déjà validés de l'année précédente.
+        $this->copyValidatedResults($studentId, $currentAcademicYear, $nextAcademicYear);
+        
         $this->createOrUpdateNoteAnnee($studentId, $nextAcademicYear);
 
-        return "Étudiant inscrit à l'étape suivante pour l'année {$nextAcademicYear}.";
+        $message = "Étudiant inscrit à l'étape suivante pour l'année {$nextAcademicYear}.";
+        if (!empty($modulesInDebt)) {
+            $message .= " Les modules en dette et les résultats validés ont été reportés.";
+        }
+        return $message;
     }
+
+    /**
+     * Copie les résultats validés (modules et éléments) de l'année précédente vers la nouvelle.
+     */
+    private function copyValidatedResults(int $studentId, string $fromYear, string $toYear): void {
+        // 1. Copier les notes des ÉLÉMENTS validés
+        $sql_elements = "
+            INSERT INTO notes (student_id, element_id, semestre_id, annee_id, note_tp, note_td, note_cc, note_exam, note_rattrapage, note_finale, decision, decision_ratt)
+            SELECT 
+                student_id, element_id, semestre_id, :to_year, note_tp, note_td, note_cc, note_exam, note_rattrapage, note_finale, decision, decision_ratt
+            FROM notes
+            WHERE student_id = :student_id AND annee_id = :from_year AND (decision = 'V' OR decision_ratt = 'VR')
+            ON DUPLICATE KEY UPDATE
+                note_finale = VALUES(note_finale), decision = VALUES(decision), decision_ratt = VALUES(decision_ratt),
+                note_tp = VALUES(note_tp), note_td = VALUES(note_td), note_cc = VALUES(note_cc), note_exam = VALUES(note_exam), note_rattrapage = VALUES(note_rattrapage);
+        ";
+        $stmt_elements = $this->conn->prepare($sql_elements);
+        $stmt_elements->execute([':student_id' => $studentId, ':from_year' => $fromYear, ':to_year' => $toYear]);
+
+        // 2. Copier les notes des MODULES validés
+        $sql_modules = "
+            INSERT INTO note_modules (student_id, module_id, semestre_id, annee_id, note_module, decision, note_ratt, decision_ratt, retake_status)
+            SELECT 
+                student_id, module_id, semestre_id, :to_year, note_module, decision, note_ratt, decision_ratt, 'completed'
+            FROM note_modules
+            WHERE student_id = :student_id AND annee_id = :from_year AND (decision IN ('V', 'VPC') OR decision_ratt = 'VR') AND retake_status IS NULL
+            ON DUPLICATE KEY UPDATE
+                note_module = VALUES(note_module), decision = VALUES(decision), decision_ratt = VALUES(decision_ratt), retake_status = VALUES(retake_status);
+        ";
+        $stmt_modules = $this->conn->prepare($sql_modules);
+        $stmt_modules->execute([':student_id' => $studentId, ':from_year' => $fromYear, ':to_year' => $toYear]);
+    }
+
      /**
      * Récupère l'état complet d'un étudiant pour une année donnée.
      */
@@ -831,6 +855,7 @@ public function processStudentProgression(int $studentId, ?int $newFieldId = nul
             $stmt_insert->execute([$studentId, $academicYear, $semesterId, $cycleId, $fieldId, $etapeId]);
         }
     }
+
     /**
      * Crée ou met à jour la ligne dans note_annees pour la nouvelle année.
      */
