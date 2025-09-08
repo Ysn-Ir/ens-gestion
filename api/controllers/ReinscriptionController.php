@@ -1,3 +1,4 @@
+
 <?php
 require_once __DIR__ . "/../models/ReinscriptionModel.php";
 require_once __DIR__ . "/../utils/Response.php";
@@ -40,7 +41,7 @@ class ReinscriptionController {
                 case 'get_graduated_students':
                     $this->getGraduatedStudents();
                     break;
- 
+
                 default:
                     Response::sendError("Action GET non valide ou manquante.", 400);
                     break;
@@ -140,7 +141,7 @@ class ReinscriptionController {
 
         try {
             // On passe les IDs à la fonction du modèle
-            $result = $this->model->reenrollStudent((int)$studentId, $newFieldId ? (int)$newFieldId : null);
+            $result = $this->model->processStudentProgression((int)$studentId, $newFieldId ? (int)$newFieldId : null);
             Response::sendSuccess($result['message'], $result);
         } catch (Exception $e) {
             Response::sendError($e->getMessage(), 500);
@@ -149,34 +150,29 @@ class ReinscriptionController {
 
     // NOUVELLE FONCTION pour gérer l'inscription en masse
     private function processBulkEnrollment(array $data) {
-        $studentIds = $data['student_ids'] ?? [];
-        if (empty($studentIds)) {
-            Response::sendError("Aucun ID d'étudiant fourni.", 400);
-            return;
-        }
-
-        try {
-            // Note : Le modèle `enrollAllPassingStudents` doit être adapté pour accepter une liste d'IDs.
-            // Pour l'instant, on va boucler, mais une requête unique serait plus performante.
-            $successCount = 0;
-            $errors = [];
-            foreach ($studentIds as $studentId) {
-                try {
-                    $this->model->reenrollStudent((int)$studentId, null);
-                    $successCount++;
-                } catch (Exception $e) {
-                    $errors[] = "Étudiant ID {$studentId}: " . $e->getMessage();
-                }
-            }
-            
-            if ($successCount > 0) {
-                Response::sendSuccess("{$successCount} étudiant(s) inscrits. Erreurs: " . count($errors), ['errors' => $errors]);
-            } else {
-                Response::sendError("Aucun étudiant n'a pu être inscrit.", 500, ['errors' => $errors]);
-            }
-
-        } catch (Exception $e) {
-            Response::sendError($e->getMessage(), 500);
-        }
+    $studentIds = $data['student_ids'] ?? [];
+    if (empty($studentIds)) {
+        Response::sendError("Aucun ID d'étudiant fourni.", 400);
+        return;
     }
+
+    try {
+        // On appelle une nouvelle fonction dédiée dans le modèle
+        $result = $this->model->enrollPassingStudentsInBulk($studentIds);
+        
+        if ($result['success_count'] > 0) {
+            $message = "{$result['success_count']} étudiant(s) inscrits avec succès.";
+            if (!empty($result['errors'])) {
+                $message .= " Erreurs: " . count($result['errors']);
+            }
+            Response::sendSuccess($message, ['errors' => $result['errors']]);
+        } else {
+            Response::sendError("Aucun étudiant n'a pu être inscrit.", 500, ['errors' => $result['errors']]);
+        }
+
+    } catch (Exception $e) {
+        // Erreur générale si la transaction échoue
+        Response::sendError("Une erreur critique est survenue: " . $e->getMessage(), 500);
+    }
+}
 }

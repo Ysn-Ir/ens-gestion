@@ -46,52 +46,52 @@ class ReinscriptionModel {
     // --- Fonctions de récupération (GET) ---
 
     public function getStudentsToReEnroll(): array {
-        $current_year = $this->getCurrentAcademicYear();
-        if (!$current_year) throw new Exception("Année académique actuelle non définie.");
+    $current_year = $this->getCurrentAcademicYear();
+    if (!$current_year) throw new Exception("Année académique actuelle non définie.");
 
-        // La requête est maintenant divisée en deux pour plus de clarté et de précision.
-        $classified = [
-            'annee_non_valide' => [],
-            'modules_restants' => []
-        ];
+    // La requête est maintenant divisée en deux pour plus de clarté et de précision.
+    $classified = [
+        'annee_non_valide' => [],
+        'modules_restants' => []
+    ];
 
-        // Requête 1 : Étudiants en redoublement (année non validée)
-        $query_failed = "
-            SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
-                GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
-            FROM etudiants e
-            INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
-            LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
-            LEFT JOIN etapes et ON se.etape_id = et.etape_id
-            LEFT JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.decision <> 'V'
-            LEFT JOIN modules m ON nm.module_id = m.module_id
-            WHERE e.actuel = 1 AND na.decision_annee IN ('F', 'NV')
-            GROUP BY e.user_id ORDER BY e.nom;
-        ";
-        $stmt_failed = $this->conn->prepare($query_failed);
-        $stmt_failed->execute([':cy' => $current_year]);
-        $classified['annee_non_valide'] = $stmt_failed->fetchAll(PDO::FETCH_ASSOC);
+    // Requête 1 : Étudiants en redoublement (année non validée)
+    $query_failed = "
+        SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
+               GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
+        FROM etudiants e
+        INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
+        LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
+        LEFT JOIN etapes et ON se.etape_id = et.etape_id
+        LEFT JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.decision <> 'V'
+        LEFT JOIN modules m ON nm.module_id = m.module_id
+        WHERE e.actuel = 1 AND na.decision_annee IN ('F', 'NV')
+        GROUP BY e.user_id ORDER BY e.nom;
+    ";
+    $stmt_failed = $this->conn->prepare($query_failed);
+    $stmt_failed->execute([':cy' => $current_year]);
+    $classified['annee_non_valide'] = $stmt_failed->fetchAll(PDO::FETCH_ASSOC);
 
-        // Requête 2 : Étudiants passant avec dette (année validée par compensation)
-        $query_debt = "
-            SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
-                GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
-            FROM etudiants e
-            INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
-            LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
-            LEFT JOIN etapes et ON se.etape_id = et.etape_id
-            INNER JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.decision <> 'V'
-            INNER JOIN modules m ON nm.module_id = m.module_id
-            WHERE e.actuel = 1 AND na.decision_annee IN ('V', 'VPC')
-            GROUP BY e.user_id HAVING COUNT(nm.module_id) > 0
-            ORDER BY e.nom;
-        ";
-        $stmt_debt = $this->conn->prepare($query_debt);
-        $stmt_debt->execute([':cy' => $current_year]);
-        $classified['modules_restants'] = $stmt_debt->fetchAll(PDO::FETCH_ASSOC);
+    // Requête 2 : Étudiants passant avec dette (année validée par compensation)
+    $query_debt = "
+        SELECT e.user_id, e.nom, e.prenom, e.cne, et.nom_etape AS current_etape_nom,
+               GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules_nv_noms
+        FROM etudiants e
+        INNER JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy
+        LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :cy
+        LEFT JOIN etapes et ON se.etape_id = et.etape_id
+        INNER JOIN note_modules nm ON e.user_id = nm.student_id AND nm.annee_id = :cy AND nm.retake_status = 'scheduled'
+        INNER JOIN modules m ON nm.module_id = m.module_id
+        WHERE e.actuel = 1 AND na.decision_annee IN ('V', 'VPC')
+        GROUP BY e.user_id
+        ORDER BY e.nom;
+    ";
+    $stmt_debt = $this->conn->prepare($query_debt);
+    $stmt_debt->execute([':cy' => $current_year]);
+    $classified['modules_restants'] = $stmt_debt->fetchAll(PDO::FETCH_ASSOC);
 
-        return $classified;
-    }
+    return $classified;
+}
 
     public function getStudentsReadyForNextCycle(): array {
         $current_year = $this->getCurrentAcademicYear();
@@ -105,7 +105,7 @@ class ReinscriptionModel {
             INNER JOIN cycles c ON se.cycle_id = c.cycle_id 
             WHERE e.actuel = 1
             AND na.decision_annee NOT IN ('F', 'NV')
-            AND (SELECT COUNT(*) FROM note_modules WHERE student_id = e.user_id AND annee_id = :current_year AND decision <> 'V') = 0
+            AND (SELECT COUNT(*) FROM note_modules WHERE student_id = e.user_id AND annee_id = :current_year AND retake_status = 'scheduled') = 0
             GROUP BY e.user_id ORDER BY e.nom;
         ";
         $stmt = $this->conn->prepare($query);
@@ -193,8 +193,9 @@ class ReinscriptionModel {
             INNER JOIN etapes et ON se.etape_id = et.etape_id
             WHERE e.actuel = 1
               AND na.decision_annee NOT IN ('F', 'NV')
-              AND (SELECT COUNT(*) FROM note_modules WHERE student_id = e.user_id AND annee_id = :ay AND decision <> 'V') = 0
+              AND (SELECT COUNT(*) FROM note_modules WHERE student_id = e.user_id AND annee_id = :ay AND retake_status = 'scheduled') = 0
               AND NOT EXISTS (SELECT 1 FROM student_enrollments se2 WHERE se2.student_id = e.user_id AND se2.annee_id = :next_ay)
+              AND (se.etape_id * 2) < c.Nombre_semestre
             GROUP BY e.user_id;
         ";
         $stmt = $this->conn->prepare($query);
@@ -232,7 +233,12 @@ class ReinscriptionModel {
     public function getStudentHistory(int $studentId): array {
         $query = "
             SELECT na.annee_id, et.nom_etape, c.nom as nom_cycle, na.note_annee, na.decision_annee, na.fail_count,
-                   (SELECT GROUP_CONCAT(m.nom SEPARATOR ', ') FROM note_modules nm JOIN modules m ON nm.module_id = m.module_id WHERE nm.student_id = na.student_id AND nm.annee_id = na.annee_id AND nm.decision <> 'V') as modules_en_dette
+                   (SELECT GROUP_CONCAT(m.nom SEPARATOR ', ') 
+                    FROM note_modules nm 
+                    JOIN modules m ON nm.module_id = m.module_id 
+                    WHERE nm.student_id = na.student_id 
+                      AND nm.annee_id = na.annee_id 
+                      AND nm.retake_status = 'scheduled') as modules_en_dette
             FROM note_annees na
             LEFT JOIN student_enrollments se ON na.student_id = se.student_id AND na.annee_id = se.annee_id
             LEFT JOIN etapes et ON se.etape_id = et.etape_id
@@ -261,173 +267,186 @@ class ReinscriptionModel {
         if (!$currentAcademicYear) throw new Exception("Année académique actuelle non définie.");
         $nextAcademicYear = $this->getNextAcademicYear($currentAcademicYear);
 
-        // 1. Vérification : L'étudiant n'est-il pas déjà inscrit ?
-        $stmt_check = $this->conn->prepare("SELECT COUNT(*) FROM student_enrollments WHERE student_id = ? AND annee_id = ?");
-        $stmt_check->execute([$studentId, $nextAcademicYear]);
-        if ($stmt_check->fetchColumn() > 0) {
-            throw new Exception("Opération bloquée : Cet étudiant est déjà inscrit pour l'année {$nextAcademicYear}.");
-        }
+            // 1. Vérification : L'étudiant n'est-il pas déjà inscrit ?
+           $stmt_check = $this->conn->prepare("SELECT COUNT(*) FROM student_enrollments WHERE student_id = ? AND annee_id = ?");
+            $stmt_check->execute([$studentId, $nextAcademicYear]);
+            if ($stmt_check->fetchColumn() > 0) {
+                throw new Exception("Opération bloquée : Cet étudiant est déjà inscrit pour l'année {$nextAcademicYear}.");
+            }
 
-        // 2. Récupération des informations complètes de l'étudiant pour l'année en cours
-        $stmt_info = $this->conn->prepare(
-            "SELECT e.field_id, e.cycle_id as student_cycle_id, na.decision_annee, na.fail_count, se.cycle_id as enrollment_cycle_id, c.nom as cycle_nom, se.etape_id AS current_etape_id,
-            (SELECT COUNT(*) FROM note_modules WHERE student_id = e.user_id AND annee_id = :cy AND decision <> 'V') as modules_en_dette
-            FROM etudiants e JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = na.annee_id LEFT JOIN cycles c ON se.cycle_id = c.cycle_id
-            WHERE e.user_id = :sid ORDER BY se.enrollment_id DESC LIMIT 1"
-        );
-        $stmt_info->execute([':cy' => $currentAcademicYear, ':sid' => $studentId]);
-        $studentInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
-        if (!$studentInfo) {
-            throw new Exception("Données de base de l'étudiant (notes, etc.) manquantes pour l'année en cours.");
-        }
+            // 2. Récupération des informations complètes de l'étudiant pour l'année en cours
+            $stmt_info = $this->conn->prepare(
+                "SELECT e.field_id, e.cycle_id as student_cycle_id, na.decision_annee, na.fail_count, se.cycle_id as enrollment_cycle_id, c.nom as cycle_nom, se.etape_id AS current_etape_id,
+                (SELECT COUNT(*) FROM note_modules WHERE student_id = e.user_id AND annee_id = :cy AND retake_status = 'scheduled') as modules_en_dette
+                FROM etudiants e JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :cy LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = na.annee_id LEFT JOIN cycles c ON se.cycle_id = c.cycle_id
+                WHERE e.user_id = :sid ORDER BY se.enrollment_id DESC LIMIT 1"
+            );
+            $stmt_info->execute([':cy' => $currentAcademicYear, ':sid' => $studentId]);
+            $studentInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
+            if (!$studentInfo) {
+                throw new Exception("Données de base de l'étudiant (notes, etc.) manquantes pour l'année en cours.");
+            }
 
-        // 3. Initialisation des variables pour la logique de décision
-        $hasPassedYear = in_array($studentInfo['decision_annee'], ['V', 'VPC']);
-        $hasDebt = (int)$studentInfo['modules_en_dette'] > 0;
-        $cycleId = $studentInfo['enrollment_cycle_id'] ?? $studentInfo['student_cycle_id'];
-        $currentEtape = (int)($studentInfo['current_etape_id'] ?? 1);
-        $fieldId = (int)$studentInfo['field_id'];
-        $cycleName = strtoupper(trim($studentInfo['cycle_nom'] ?: ''));
 
-        $nextEtapeId = $currentEtape;
-        $nextCycleId = $cycleId;
-        $nextFieldId = $fieldId;
-        $isRedoublement = false;
-        $message = "Inscription réussie pour l'année {$nextAcademicYear}.";
+            // 3. Initialisation des variables pour la logique de décision
+             $hasPassedYear = in_array($studentInfo['decision_annee'], ['V', 'VPC']);
+            $hasDebt = (int)$studentInfo['modules_en_dette'] > 0;
+            $cycleId = $studentInfo['enrollment_cycle_id'] ?? $studentInfo['student_cycle_id'];
+            $currentEtape = (int)($studentInfo['current_etape_id'] ?? 1);
+            $fieldId = (int)$studentInfo['field_id']; // La filière ACTUELLE de l'étudiant
+            $cycleName = strtoupper(trim($studentInfo['cycle_nom'] ?: ''));
 
-        // ====================================================================
-        // DÉBUT DE LA LOGIQUE DE DÉCISION SPÉCIFIQUE PAR CYCLE (CORRIGÉE)
-        // ====================================================================
-        if (!$hasPassedYear) {
-            // Cas simple : l'année n'est pas validée, c'est un redoublement complet.
-            $isRedoublement = true;
-        } else {
-            // L'année est validée (V ou VPC), on analyse la situation.
-            switch ($cycleName) {
-                case 'DEUG':
-                    if ($currentEtape === 1) {
-                        $nextEtapeId = 2; // Passage simple en 2ème année de DEUG
-                    } elseif ($currentEtape === 2) {
+            $nextEtapeId = $currentEtape;
+            $nextCycleId = $cycleId;
+            $nextFieldId = $fieldId; // Par défaut, on reste dans la même filière
+            $isRedoublement = false;
+            $message = "Inscription réussie pour l'année {$nextAcademicYear}.";
+
+
+            // ====================================================================
+            // DÉBUT DE LA LOGIQUE DE DÉCISION SPÉCIFIQUE PAR CYCLE (CORRIGÉE)
+            // ====================================================================
+            if (!$hasPassedYear) {
+                // Cas simple : l'année n'est pas validée, c'est un redoublement complet.
+                $isRedoublement = true;
+            } else {
+                // L'année est validée (V ou VPC), on analyse la situation.
+                switch ($cycleName) {
+                    case 'DEUG':
+                        if ($currentEtape === 1) {
+                            $nextEtapeId = 2; // Passage simple en 2ème année de DEUG
+                        } elseif ($currentEtape === 2) {
+                            if (!$hasDebt) {
+                                // Fin du DEUG sans dette -> Passage en Licence
+                                if ($newFieldId === null) throw new Exception("Le choix d'une filière de Licence est obligatoire.");
+                                $nextCycleId = 2; // ID du cycle Licence
+                                $nextEtapeId = 1; // 1ère étape de Licence
+                                $nextFieldId = $newFieldId;
+                            } else {
+                                // Fin du DEUG avec dette -> Redoublement
+                                $isRedoublement = true;
+                            }
+                        }
+                        break;
+
+                    case 'LICENSE':
+                        // La licence n'a qu'une seule étape dans ce modèle
                         if (!$hasDebt) {
-                            // Fin du DEUG sans dette -> Passage en Licence
-                            if ($newFieldId === null) throw new Exception("Le choix d'une filière de Licence est obligatoire.");
-                            $nextCycleId = 2; // ID du cycle Licence
-                            $nextEtapeId = 1; // 1ère étape de Licence
+                            // Fin de la Licence sans dette -> Passage en Master
+                            if ($newFieldId === null) throw new Exception("Le choix d'une filière de Master est obligatoire.");
+                            $nextCycleId = 3; // ID du cycle Master
+                            $nextEtapeId = 1; // 1ère étape de Master
                             $nextFieldId = $newFieldId;
                         } else {
-                            // Fin du DEUG avec dette -> Redoublement
+                            // Fin de la Licence avec dette -> Redoublement
                             $isRedoublement = true;
                         }
-                    }
-                    break;
+                        break;
 
-                case 'LICENSE':
-                    // La licence n'a qu'une seule étape dans ce modèle
-                    if (!$hasDebt) {
-                        // Fin de la Licence sans dette -> Passage en Master
-                        if ($newFieldId === null) throw new Exception("Le choix d'une filière de Master est obligatoire.");
-                        $nextCycleId = 3; // ID du cycle Master
-                        $nextEtapeId = 1; // 1ère étape de Master
-                        $nextFieldId = $newFieldId;
-                    } else {
-                        // Fin de la Licence avec dette -> Redoublement
-                        $isRedoublement = true;
-                    }
-                    break;
-
-                case 'MASTER':
-                    if ($currentEtape === 1) {
-                        $nextEtapeId = 2; // Passage simple en 2ème année de Master
-                    } elseif ($currentEtape === 2) {
-                        if (!$hasDebt) {
-                            // Fin du Master sans dette -> Diplomation
-                            $this->conn->commit(); // On valide la transaction avant de sortir
-                            return ['success' => true, 'message' => "Félicitations ! L'étudiant a terminé son cursus et est prêt pour la diplomation."];
+                    case 'MASTER':
+                        if ($currentEtape === 1) {
+                            $nextEtapeId = 2; // Passage simple en 2ème année de Master
+                        } elseif ($currentEtape === 2) {
+                            if (!$hasDebt) {
+                                // Fin du Master sans dette -> Diplomation
+                                $this->conn->commit(); // On valide la transaction avant de sortir
+                                return ['success' => true, 'message' => "Félicitations ! L'étudiant a terminé son cursus et est prêt pour la diplomation."];
+                            } else {
+                                // Fin du Master avec dette -> Redoublement
+                                $isRedoublement = true;
+                            }
+                        }
+                        break;
+                    
+                    default:
+                        // Logique générique pour d'autres cycles (ex: Doctorat)
+                        if ($this->isLastStepOfCycle($studentId, $currentAcademicYear) && !$hasDebt) {
+                            throw new Exception("Fin de cycle non gérée pour '{$cycleName}'. L'étudiant est diplômé ?");
+                        } else if ($hasDebt) {
+                            $isRedoublement = true;
                         } else {
-                            // Fin du Master avec dette -> Redoublement
-                            $isRedoublement = true;
+                            $nextEtapeId = $currentEtape + 1;
                         }
-                    }
-                    break;
-                
-                default:
-                    // Logique générique pour d'autres cycles (ex: Doctorat)
-                    if ($this->isLastStepOfCycle($studentId, $currentAcademicYear) && !$hasDebt) {
-                         throw new Exception("Fin de cycle non gérée pour '{$cycleName}'. L'étudiant est diplômé ?");
-                    } else if ($hasDebt) {
-                        $isRedoublement = true;
-                    } else {
-                        $nextEtapeId = $currentEtape + 1;
-                    }
-                    break;
+                        break;
+                }
             }
-        }
-        
-        if ($isRedoublement) {
-            if ((int)$studentInfo['fail_count'] >= 2) { // Seuil de redoublement
-                throw new Exception("Réinscription bloquée : nombre maximum de redoublements atteint.");
+            
+            if ($isRedoublement) {
+                if ((int)$studentInfo['fail_count'] >= 2) { // Seuil de redoublement
+                    throw new Exception("Réinscription bloquée : nombre maximum de redoublements atteint.");
+                }
+                $nextEtapeId = $currentEtape; // On reste à la même étape
             }
-            $nextEtapeId = $currentEtape; // On reste à la même étape
-        }
-        // ====================================================================
-        // FIN DE LA LOGIQUE DE DÉCISION
-        // ====================================================================
+            // ====================================================================
+            // FIN DE LA LOGIQUE DE DÉCISION
+            // ====================================================================
 
-        // 4. Inscription administrative
-        $stmt_semestre = $this->conn->prepare("SELECT semestre_id FROM semestres WHERE etape_id = ? AND field_id = ? ORDER BY semestre_id ASC LIMIT 1");
-        $stmt_semestre->execute([$nextEtapeId, $nextFieldId]);
-        $reEnrollSemesterId = $stmt_semestre->fetchColumn();
-        if (!$reEnrollSemesterId) {
-            throw new Exception("Configuration BD incomplète : semestre non trouvé pour l'étape {$nextEtapeId} et la filière {$nextFieldId}.");
-        }
-        $stmt_insert_enrollment = $this->conn->prepare("INSERT INTO student_enrollments (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, status) VALUES (?, ?, ?, ?, ?, ?, 'inscrit')");
-        $stmt_insert_enrollment->execute([$studentId, $nextAcademicYear, $reEnrollSemesterId, $nextCycleId, $nextFieldId, $nextEtapeId]);
-        
-        // 5. Mise à jour du statut de l'étudiant et de sa note d'année pour l'année suivante
-        $newFailCount = $isRedoublement ? (int)$studentInfo['fail_count'] + 1 : 0;
-        $stmt_upsert_note_annee = $this->conn->prepare("INSERT INTO note_annees (student_id, annee_id, fail_count) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE fail_count = VALUES(fail_count)");
-        $stmt_upsert_note_annee->execute([$studentId, $nextAcademicYear, $newFailCount]);
-        if ($nextCycleId !== $cycleId || $nextFieldId !== $fieldId) {
-            $stmt_update_student = $this->conn->prepare("UPDATE etudiants SET cycle_id = ?, field_id = ? WHERE user_id = ?");
-            $stmt_update_student->execute([$nextCycleId, $nextFieldId, $studentId]);
-        }
+            // 4. Inscription administrative
+            $stmt_semestres = $this->conn->prepare("SELECT semestre_id FROM semestres WHERE etape_id = ? AND field_id = ?");
+            $stmt_semestres->execute([$nextEtapeId, $nextFieldId]);
+            $semestersToEnroll = $stmt_semestres->fetchAll(PDO::FETCH_COLUMN);
 
-        // 6. Création des enregistrements de notes vierges pour la nouvelle situation
-        $modulesForNewStep = $this->getModulesForStep($nextFieldId, $nextEtapeId);
+            // On vérifie si la liste est vide
+            if (empty($semestersToEnroll)) {
+                throw new Exception("Configuration BD incomplète : Aucun semestre n'est défini pour l'étape '{$nextEtapeId}' dans la filière '{$nextFieldId}'.");
+            }
 
-        if (empty($modulesForNewStep)) {
-            throw new Exception(
-                "Erreur critique de configuration : Aucun module n'a été trouvé pour la filière ID '{$nextFieldId}' et l'étape ID '{$nextEtapeId}'. L'inscription a été annulée pour garantir la cohérence des données."
-            );
-        }
+            // On prépare la requête d'insertion une seule fois
+            $stmt_insert_enrollment = $this->conn->prepare("INSERT INTO student_enrollments (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, status) VALUES (?, ?, ?, ?, ?, ?, 'inscrit')");
+            
+            // On boucle sur chaque semestre trouvé et on insère une ligne
+            foreach ($semestersToEnroll as $semesterId) {
+                $stmt_insert_enrollment->execute([$studentId, $nextAcademicYear, $semesterId, $nextCycleId, $nextFieldId, $nextEtapeId]);
+            }
+            
+             // 5. Mise à jour du statut de l'étudiant et de sa note d'année pour l'année suivante
+            $newFailCount = $isRedoublement ? (int)$studentInfo['fail_count'] + 1 : 0;
+            $stmt_upsert_note_annee = $this->conn->prepare("INSERT INTO note_annees (student_id, annee_id, fail_count) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE fail_count = VALUES(fail_count)");
+            $stmt_upsert_note_annee->execute([$studentId, $nextAcademicYear, $newFailCount]);
+            if ($nextCycleId !== $cycleId || $nextFieldId !== $fieldId) {
+                $stmt_update_student = $this->conn->prepare("UPDATE etudiants SET cycle_id = ?, field_id = ? WHERE user_id = ?");
+                $stmt_update_student->execute([$nextCycleId, $nextFieldId, $studentId]);
+            }
 
-        // 7. Si des modules sont trouvés, on crée les enregistrements de notes.
-        $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modulesForNewStep);
-        
-        // 8. Report des modules en dette (si l'année a été validée par compensation)
-        if ($hasPassedYear && $hasDebt) {
-            $stmt_failed_modules = $this->conn->prepare(
+             // 6. Récupérer les modules pour la nouvelle situation de l'étudiant.
+            $modulesForNewStep = $this->getModulesForStep($nextFieldId, $nextEtapeId);
+            // **VÉRIFICATION CRUCIALE** : On vérifie si on a bien trouvé des modules.
+            if (empty($modulesForNewStep)) {
+                // Si aucun module n'est trouvé, c'est une erreur de configuration qui doit bloquer l'inscription.
+                // On annule toute la transaction pour ne pas laisser une inscription administrative orpheline.
+                throw new Exception(
+                    "Erreur critique de configuration : Aucun module n'a été trouvé pour la filière ID '{$nextFieldId}' et l'étape ID '{$nextEtapeId}'. L'inscription a été annulée pour garantir la cohérence des données."
+                );
+            }
+            
+            // 7. Si des modules sont trouvés, on crée les enregistrements de notes.
+            $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modulesForNewStep);
+            
+            // 8. Report des modules en dette (si l'année a été validée par compensation)
+            if ($hasPassedYear && $hasDebt) {
+             $stmt_failed_modules = $this->conn->prepare(
                 "SELECT module_id, semestre_id FROM note_modules 
-                 WHERE student_id = ? AND annee_id = ? AND decision <> 'V'"
+                WHERE student_id = ? AND annee_id = ? AND retake_status = 'scheduled'"
             );
-            $stmt_failed_modules->execute([$studentId, $currentAcademicYear]);
-            $modulesToRetake = $stmt_failed_modules->fetchAll(PDO::FETCH_ASSOC);
+             $stmt_failed_modules->execute([$studentId, $currentAcademicYear]);
+             $modulesToRetake = $stmt_failed_modules->fetchAll(PDO::FETCH_ASSOC);
             
             if (!empty($modulesToRetake)) {
+                // Le reste du code est déjà correct et n'a pas besoin de changer.
                 $stmt_report_module = $this->conn->prepare(
                     "INSERT INTO note_modules (student_id, module_id, semestre_id, annee_id, note_module, retake_status) 
-                     VALUES (?, ?, ?, ?, 0.00, 'pending') 
-                     ON DUPLICATE KEY UPDATE retake_status = 'pending'"
+                    VALUES (?, ?, ?, ?, 0.00, 'pending') 
+                    ON DUPLICATE KEY UPDATE retake_status = 'pending'"
                 );
                 
                 $stmt_get_elements = $this->conn->prepare("SELECT element_id FROM elements WHERE module_id = ?");
                 $stmt_insert_note_element = $this->conn->prepare("INSERT IGNORE INTO notes (student_id, element_id, semestre_id, annee_id) VALUES (?, ?, ?, ?)");
- 
+
                 foreach ($modulesToRetake as $module) {
                     // On crée l'enregistrement dans note_modules pour le module à repasser
                     $stmt_report_module->execute([$studentId, $module['module_id'], $module['semestre_id'], $nextAcademicYear]);
 
-                    //On crée aussi les enregistrements dans la table `notes` pour chaque élément de ce module en dette.
+                    // On crée aussi les enregistrements dans la table `notes` pour chaque élément de ce module en dette.
                     $stmt_get_elements->execute([$module['module_id']]);
                     $elements = $stmt_get_elements->fetchAll(PDO::FETCH_COLUMN);
                     foreach ($elements as $elementId) {
@@ -437,14 +456,14 @@ class ReinscriptionModel {
             }
         }
 
-        $this->conn->commit();
-        return ['success' => true, 'message' => $message];
+            $this->conn->commit();
+            return ['success' => true, 'message' => $message];
 
-    } catch (Exception $e) {
-        $this->conn->rollBack();
-        throw $e;
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            throw $e;
+        }
     }
-}
 
 
 
@@ -529,31 +548,30 @@ class ReinscriptionModel {
     }
 }
 
-    //** Crée les enregistrements de notes initiaux pour un étudiant dans une nouvelle année.
+    /**
+     * Crée les enregistrements de notes vierges pour les nouveaux modules et les modules en dette.
+     */
+    private function createInitialGradeRecords(int $studentId, string $academicYear, array $modulesForNewStep, array $modulesToRetake = []): void {
+        $allModules = array_merge($modulesForNewStep, $modulesToRetake);
+        if (empty($allModules)) return;
 
-    private function createInitialGradeRecords(int $studentId, string $academicYear, array $modules): void {
-        // Préparation des requêtes pour éviter de les recréer dans la boucle
-        $stmt_insert_note_semestre = $this->conn->prepare("INSERT IGNORE INTO note_semestres (student_id, semestre_id, annee_id, note_semestre) VALUES (?, ?, ?, 0.00)");
-        $stmt_insert_note_module = $this->conn->prepare("INSERT IGNORE INTO note_modules (student_id, module_id, semestre_id, annee_id, note_module) VALUES (?, ?, ?, ?, 0.00)");
+        $stmt_insert_note_semestre = $this->conn->prepare("INSERT IGNORE INTO note_semestres (student_id, semestre_id, annee_id) VALUES (?, ?, ?)");
+        $stmt_insert_note_module = $this->conn->prepare("INSERT IGNORE INTO note_modules (student_id, module_id, semestre_id, annee_id) VALUES (?, ?, ?, ?)");
         $stmt_insert_note_element = $this->conn->prepare("INSERT IGNORE INTO notes (student_id, element_id, semestre_id, annee_id) VALUES (?, ?, ?, ?)");
         $stmt_get_elements = $this->conn->prepare("SELECT element_id FROM elements WHERE module_id = ?");
 
         $processedSemesters = [];
-
-        foreach ($modules as $module) {
+        foreach ($allModules as $module) {
             $moduleId = $module['module_id'];
             $semestreId = $module['semestre_id'];
 
-            // 1. Créer l'enregistrement pour le semestre (une seule fois)
             if (!in_array($semestreId, $processedSemesters)) {
                 $stmt_insert_note_semestre->execute([$studentId, $semestreId, $academicYear]);
                 $processedSemesters[] = $semestreId;
             }
 
-            // 2. Créer l'enregistrement pour le module
             $stmt_insert_note_module->execute([$studentId, $moduleId, $semestreId, $academicYear]);
 
-            // 3. Récupérer et créer les enregistrements pour chaque élément de ce module
             $stmt_get_elements->execute([$moduleId]);
             $elements = $stmt_get_elements->fetchAll(PDO::FETCH_COLUMN);
             foreach ($elements as $elementId) {
@@ -565,15 +583,260 @@ class ReinscriptionModel {
     /**
      * Récupère tous les modules pour une étape et une filière données.
      */
-     private function getModulesForStep(int $fieldId, int $etapeId): array {
-        $query = "
-            SELECT m.module_id, s.semestre_id 
-            FROM modules m
-            JOIN semestres s ON m.semestre_id = s.semestre_id
-            WHERE s.field_id = ? AND s.etape_id = ?
-        ";
-        $stmt = $this->conn->prepare($query);
+    private function getModulesForStep(int $fieldId, int $etapeId): array {
+        $stmt = $this->conn->prepare(
+            "SELECT m.module_id, m.semestre_id 
+             FROM modules m
+             JOIN semestres s ON m.semestre_id = s.semestre_id
+             WHERE s.field_id = ? AND s.etape_id = ?"
+        );
         $stmt->execute([$fieldId, $etapeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function enrollPassingStudentsInBulk(array $studentIds): array {
+    $this->conn->beginTransaction();
+    try {
+        $currentAcademicYear = $this->getCurrentAcademicYear();
+        $nextAcademicYear = $this->getNextAcademicYear($currentAcademicYear);
+        
+        $successCount = 0;
+        $errors = [];
+
+        // Préparez les requêtes une seule fois
+        $stmt_info = $this->conn->prepare(
+            "SELECT field_id, cycle_id, etape_id FROM student_enrollments 
+             WHERE student_id = :sid AND annee_id = :ay ORDER BY enrollment_id DESC LIMIT 1"
+        );
+        $stmt_semestre = $this->conn->prepare("SELECT semestre_id FROM semestres WHERE etape_id = ? AND field_id = ? ORDER BY semestre_id ASC LIMIT 1");
+        $stmt_insert = $this->conn->prepare("INSERT INTO student_enrollments (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, status) VALUES (?, ?, ?, ?, ?, ?, 'inscrit')");
+        $stmt_note = $this->conn->prepare("INSERT INTO note_annees (student_id, annee_id, fail_count) VALUES (?, ?, 0) ON DUPLICATE KEY UPDATE fail_count = 0");
+
+        foreach ($studentIds as $studentId) {
+            try {
+                // 1. Vérifier si l'étudiant est déjà inscrit
+                $stmt_check = $this->conn->prepare("SELECT COUNT(*) FROM student_enrollments WHERE student_id = ? AND annee_id = ?");
+                $stmt_check->execute([$studentId, $nextAcademicYear]);
+                if ($stmt_check->fetchColumn() > 0) {
+                    throw new Exception("Déjà inscrit pour l'année suivante.");
+                }
+
+                // 2. Récupérer les informations d'inscription actuelles
+                $stmt_info->execute([':sid' => $studentId, ':ay' => $currentAcademicYear]);
+                $enrollmentInfo = $stmt_info->fetch(PDO::FETCH_ASSOC);
+
+                if (!$enrollmentInfo) {
+                    throw new Exception("Aucune inscription trouvée pour l'année en cours.");
+                }
+                
+                // 3. Vérifier si c'est la dernière étape du cycle
+                if ($this->isLastStepOfCycle($studentId, $currentAcademicYear)) {
+                    throw new Exception("Changement de cycle requis, ne peut être traité en masse.");
+                }
+
+                // 4. Calculer la prochaine étape
+                $nextEtapeId = (int)$enrollmentInfo['etape_id'] + 1;
+
+                // 5. Trouver le semestre correspondant
+                $stmt_semestre->execute([$nextEtapeId, $enrollmentInfo['field_id']]);
+                $nextSemesterId = $stmt_semestre->fetchColumn();
+
+                if (!$nextSemesterId) {
+                    throw new Exception("Configuration BD incomplète: semestre non trouvé pour l'étape {$nextEtapeId}.");
+                }
+
+                // 6. Inscrire l'étudiant
+                $stmt_insert->execute([$studentId, $nextAcademicYear, $nextSemesterId, $enrollmentInfo['cycle_id'], $enrollmentInfo['field_id'], $nextEtapeId]);
+                $stmt_note->execute([$studentId, $nextAcademicYear]);
+                
+                $successCount++;
+
+            } catch (Exception $e) {
+                $errors[] = "Étudiant ID {$studentId}: " . $e->getMessage();
+            }
+        }
+
+        $this->conn->commit();
+        return ['success_count' => $successCount, 'errors' => $errors];
+
+    } catch (Exception $e) {
+        $this->conn->rollBack();
+        // Relancer l'exception pour qu'elle soit capturée par le contrôleur
+        throw new Exception("Transaction échouée: " . $e->getMessage());
+    }
+}
+
+public function processStudentProgression(int $studentId, ?int $newFieldId = null): array {
+        $this->conn->beginTransaction();
+        try {
+            $currentAcademicYear = $this->getCurrentAcademicYear();
+            if (!$currentAcademicYear) throw new Exception("Année académique actuelle non définie.");
+
+            // 1. Récupérer l'état complet de l'étudiant
+            $studentInfo = $this->getStudentState($studentId, $currentAcademicYear);
+            if (!$studentInfo) {
+                throw new Exception("Données de base de l'étudiant manquantes pour l'année en cours.");
+            }
+
+            // 2. Décider de l'action à entreprendre
+            $hasPassedYear = in_array($studentInfo['decision_annee'], ['V', 'VPC']);
+            $hasDebt = $studentInfo['modules_en_dette'] > 0;
+            $isLastStep = $this->isLastStepOfCycle($studentId, $currentAcademicYear);
+
+            $message = "";
+
+            if (!$hasPassedYear) {
+                // CAS 1 : REDOUBLEMENT (Année non validée)
+                $message = $this->enrollRedoublement($studentId, $studentInfo);
+            } elseif ($isLastStep) {
+                if ($hasDebt) {
+                    // CAS 2 : REDOUBLEMENT (Dernière année du cycle avec dette)
+                    $message = $this->enrollRedoublement($studentId, $studentInfo);
+                } else {
+                    // CAS 3 : PASSAGE AU CYCLE SUIVANT
+                    if ($newFieldId === null) throw new Exception("Le choix d'une nouvelle filière est obligatoire pour passer au cycle suivant.");
+                    $message = $this->enrollNextCycle($studentId, $studentInfo, $newFieldId);
+                }
+            } else {
+                // CAS 4 : PASSAGE SIMPLE (à l'année suivante dans le même cycle)
+                $message = $this->enrollSimplePassage($studentId, $studentInfo);
+            }
+
+            $this->conn->commit();
+            return ['success' => true, 'message' => $message];
+
+        } catch (Exception $e) {
+            $this->conn->rollBack();
+            throw $e; // L'exception sera gérée par le contrôleur
+        }
+    }
+
+    /**
+     * Cas 1 & 2 : Inscrit l'étudiant en redoublement.
+     */
+    private function enrollRedoublement(int $studentId, array $studentInfo): string {
+        if ($studentInfo['fail_count'] >= 2) { // Seuil de redoublement
+            throw new Exception("Réinscription bloquée : nombre maximum de redoublements atteint.");
+        }
+        
+        $nextAcademicYear = $this->getNextAcademicYear($studentInfo['annee_id']);
+        $nextEtapeId = $studentInfo['current_etape_id']; // On reste à la même étape
+        $nextFieldId = $studentInfo['field_id'];
+        $nextCycleId = $studentInfo['cycle_id'];
+
+        // Inscription administrative pour tous les semestres de l'étape
+        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $nextFieldId, $nextCycleId);
+
+        // Création des enregistrements de notes vierges
+        $modules = $this->getModulesForStep($nextFieldId, $nextEtapeId);
+        $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modules);
+        
+        // Mise à jour de la note année avec incrémentation du compteur d'échec
+        $newFailCount = $studentInfo['fail_count'] + 1;
+        $this->createOrUpdateNoteAnnee($studentId, $nextAcademicYear, $newFailCount);
+
+        return "Étudiant inscrit en redoublement pour l'année {$nextAcademicYear}.";
+    }
+
+    /**
+     * Cas 3 : Inscrit l'étudiant au cycle suivant.
+     */
+    private function enrollNextCycle(int $studentId, array $studentInfo, int $newFieldId): string {
+        $nextAcademicYear = $this->getNextAcademicYear($studentInfo['annee_id']);
+        $nextCycleId = $studentInfo['cycle_id'] + 1; // Passage au cycle supérieur
+        $nextEtapeId = 1; // On commence à la première étape du nouveau cycle
+
+        // Inscription administrative
+        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $newFieldId, $nextCycleId);
+
+        // Création des enregistrements de notes
+        $modules = $this->getModulesForStep($newFieldId, $nextEtapeId);
+        $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modules);
+        
+        // Mise à jour de la note année
+        $this->createOrUpdateNoteAnnee($studentId, $nextAcademicYear);
+
+        // Mise à jour du profil de l'étudiant avec son nouveau cycle et sa nouvelle filière
+        $stmt = $this->conn->prepare("UPDATE etudiants SET cycle_id = ?, field_id = ? WHERE user_id = ?");
+        $stmt->execute([$nextCycleId, $newFieldId, $studentId]);
+
+        return "Étudiant inscrit avec succès dans le nouveau cycle pour l'année {$nextAcademicYear}.";
+    }
+
+    /**
+     * Cas 4 : Inscrit l'étudiant à l'étape suivante du même cycle.
+     */
+    private function enrollSimplePassage(int $studentId, array $studentInfo): string {
+        $nextAcademicYear = $this->getNextAcademicYear($studentInfo['annee_id']);
+        $nextEtapeId = $studentInfo['current_etape_id'] + 1; // On passe à l'étape suivante
+        $nextFieldId = $studentInfo['field_id']; // On reste dans la même filière
+        $nextCycleId = $studentInfo['cycle_id']; // On reste dans le même cycle
+
+        // Inscription administrative
+        $this->createEnrollmentRecords($studentId, $nextAcademicYear, $nextEtapeId, $nextFieldId, $nextCycleId);
+
+        // Récupérer les modules de la nouvelle étape
+        $modulesNewStep = $this->getModulesForStep($nextFieldId, $nextEtapeId);
+        
+        // Récupérer les modules en dette de l'année précédente
+        $modulesInDebt = [];
+        if ($studentInfo['modules_en_dette'] > 0) {
+            $stmt = $this->conn->prepare("SELECT module_id, semestre_id FROM note_modules WHERE student_id = ? AND annee_id = ? AND retake_status = 'scheduled'");
+            $stmt->execute([$studentId, $studentInfo['annee_id']]);
+            $modulesInDebt = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        // Création des enregistrements de notes (nouveaux modules + modules en dette)
+        $this->createInitialGradeRecords($studentId, $nextAcademicYear, $modulesNewStep, $modulesInDebt);
+        
+        // Mise à jour de la note année
+        $this->createOrUpdateNoteAnnee($studentId, $nextAcademicYear);
+
+        return "Étudiant inscrit à l'étape suivante pour l'année {$nextAcademicYear}.";
+    }
+     /**
+     * Récupère l'état complet d'un étudiant pour une année donnée.
+     */
+    private function getStudentState(int $studentId, string $academicYear): ?array {
+        $stmt = $this->conn->prepare(
+            "SELECT 
+                e.field_id, se.cycle_id, se.etape_id AS current_etape_id,
+                na.annee_id, na.decision_annee, na.fail_count,
+                (SELECT COUNT(*) FROM note_modules WHERE student_id = :sid AND annee_id = :ay AND retake_status = 'scheduled') as modules_en_dette
+            FROM etudiants e
+            LEFT JOIN student_enrollments se ON e.user_id = se.student_id AND se.annee_id = :ay
+            LEFT JOIN note_annees na ON e.user_id = na.student_id AND na.annee_id = :ay
+            WHERE e.user_id = :sid
+            ORDER BY se.enrollment_id DESC LIMIT 1"
+        );
+        $stmt->execute([':sid' => $studentId, ':ay' => $academicYear]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    /**
+     * Crée les lignes d'inscription pour tous les semestres d'une étape.
+     */
+    private function createEnrollmentRecords(int $studentId, string $academicYear, int $etapeId, int $fieldId, int $cycleId): void {
+        $stmt_semestres = $this->conn->prepare("SELECT semestre_id FROM semestres WHERE etape_id = ? AND field_id = ?");
+        $stmt_semestres->execute([$etapeId, $fieldId]);
+        $semestersToEnroll = $stmt_semestres->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($semestersToEnroll)) {
+            throw new Exception("Configuration BD incomplète : Aucun semestre n'est défini pour l'étape '{$etapeId}' dans la filière '{$fieldId}'.");
+        }
+
+        $stmt_insert = $this->conn->prepare("INSERT INTO student_enrollments (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, status) VALUES (?, ?, ?, ?, ?, ?, 'inscrit')");
+        foreach ($semestersToEnroll as $semesterId) {
+            $stmt_insert->execute([$studentId, $academicYear, $semesterId, $cycleId, $fieldId, $etapeId]);
+        }
+    }
+    /**
+     * Crée ou met à jour la ligne dans note_annees pour la nouvelle année.
+     */
+    private function createOrUpdateNoteAnnee(int $studentId, string $academicYear, int $failCount = 0): void {
+        $stmt = $this->conn->prepare("INSERT INTO note_annees (student_id, annee_id, fail_count) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE fail_count = VALUES(fail_count)");
+        $stmt->execute([$studentId, $academicYear, $failCount]);
+    }
+
 }
