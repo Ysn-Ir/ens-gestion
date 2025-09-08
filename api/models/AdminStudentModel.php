@@ -195,7 +195,7 @@ public function createStudent(array $data) {
         }
 
         // 8. Create enrollment record if provided
-        if (!empty($data['annee_id']) && !empty($data['semestre_id'])) {
+        if (!empty($data['annee_id']) && !empty($data['semester_id'])) {
             $stmt = $db->prepare("
                 INSERT INTO student_enrollments 
                 (student_id, annee_id, semestre_id, cycle_id, field_id, etape_id, group_id, section_id, status)
@@ -204,7 +204,7 @@ public function createStudent(array $data) {
             $enrollmentData = [
                 $userId,
                 $data['annee_id'],
-                (int)$data['semestre_id'],
+                (int)$data['semester_id'],
                (int)$data['cycle_id'],
                 (int)$data['field_id'],
                 (int)$data['etape_id'] ,
