@@ -1,3 +1,5 @@
+
+
 <?php
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/controllers/AdminController2.php';
@@ -125,7 +127,7 @@ try {
                 $controller->GetAllCycle();
                 break ;
             case 'GetAllRegularProffessors':
-                $controller->GetAllRegularProffessors($role);
+                $controller->GetAllRegularProffessors($role,$depart_id);
                 break ;
             case 'GetAllDepartment':
                 $controller->GetAllDepartment();
@@ -157,10 +159,10 @@ try {
                 $controller->deleteDepart($depart_id);
                 break ; 
             case "AjouterDepart" : 
-                if (!$nomDepart && ! $prof_id && !$dateDebut && !$dateFin) {
+                if (!$nomDepart) {
                     throw new Exception("Paramètres requis pour l'ajout d'une filière manquants", 400);
                 }
-                $controller->AjouterDepart($nomDepart,$prof_id,$dateDebut,$dateFin);
+                $controller->AjouterDepart($nomDepart);
                 break ; 
             case "updateDepart":
                 if (!$depart_id || !$nomDepart || !$prof_id || !$anneeAccreditation || !$dateDebut || !$dateFin) {
