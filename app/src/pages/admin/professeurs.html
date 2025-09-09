@@ -441,12 +441,12 @@
             }
             professors.forEach(prof => {
                 console.log('Processing professor:', prof);
-                const roleLabel = prof.role === 'prof' ? 'Professeur' :
-                                  prof.role === 'chef_dep' ? 'Chef de Département' :
-                                  prof.role === 'chef_fill' ? 'Chef de Filière' : 'Inconnu';
-                const roleClass = prof.role === 'prof' ? 'role-prof' :
-                                  prof.role === 'chef_dep' ? 'role-chef_dep' :
-                                  prof.role === 'chef_fill' ? 'role-chef_fill' : '';
+                const roleLabel = prof.role === 'Regular' ? 'Professeur' :
+                                  prof.role === 'Chef_de_Departement' ? 'Chef de Département' :
+                                  prof.role === 'Chef_de_Filiere' ? 'Chef de Filière' : 'Inconnu';
+                const roleClass = prof.role === 'Regular' ? 'role-prof' :
+                                  prof.role === 'Chef_de_Departement' ? 'role-chef_dep' :
+                                  prof.role === 'Chef_de_Filiere' ? 'role-chef_fill' : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${prof.user_id}</td>
@@ -520,7 +520,7 @@
                         document.getElementById('email').value = DOMPurify.sanitize(prof.email || '');
                         document.getElementById('phone').value = DOMPurify.sanitize(prof.telephone || '');
                         document.getElementById('department').value = prof.department_id || '';
-                        document.getElementById('role').value = prof.system_role || 'prof';
+                        document.getElementById('role').value = prof.system_role === 'Regular' ? 'prof' : prof.system_role === 'Chef_de_Departement' ? 'chef_dep' : prof.system_role === 'Chef_de_Filiere' ? 'chef_fill' :"";
                         document.getElementById('filiere').value = prof.assigned_field_id || '';
                         document.getElementById('departmentChef').value = prof.department_id || '';
                         document.querySelector('.modal-title').textContent = 'Modifier un Professeur';
@@ -883,3 +883,4 @@ importCSVModal._element.addEventListener('hidden.bs.modal', () => {
     </script>
 </body>
 </html>
+
