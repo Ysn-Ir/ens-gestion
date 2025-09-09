@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard - Filières</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    <script src="../../route.js"></script>
 
@@ -396,17 +398,46 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
-    .coefficient-input {
-      max-width: 100px;
-    }
-    
     .coefficient-group {
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
+      margin-bottom: 1.5rem;
     }
-    
+
+    .coefficient-title {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    .titles {
+      font-weight: 600;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+    }
+
+    .coefficient-title i {
+      margin-right: 8px;
+      color: var(--success);
+    }
+
+    .coefficient-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .coefficient-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--dark);
+    }
     .alert-coeff {
       margin-top: 10px;
       display: none;
@@ -544,7 +575,7 @@
     
     /* Styles pour les nouveaux champs */
     .horaire-container {
-      background-color: #f8f9fa;
+      background-color: #e9ecef;
       padding: 15px;
       border-radius: 8px;
       margin-top: 20px;
@@ -567,6 +598,15 @@
       border-left: 4px solid #28a745;
     }
 
+    /* Styles pour les coefficients */
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #28a745;
+    }
+
     /* Styles pour les profs associés */
     .professeurs-group {
       background-color: #e9ecef;
@@ -576,15 +616,62 @@
       border-left: 4px solid #007bff;
     }
 
-    /* Styles pour les champs de volume horaire réduits */
-    .volume-horaire-input {
-      max-width: 120px;
+   
+
+     .langues {
+        display: flex;
+        align-items: center;     /* vertical alignment */
+        gap: 1rem;               /* space between label and select */
+        background-color: #e9ecef;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.2rem;
+        border-left: 4px solid var(--dark);
+      }
+
+    .langues i {
+      color: #0d6efd; /* Bootstrap primary blue */
+      margin-right: 0.5rem; /* space between icon and text */
     }
 
-    /* Styles pour les champs de coefficients */
-    .coefficient-input {
-      max-width: 80px;
+     .langues select {
+      width:fit-content;
     }
+    .professeurs-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--accent);
+    }
+    .module-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .module-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-label {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-label i {
+      margin-right: 8px;
+      color: var(--accent);
+    }
+    
+    
+
+   
   </style>
 </head>
 <body>
@@ -737,45 +824,31 @@
         <button type="button" class="btn-remove">×</button>
       </div>
       
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Code</label>
-          <input type="text" class="form-control module-code" placeholder="Code de module" required>
+      <div class="module-section">
+        <div class="section-label"><i class="fas fa-info-circle me-2"></i>Informations de base</div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Code</label>
+            <input type="text" class="form-control module-code" placeholder="Code de module" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Nom</label>
+            <input type="text" class="form-control module-name" placeholder="Nom du module" required>
+          </div>
+        
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Type de module</label>
+            <select class="form-select module-type" required>
+              <option value="">Sélectionner un type</option>
+              <option value="Soft Skills">Soft Skills</option>
+              <option value="Module d'éducation">Module d'éducation</option>
+              <option value="Module de spécialité">Module de spécialité</option>
+            </select>
+          </div>
+          
         </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Nom</label>
-          <input type="text" class="form-control module-name" placeholder="Nom du module" required>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label class="form-label">Chef de module</label>
-          <select class="form-select module-chef prof-select" required>
-            <option value="">Sélectionner un chef de module</option>
-          </select>
-        </div>
-      </div>
-      
-      <!-- Nouveaux champs: Langue d'enseignement et Type de module -->
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Langue d'enseignement</label>
-          <select class="form-select module-langue" required>
-            <option value="">Sélectionner une langue</option>
-            <option value="français">Français</option>
-            <option value="anglais">Anglais</option>
-            <option value="arabe">Arabe</option>
-            <option value="espagnol">Espagnol</option>
-            <option value="allemand">Allemand</option>
-          </select>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Type de module</label>
-          <select class="form-select module-type" required>
-            <option value="">Sélectionner un type</option>
-            <option value="Soft Skills">Soft Skills</option>
-            <option value="Module d'éducation">Module d'éducation</option>
-            <option value="Module de spécialité">Module de spécialité</option>
-          </select>
-        </div>
+        
+        
       </div>
       
       <div class="has-elements-group">
@@ -792,115 +865,119 @@
       
       <!-- Conteneur pour les coefficients du module (affiché quand "Non" est sélectionné) -->
       <div class="module-coefficients">
-        <div class="coefficient-group">
-          <div class="row align-items-end">
-            <div class="col-md-2 mb-4 d-flex align-items-center justify-content-center">
-              <h5 class="m-0 fw-bold text-secondary">Coefficients:</h5>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de TP</label>
-              <input type="number" class="form-control coefficient-input" min="0" max="1" step="0.1" value="0.2">
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de TD</label>
-              <input type="number" class="form-control coefficient-input" min="0" max="1" step="0.1" value="0.3">
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff d'Ecrit</label>
-              <input type="number" class="form-control coefficient-input" min="0" max="1" step="0.1" value="0.3">
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de CC</label>
-              <input type="number" class="form-control coefficient-input" min="0" max="1" step="0.1" value="0.2">
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de Projet</label>
-              <input type="number" class="form-control coefficient-input" min="0" max="1" step="0.1" value="0">
-            </div>
-          </div>
-          <div class="alert alert-warning alert-coeff">
-            La somme des coefficients doit être égale à 1.
-          </div>
+         <div class="langues">
+          <label class="form-label titles mb-0 col-md-3">
+            <i class="bi bi-translate"></i> Langue d'enseignement
+          </label>
+          
+          <select class="form-select module-langue col-md-4" >
+            <option value="">Sélectionner une langue</option>
+            <option value="français">Français</option>
+            <option value="anglais">Anglais</option>
+            <option value="arabe">Arabe</option>
+            <option value="espagnol">Espagnol</option>
+            <option value="allemand">Allemand</option>
+          </select>
         </div>
+        <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+           
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div> 
         
-        <div class="professeurs-group mt-4">
-          <div class="row align-items-end">
-            <div class="col-md-2 mb-4 d-flex align-items-center justify-content-center">
-              <h5 class="m-0 fw-bold text-secondary">Professeurs:</h5>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Prof de TP</label>
-              <select class="form-select prof-tp prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Prof de TD</label>
-              <select class="form-select prof-td prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Prof de Cours</label>
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de Cours</label>
               <select class="form-select prof-cours prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Chef d'élément</label>
-              <select class="form-select chef-element prof-select">
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            
           </div>
         </div>
 
         <div class="horaire-container">
-          <h6 class="horaire-title">Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
+          <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
           <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire de TP</label>
-              <input type="number" class="form-control volume-tp" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire de TD</label>
-              <input type="number" class="form-control volume-td" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire de Cours</label>
-              <input type="number" class="form-control volume-cours" min="0" value="0">
-            </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
           </div>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire d'Activité pratique</label>
-              <input type="number" class="form-control volume-pratique" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire d'Évaluation</label>
-              <input type="number" class="form-control volume-evaluation" min="0" value="0">
-            </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
           </div>
-        </div>
-        
-        <!-- Répartition du volume horaire par mode d’enseignement -->
-        <div class="horaire-container">
-          <h6 class="horaire-title">Répartition du volume horaire par mode d’enseignement</h6>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire en présentiel</label>
-              <input type="number" class="form-control volume-presentiel" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire à distance</label>
-              <input type="number" class="form-control volume-distance" min="0" value="0">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Volume horaire en alternance</label>
-              <input type="number" class="form-control volume-alternance" min="0" value="0">
-            </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+          </div>
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
           </div>
         </div>
+      </div>
+
+      <div class="horaire-container">
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En présentiel</label>
+            <input type="number" class="form-control volume-presentiel" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">A distance</label>
+            <input type="number" class="form-control volume-distance" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En alternance</label>
+            <input type="number" class="form-control volume-alternance" min="0" value="0">
+          </div>
+        </div>
+      </div>
       </div>
       
       <!-- Conteneur principal qui s'affiche seulement si Oui est sélectionné -->
@@ -930,124 +1007,124 @@
         <button type="button" class="btn-remove">×</button>
       </div>
       <div class="row">
-        <div class="col-md-8 mb-3">
-          <label class="form-label">Nom de l'élément</label>
-          <input type="text" class="form-control element-name" placeholder="Nom de l'élément" style="width: 100%" required>
+        <div class="col-md-4 mb-3">
+          <label class="form-label titles">Nom de l'élément</label>
+          <input type="text" class="form-control element-name" placeholder="Nom de l'élément" required>
         </div>
         <div class="col-md-4 mb-3">
-          <label class="form-label">Coefficient de l'élément</label>
-          <input type="number" class="form-control element-coeff" min="0" max="1" step="0.1" style="width: 70%" required>
+            <label class="form-label titles">Langue d'enseignement</label>
+            <select class="form-select element-langue" >
+              <option value="">Sélectionner une langue</option>
+              <option value="français">Français</option>
+              <option value="anglais">Anglais</option>
+              <option value="arabe">Arabe</option>
+              <option value="espagnol">Espagnol</option>
+              <option value="allemand">Allemand</option>
+            </select>
+          </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label titles">Coefficient de l'élément</label>
+          <input type="number" class="form-control element-coeff" min="0" max="1" step="0.01" required>
         </div>
+
       </div>
       
-      <div class="coefficients-container">
         <div class="coefficient-group">
-          <div class="row align-items-end">
-            <div class="col-md-2 mb-4 d-flex align-items-center justify-content-center">
-              <h5 class="m-0 fw-bold text-secondary">Coefficients:</h5>
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
             </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de TP</label>
-              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.1" value="0.2" required>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de TD</label>
-              <input type="number" class="form-control coefficient-input coeff-td" min="0" max="1" step="0.1" value="0.3" required>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff d'Ecrit</label>
-              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.1" value="0.3" required>
-            </div>
-            <div class="col-md-2 mb-3">
+            <div class="coefficient-item titles">
               <label class="form-label">Coeff de CC</label>
-              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.1" value="0.2" required>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
             </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Coeff de Projet</label>
-              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.1" value="0" required>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
             </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+           
           </div>
-          <div class="alert alert-warning alert-coeff">
-            La somme des coefficients doit être égale à 1.
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
           </div>
-        </div>
+        </div> 
         
-        <div class="professeurs-group mt-4">
-          <div class="row align-items-end">
-            <div class="col-md-2 mb-4 d-flex align-items-center justify-content-center">
-              <h5 class="m-0 fw-bold text-secondary">Professeurs:</h5>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Prof de TP</label>
-              <select class="form-select prof-tp prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Prof de TD</label>
-              <select class="form-select prof-td prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Prof de Cours</label>
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de Cours</label>
               <select class="form-select prof-cours prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-2 mb-3">
-              <label class="form-label">Chef d'élément</label>
-              <select class="form-select chef-element prof-select">
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            
           </div>
         </div>
-      </div>
       
       <!-- Répartition du volume horaire par activité d’enseignement et d’évaluation -->
       <div class="horaire-container">
-        <h6 class="horaire-title">Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire de TP</label>
-            <input type="number" class="form-control volume-tp" min="0" value="0">
+          <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
+          <div class="row">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire de TD</label>
-            <input type="number" class="form-control volume-td" min="0" value="0">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire de Cours</label>
-            <input type="number" class="form-control volume-cours" min="0" value="0">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
           </div>
-        </div>
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire d'Activité pratique</label>
-            <input type="number" class="form-control volume-pratique" min="0" value="0">
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire d'Évaluation</label>
-            <input type="number" class="form-control volume-evaluation" min="0" value="0">
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
           </div>
         </div>
       </div>
 
-      <!-- Répartition du volume horaire par mode d’enseignement -->
       <div class="horaire-container">
-        <h6 class="horaire-title">Répartition du volume horaire par mode d’enseignement</h6>
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
         <div class="row">
           <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire en présentiel</label>
+            <label class="form-label titles">En présentiel</label>
             <input type="number" class="form-control volume-presentiel" min="0" value="0">
           </div>
           <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire à distance</label>
+            <label class="form-label titles">A distance</label>
             <input type="number" class="form-control volume-distance" min="0" value="0">
           </div>
           <div class="col-md-4 mb-3">
-            <label class="form-label">Volume horaire en alternance</label>
+            <label class="form-label titles">En alternance</label>
             <input type="number" class="form-control volume-alternance" min="0" value="0">
           </div>
         </div>
@@ -1098,7 +1175,7 @@
       
       
       // Remplir aussi les dropdowns des modules existants
-      document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
+      document.querySelectorAll(' .prof-tp, .prof-td, .prof-cours').forEach(dropdown => {
         // Garder l'option par défaut "Aucun prof"
         while (dropdown.options.length > 1) {
           dropdown.remove(1);
@@ -1116,7 +1193,7 @@
     
     // Remplir les dropdowns d'un élément spécifique
     function populateElementDropdowns(elementContainer) {
-      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours, .chef-element');
+      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours');
       
       dropdowns.forEach(dropdown => {
         // Garder l'option par défaut "Aucun prof"
@@ -1300,7 +1377,7 @@
       
       // Remplir les dropdowns du module
       if (moduleContainer) {
-        const profDropdowns = moduleContainer.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element');
+        const profDropdowns = moduleContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours');
         
         if (profDropdowns && profDropdowns.length > 0) {
           profDropdowns.forEach(dropdown => {
@@ -1504,65 +1581,74 @@
       startYearSelect.value = currentYear;
       endYearSelect.value = currentYear + 5;
     }
-    function setSelectValue(selectId, value) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
+   function setSelectValue(name, value, { container = document, triggerChange = false } = {}) {
+  // Look by id in the container first, then by class
+  let select = container.querySelector(`#${name}, select.${name}`);
+  if (!select) {
+    console.warn(`No <select> found with "${name}" inside`, container);
+    return null;
+  }
 
-            // Vérifie si l'option existe déjà
-            const option = [...select.options].find(opt => opt.value == value);
-            if (option) {
-                select.value = value;
-            } else {
-                // Si les options ne sont pas encore là, attendre un peu
-                const observer = new MutationObserver(() => {
-                const opt = [...select.options].find(o => o.value == value);
-                if (opt) {
-                    select.value = value;
-                    observer.disconnect();
-                }
-                });
-                observer.observe(select, { childList: true });
-            }
-            }
+  const trySet = () => {
+    const hasOption = Array.from(select.options).some(o => String(o.value) === String(value));
+    if (!hasOption) return false;
+
+    select.value = String(value);
+
+    if (triggerChange) {
+      select.dispatchEvent(new Event('input',  { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    return true;
+  };
+
+  if (trySet()) return select;
+
+  // Wait for dynamic options
+  const obs = new MutationObserver(() => {
+    if (trySet()) obs.disconnect();
+  });
+  obs.observe(select, { childList: true, subtree: true });
+
+  return select;
+}
                 let cyclesData = {};  
 
     
-    let profSelect=document.getElementById("professeur");
     
     // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
 
 
       // Fetch Professors
-                fetch(adminURL+'/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Filiere')
-                  .then(res => res.json())
-                  .then(data => {
+      //       fetch(adminURL+`/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement&depart_id=${document.getElementById("departement").value}`)
+      //             .then(res => res.json())
+      //             .then(data => {
                     
-                    const filiereData =JSON.parse(localStorage.getItem("filiereToUpdate")) ;
-                    const localChefId = filiereData.head_professor_id ;
-                    const   localChefName =filiereData.nom_professeur_responsable;
-                    console.log(localChefId,localChefName);
+      //               const filiereData =JSON.parse(localStorage.getItem("filiereToUpdate")) ;
+      //               const localChefId = filiereData.head_professor_id ;
+      //               const   localChefName =filiereData.nom_professeur_responsable;
 
-                    // Add the chef from localStorage as a pre-selected option
-                    if (localChefName && localChefId) {
-                      const option = document.createElement('option');
-                      option.value = localChefId;
-                      option.textContent = localChefName;
-                      option.selected = true; // force it selected
-                      profSelect.appendChild(option);
-                    }
-                    const profs = objectToArray(data);
-                    profs.forEach(prof => {
-                      const option = document.createElement('option');
-                      option.value = prof.user_id;
-                      option.textContent = `${prof.nom} ${prof.prenom}`;
-                      profSelect.appendChild(option);
-                    });
-                  })
-                  .catch(() => {
-                    alert("Erreur lors du chargement des professeurs");
-                  });
-      // Charger les professeurs
+      //               // Add the chef from localStorage as a pre-selected option
+      //               if (localChefName && localChefId) {
+      //                 const option = document.createElement('option');
+      //                 option.value = localChefId;
+      //                 option.textContent = localChefName;
+      //                 option.selected = true; // force it selected
+      //                 profSelect.appendChild(option);
+      //               }
+      //               const profs = objectToArray(data);
+      //               profs.forEach(prof => {
+      //                 const option = document.createElement('option');
+      //                 option.value = prof.user_id;
+      //                 option.textContent = `${prof.nom} ${prof.prenom}`;
+      //                 profSelect.appendChild(option);
+      //               });
+      //             })
+      //             .catch(() => {
+      //               alert("Erreur lors du chargement des professeurs");
+      //             });
+      // // Charger les professeurs
       loadProfs();
       
       // Remplir les selects d'années
@@ -1596,19 +1682,7 @@
         })
         .catch(() => alert("Erreur lors du chargement des annees"));
 
-      // Fetch Diplome
-      // fetch(adminURL+'/admin2.php?action=GetAllDiplome')
-      //   .then(res => res.json())
-      //   .then(data => {
-      //     const diplomes = objectToArray(data);
-      //     diplomes.forEach(diplome => {
-      //       const option = document.createElement('option');
-      //       option.value = diplome.diplome_id;
-      //       option.textContent = diplome.nom;
-      //       document.getElementById('diplome').appendChild(option);
-      //     });
-      //   })
-      //   .catch(() => alert("Erreur lors du chargement des diplomes"));
+    
       
       // Fetch Departments
       fetch(adminURL+'/admin2.php?action=GetAllDepartment')
@@ -1642,8 +1716,8 @@
       
       document.getElementById('ajouterModulesBtn').addEventListener('click', function () {
               displayMod();
-
-              if( displayMod()){
+        
+              if(displayMod()){
                   this.style.display = 'none';
                 } 
         });
@@ -1675,12 +1749,12 @@
                 document.getElementById("nom").value = filiereData.nom_filiere ?? "";
 
                 // Utilise la fonction pour pré-sélectionner le bon texte
-                setSelectValue("departement", filiereData.department_id ?? "");
-                setSelectValue("professeur", filiereData.head_professor_id ?? "");
                 setSelectValue("annee_debut_accreditation", filiereData.annee_accreditation ?? "");
                 setSelectValue("annee_fin_accreditation", filiereData.annee_fin_accrediation ?? "");
                 setSelectValue("cycle", filiereData.cycle_id ?? "");
                 setSelectValue("statut", filiereData.status ?? "");
+                setSelectValue("departement", filiereData.department_id ?? "", { triggerChange: true });
+                setSelectValue("professeur", filiereData.head_professor_id ?? "");
                 // Dates
                 document.getElementById("date_debut_affectation").value = filiereData.debut_affectation ?? "";
                 document.getElementById("date_fin_affectation").value = filiereData.fin_affectation ?? "";
@@ -1704,6 +1778,40 @@
         // Afficher le conteneur
         document.getElementById('modulesContainer').style.display = 'block';
       }
+      
+
+      let profSelect=document.getElementById("professeur");
+    document.getElementById("departement").addEventListener('change',()=>{
+            fetch(adminURL+`/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement&depart_id=${document.getElementById("departement").value}`)
+                  .then(res => res.json())
+                  .then(data => {
+                    console.log(data);
+                    const filiereData =JSON.parse(localStorage.getItem("filiereToUpdate")) ;
+                    const localChefId = filiereData.head_professor_id ;
+                    const   localChefName =filiereData.nom_professeur_responsable;
+                    profSelect.innerHTML = "";
+                   
+                    // Add the chef from localStorage as a pre-selected option
+                    if (localChefName && localChefId) {
+                      const option = document.createElement('option');
+                      option.value = localChefId;
+                      option.textContent = localChefName;
+                      option.selected = true; // force it selected
+                      profSelect.appendChild(option);
+                    }
+                    
+                    const profs = objectToArray(data);
+                    profs.forEach(prof => {
+                      const option = document.createElement('option');
+                      option.value = prof.user_id;
+                      option.textContent = `${prof.nom} ${prof.prenom}`;
+                      profSelect.appendChild(option);
+                    });
+                  })
+                  .catch(() => {
+                    alert("Erreur lors du chargement des professeurs");
+                  });
+      });
 
     // Fonction pour collecter tous les volumes horaires
     function collectAllVolumes() {
@@ -1864,8 +1972,6 @@
                 const moduleData = {
                   code: moduleContainer.querySelector('.module-code').value,
                   nom: moduleContainer.querySelector('.module-name').value,
-                  chef_id: moduleContainer.querySelector('.module-chef').value,
-                  langue: moduleContainer.querySelector('.module-langue').value,
                   type: moduleContainer.querySelector('.module-type').value,
                   has_elements: hasElements,
                   etape: parseInt(etape),
@@ -1894,10 +2000,12 @@
                             coeff_ecrit: elementContainer.querySelector('.coeff-ecrit').value || 0,
 
                             // Professors
-                            Ref_prof_element: elementContainer.querySelector('.chef-element').value || null,
                             Ref_prof_tp: elementContainer.querySelector('.prof-tp').value || null,
                             Ref_prof_td: elementContainer.querySelector('.prof-td').value || null,
                             Ref_prof_cours: elementContainer.querySelector('.prof-cours').value || null,
+
+                            //langue
+                            langue:elementContainer.querySelector('.element-langue').value,
 
                             // Volumes
                             horraire_tp: elementContainer.querySelector('.volume-tp').value || 0,
@@ -1918,12 +2026,11 @@
                   moduleData.coeff_td = coeffInputs[1]?.value || 0;
                   moduleData.coeff_ecrit = coeffInputs[2]?.value || 0;
                   moduleData.coeff_cc = coeffInputs[3]?.value || 0;
-                  moduleData.coeff_projet = coeffInputs[4]?.value || 0;
                   moduleData.coeff_element = 1; // ou un champ input si tu veux le laisser configurable
                   moduleData.prof_tp = moduleContainer.querySelector('.prof-tp').value || null;
                   moduleData.prof_td = moduleContainer.querySelector('.prof-td').value || null;
                   moduleData.prof_cours = moduleContainer.querySelector('.prof-cours').value || null;
-                  moduleData.chef_element = moduleContainer.querySelector('.chef-element').value || null;
+                  moduleData.langue= moduleContainer.querySelector('.module-langue').value || null;
 
 
               }
