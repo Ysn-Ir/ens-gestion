@@ -442,7 +442,7 @@
 
     .info-details {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1rem;
     }
 
@@ -505,7 +505,7 @@
       </div>
           <div class="p-2"> 
              <button type="button" class="btn btn-success" onclick="AjouterModule()">
-            <i class="bi bi-plus-circle me-2"></i>Ajouter un module
+            <i class="bi bi-plus-circle me-2"></i>Ajouter Modules
           </button>
           </div>
         </div>
@@ -516,20 +516,18 @@
         <table class="table table-striped  table-hover table-bordered align-middle text-center">
           <thead>
             <tr>
-              <th colspan="6" class="section-header">Description du module</th>
-              <th colspan="3" class="section-header">Élement du module</th>
+              <th colspan="5" class="section-header">Description du module</th>
+              <th colspan="2" class="section-header">Élement du module</th>
               <th colspan="1" class="section-header">Action sur l'élément</th>
               <th colspan="1" class="section-header">Action sur le module</th>
             </tr>
             <tr class="table-dark">
               <th>Code Module</th>
               <th>Nom Module</th>
-              <th>Chef de Module</th>
               <th>Filière associée</th>
               <th>Semestre associé</th>
               <th>Type</th>
               <th>Nom Élément</th>
-              <th>Chef de l'élement</th> 
               <th>Coeff Élément</th>
               <th>Supprimer élement</th>
               <th>Actions</th>
@@ -659,15 +657,15 @@
         fetch(adminURL+`/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
           .then(res => res.json())
           .then(data => {
-            console.log(data);
             if (data.status === "success") {
-              const nombreSemestre = data.nombre_semestre;
-              for (let i = 1; i <= nombreSemestre; i++) { 
+              data.data.forEach(semestre =>{
                 const option = document.createElement("option");
-                option.value = i;
-                option.textContent = "Semestre " + i;
+                option.value = semestre.semestre_id;
+                option.textContent = semestre.nom;
                 semestreSelect.appendChild(option);
-              }
+              })
+              
+             
             }
           })
           .catch(() => console.error("Erreur lors du chargement des semestres"));
@@ -677,27 +675,7 @@
    
 
 
-    // function suppModule(id) {
-    //   if (confirm("Voulez-vous vraiment supprimer le module ID " + id + " ?")) {
-    //     fetch(adminURL+`/admin2.php?action=deletemodule&module_id=${id}`, {
-    //       method: 'DELETE',
-    //       credentials: 'include'
-    //     })
-    //     .then(response => response.json())
-    //     .then(result => {
-    //       if (result.success) {
-    //         alert("Module supprimé avec succès.");
-    //         location.reload();
-    //       } else {
-    //         alert("Erreur lors de la suppression.");
-    //       }
-    //     })
-    //     .catch(error => {
-    //       console.error("Erreur:", error);
-    //       alert("Erreur de suppression.");
-    //     });
-    //   }
-    // }
+  
 
     function AjouterModule() {
       window.location.href = "AjouterModule.html";
@@ -763,7 +741,6 @@
       })
       .then(response => response.json())
       .then(data => {
-        console.log(data);
         loadModuleTable(data);
       })
       .catch(error => {
@@ -812,18 +789,16 @@
               ${index === 0 ? `
                 <td rowspan="${rowspan}">${info.code_module || '--'}</td>
                 <td rowspan="${rowspan}">${info.nom_module || '--'}</td>
-                <td rowspan="${rowspan}">${info.prof_responsable || '--'}</td>
                 <td rowspan="${rowspan}">${info.nom_filiere || '--'}</td>
                 <td rowspan="${rowspan}">${info.semestre || '--'}</td>
                 <td rowspan="${rowspan}">${info.type || '--'}</td>
               ` : ''}
 
                 <td>${el.nom_element || '--'}</td>
-                <td>${el.prof_element ?? '--'}</td>
                 <td>${el.coeff_element ?? '--'}</td>
                 <td>
                     <button class="btn btn-sm btn-danger" onclick="deleteElement('${el.nom_element}', '${el.element_id}')" title="Supprimer l'élément">
-<i class="bi bi-x-circle"></i>
+                            <i class="bi bi-x-circle"></i>
                     </button>
                 </td>
 
@@ -874,12 +849,9 @@
       localStorage.setItem("module_id", module.module_id);
       localStorage.setItem("nom_module", module.nom_module);
       localStorage.setItem("code_module", module.code_module);
-      localStorage.setItem("chef_module", module.id_prof_responsable || "");
-      localStorage.setItem("langue_module", module.langue || "");
       localStorage.setItem("type_module", module.type || "");
       localStorage.setItem("filiere_id", module.id_filiere || "");
       localStorage.setItem("semestre_module", module.id_semestre || "");
-      localStorage.setItem("annee_module", module.annee || "");
       
         // Stocker les éléments normalement
         elements.forEach((el, index) => {
@@ -890,14 +862,13 @@
           localStorage.setItem(`cc_${index}`, el.coeff_cc);
           localStorage.setItem(`tp_${index}`, el.coeff_tp);
           localStorage.setItem(`td_${index}`, el.coeff_td);
-          localStorage.setItem(`projet_${index}`, el.coeff_projet);
+          localStorage.setItem(`element-langue${index}`, el.langue || "");
 
-          // Professeurs des éléments
+
           // Professeurs des éléments
           localStorage.setItem(`prof_cours_element${index}`, el.id_prof_cours || "");
           localStorage.setItem(`prof_td_element${index}`, el.id_prof_td || "");
           localStorage.setItem(`prof_tp_element${index}`, el.id_prof_tp || "");
-          localStorage.setItem(`chef_element${index}`, el.id_prof_element || "");
 
 
           // Volumes horaires des éléments
@@ -937,12 +908,10 @@ function showDetails(nomModule, moduleId) {
       <div class="info-details">
         <div class="info-item"><strong>Code module</strong> ${moduleInfo.code_module || '--'}  </div>
         <div class="info-item"><strong>Nom du module</strong> ${moduleInfo.nom_module || '--'}</div>
-        <div class="info-item"><strong>Chef de module</strong> ${moduleInfo.prof_responsable || '--'}</div>
-        <div class="info-item"><strong>Coefficient</strong> ${moduleInfo.coeff_module ?? '--'}</div>
+        <div class="info-item"><strong>Type</strong> ${moduleInfo.type || '--'}</div>
         <div class="info-item"><strong>Filière</strong> ${moduleInfo.nom_filiere || '--'}</div>
         <div class="info-item"><strong>Semestre</strong> ${moduleInfo.semestre || '--'}</div>
-        <div class="info-item"><strong>Type</strong> ${moduleInfo.type || '--'}</div>
-        <div class="info-item"><strong>Langue d'enseignement</strong> ${moduleInfo.langue || '--'}</div>
+        <div class="info-item"><strong>Coefficient</strong> ${moduleInfo.coeff_module ?? '--'}</div>
       </div>
     </div>
   `;
@@ -953,24 +922,23 @@ function showDetails(nomModule, moduleId) {
       <table class="table table-bordered align-middle text-center">
         <thead>
           <tr id="first">
-            <th colspan="1">Nom Élément</th>
-            <th colspan="6">Coefficients</th>
-            <th colspan="4">Profs associés</th>
+            <th colspan="2">Nom Élément</th>
+            <th colspan="5">Coefficients</th>
+            <th colspan="3">Profs associés</th>
             <th colspan="5">Volume horaire par activité</th>
             <th colspan="3">Volume horaire par mode d'enseignement</th>
           </tr>
           <tr id="second">
             <th>Nom Élément</th>
+            <th>Langue </th>
             <th>Coeff Élément</th>
             <th>Écrit</th>
             <th>TD</th>
             <th>TP</th>
             <th>CC</th>
-            <th>Projet</th>
             <th>Prof Cours</th>
             <th>Prof TD</th>
             <th>Prof TP</th>
-            <th>Chef Élément</th>
             <th>Cours</th>
             <th>TD</th>
             <th>TP</th>
@@ -988,16 +956,15 @@ function showDetails(nomModule, moduleId) {
     html += `
       <tr>
         <td>${el.nom_element ?? '--'}</td>
+        <td>${el.langue ?? '--'}</td>
         <td>${el.coeff_element ?? '--'}</td>
         <td>${el.coeff_ecrit ?? '--'}</td>
         <td>${el.coeff_td ?? '--'}</td>
         <td>${el.coeff_tp ?? '--'}</td>
         <td>${el.coeff_cc ?? '--'}</td>
-        <td>${el.coeff_projet ?? '--'}</td>
         <td>${el.prof_cours ?? '--'}</td>
         <td>${el.prof_td ?? '--'}</td>
         <td>${el.prof_tp ?? '--'}</td>
-        <td>${el.prof_element ?? '--'}</td>
         <td>${el.horraire_cours ?? '--'}</td>
         <td>${el.horraire_td ?? '--'}</td>
         <td>${el.horraire_tp ?? '--'}</td>
