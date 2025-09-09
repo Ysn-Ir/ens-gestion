@@ -87,15 +87,15 @@ public function getNombreSemestresByFiliere($filiere_id)
 
     $result = $this->model->getNombreSemestresByFiliere($filiere_id);
 
-    if ($result && isset($result['Nombre_semestre'])) {
+    if ($result ) {
         return $this->response->sende(200, [
             'status' => 'success',
-            'nombre_semestre' => intval($result['Nombre_semestre'])
+            'data' => $result
         ]);
     } else {
         return $this->response->sende(404, [
             'status' => 'error',
-            'message' => 'Aucun nombre de semestres trouvé pour cette filière'
+            'message' => 'Aucun info'
         ]);
     }
 }
@@ -110,8 +110,8 @@ public function getNombreSemestresByFiliere($filiere_id)
 
 
 
-            public function GetAllProffessors()
-            {   $this->authMiddleware->verifySession();
+            public function GetAllProffessors(){
+               $this->authMiddleware->verifySession();
                         $this->adminMiddleware->verifyAdmin();
                 $this->model = new AdminModel2();
                 $profs = $this->model->GetAllProffessors();
@@ -160,10 +160,10 @@ public function deleteElement($element_id) {
     }
 }
 
-    public function GetAllRegularProffessors($role){
+    public function GetAllRegularProffessors($role,$depart_id){
         $this->authMiddleware->verifySession();
         $this->adminMiddleware->verifyAdmin();
-        $professeurs = $this->model->GetAllRegularProffessors($role);
+        $professeurs = $this->model->GetAllRegularProffessors($role,$depart_id);
         $this->response->sende(200, $professeurs);
     }
 
@@ -225,15 +225,15 @@ public function deleteElement($element_id) {
         }
     }
 
-    public function AjouterDepart($nom,$profId,$dateDebut,$dateFin) {
+    public function AjouterDepart($nom) {
                     $this->authMiddleware->verifySession();
-            $this->adminMiddleware->verifyAdmin();
-                    if (empty($dateDebut) || empty($dateFin) || empty($nom) || !is_numeric($profId)) {
-                        $this->response->sende(400, ['message' => $dateDebut.$dateFin.'Données invalides']);
+                    $this->adminMiddleware->verifyAdmin();
+                    if (empty($nom) ) {
+                        $this->response->sende(400, ['message' => 'Données invalides']);
                         return;
                     }
 
-                    $result = $this->model->AjouterDepart($nom,$profId,$dateDebut,$dateFin);
+                    $result = $this->model->AjouterDepart($nom);
 
                     if ($result) {
                         $this->response->sende(201, ['message' => 'Département créée avec succès']);
@@ -402,3 +402,4 @@ public function deleteElement($element_id) {
 
 
 ?>
+
