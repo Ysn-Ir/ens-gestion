@@ -32,8 +32,8 @@
             padding: 5px 10px;
         }
         .role-prof { background-color: #28a745; color: white; }
-        .role-chef_dep { background-color: #007bff; color: white; }
-        .role-chef_fill { background-color: #ffc107; color: black; }
+        .role-Chef_de_Departement { background-color: #007bff; color: white; }
+        .role-Chef_de_Filiere { background-color: #ffc107; color: black; }
     </style>
 </head>
 <body>
@@ -158,8 +158,8 @@
                                 <label for="role" class="form-label">Rôle</label>
                                 <select class="form-select" id="role" required>
                                     <option value="prof">Professeur</option>
-                                    <option value="chef_dep">Chef de Département</option>
-                                    <option value="chef_fill">Chef de Filière</option>
+                                    <option value="Chef_de_Departement">Chef de Département</option>
+                                    <option value="Chef_de_Filiere">Chef de Filière</option>
                                 </select>
                                 <div class="invalid-feedback">Veuillez sélectionner un rôle.</div>
                             </div>
@@ -445,8 +445,8 @@
                                   prof.role === 'Chef_de_Departement' ? 'Chef de Département' :
                                   prof.role === 'Chef_de_Filiere' ? 'Chef de Filière' : 'Inconnu';
                 const roleClass = prof.role === 'Regular' ? 'role-prof' :
-                                  prof.role === 'Chef_de_Departement' ? 'role-chef_dep' :
-                                  prof.role === 'Chef_de_Filiere' ? 'role-chef_fill' : '';
+                                  prof.role === 'Chef_de_Departement' ? 'role-Chef_de_Departement' :
+                                  prof.role === 'Chef_de_Filiere' ? 'role-Chef_de_Filiere' : '';
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${prof.user_id}</td>
@@ -520,7 +520,7 @@
                         document.getElementById('email').value = DOMPurify.sanitize(prof.email || '');
                         document.getElementById('phone').value = DOMPurify.sanitize(prof.telephone || '');
                         document.getElementById('department').value = prof.department_id || '';
-                        document.getElementById('role').value = prof.system_role === 'Regular' ? 'prof' : prof.system_role === 'Chef_de_Departement' ? 'chef_dep' : prof.system_role === 'Chef_de_Filiere' ? 'chef_fill' :"";
+                        document.getElementById('role').value = prof.system_role === 'Regular' ? 'prof' : prof.system_role === 'Chef_de_Departement' ? 'Chef_de_Departement' : prof.system_role === 'Chef_de_Filiere' ? 'Chef_de_Filiere' :"";
                         document.getElementById('filiere').value = prof.assigned_field_id || '';
                         document.getElementById('departmentChef').value = prof.department_id || '';
                         document.querySelector('.modal-title').textContent = 'Modifier un Professeur';
@@ -583,11 +583,11 @@
             const filiereSelect = document.getElementById('filiere');
             const departmentChefSelect = document.getElementById('departmentChef');
 
-            filiereContainer.style.display = selectedRole === 'chef_fill' ? 'block' : 'none';
-            departmentChefContainer.style.display = selectedRole === 'chef_dep' ? 'block' : 'none';
+            filiereContainer.style.display = selectedRole === 'Chef_de_Filiere' ? 'block' : 'none';
+            departmentChefContainer.style.display = selectedRole === 'Chef_de_Departement' ? 'block' : 'none';
             
-            filiereSelect.required = selectedRole === 'chef_fill';
-            departmentChefSelect.required = selectedRole === 'chef_dep';
+            filiereSelect.required = selectedRole === 'Chef_de_Filiere';
+            departmentChefSelect.required = selectedRole === 'Chef_de_Departement';
         }
 
         // Download CSV template
@@ -777,7 +777,7 @@ importCSVModal._element.addEventListener('hidden.bs.modal', () => {
                 return;
             }
 
-            if (selectedRole === 'chef_fill') {
+            if (selectedRole === 'Chef_de_Filiere') {
                 profData.field_id = parseInt(document.getElementById('filiere').value, 10) || null;
                 if (!profData.field_id) {
                     showToast('errorToast', 'Veuillez sélectionner une filière pour le rôle Chef de Filière.');
@@ -785,7 +785,7 @@ importCSVModal._element.addEventListener('hidden.bs.modal', () => {
                     hideLoading();
                     return;
                 }
-            } else if (selectedRole === 'chef_dep') {
+            } else if (selectedRole === 'Chef_de_Departement') {
                 profData.department_id = parseInt(document.getElementById('departmentChef').value, 10) || null;
                 if (!profData.department_id) {
                     showToast('errorToast', 'Veuillez sélectionner un département pour le rôle Chef de Département.');
