@@ -350,7 +350,7 @@
     const dateDebut = localStorage.getItem("date_debut");
     const dateFin   = localStorage.getItem("date_fin");
 
-    if (dateDebut) {
+    if (dateDebut !== "null" ) {
       dateDebutInput.value = dateDebut;
     } else {
       dateDebutInput.value = "";
@@ -423,7 +423,7 @@
       }
 
       // Fetch Professors
-      fetch(adminURL + '/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement')
+      fetch(adminURL + `/admin2.php?action=GetAllRegularProffessors&depart_id=${localStorage.getItem("id_depart")}`)
         .then(res => res.json())
         .then(data => {
           const profs = objectToArray(data);
@@ -434,7 +434,7 @@
           console.log(localChefId,localChefName);
 
           // Add the chef from localStorage as a pre-selected option
-          if (localChefName && localChefId) {
+          if (localChefName !== "null" ) {
             const option = document.createElement('option');
             option.value = localChefId;
             option.textContent = localChefName;
@@ -444,25 +444,20 @@
 
           // Add the rest of professors
           profs.forEach(prof => {
-                            console.log(prof);
+              if (prof.user_id == localChefId) return;
+                
+              const option = document.createElement('option');
+              option.value = prof.user_id;
+              option.textContent = `${prof.nom} ${prof.prenom}`;
 
-            const option = document.createElement('option');
-            option.value = prof.user_id;
-            option.textContent = `${prof.nom} ${prof.prenom}`;
-
-            // Select current chef if it matches
-            if (departToUpdate.chef_departement_id == prof.user_id && !localChefId) {
-              option.selected = true;
-            }
+            
 
             profSelect.appendChild(option);
           });
 
           // Ensure the select value is set properly
-          if (localChefId) {
-            setSelectValue('professeur', localChefId);
-          } else {
-            setSelectValue('professeur', departToUpdate.chef_departement_id);
+          if (localChefName !== "null") {
+                  setSelectValue('professeur', departToUpdate.chef_departement_id );
           }
         })
         .catch(() => {
