@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gestion des Modules </title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <script src="../../route.js"></script>
@@ -406,6 +408,13 @@
       display: flex;
       flex-direction: column;
     }
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--dark);
+    }
 
     .alert-coeff {
       margin-top: 10px;
@@ -419,13 +428,7 @@
       margin-top: 1.2rem;
       border-left: 4px solid var(--accent);
     }
-    .coefficient-group {
-      background-color: #e9ecef;
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin-top: 1.2rem;
-      border-left: 4px solid var(--dark);
-    }
+    
 
     .horaire-container {
       background-color: #e9ecef;
@@ -503,6 +506,28 @@
       min-width: 300px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
+    .langues {
+        display: flex;
+        align-items: center;     /* vertical alignment */
+        gap: 1rem;               /* space between label and select */
+        background-color: #e9ecef;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.2rem;
+        border-left: 4px solid var(--dark);
+      }
+
+    .langues i {
+      color: #0d6efd; /* Bootstrap primary blue */
+      margin-right: 0.5rem; /* space between icon and text */
+    }
+
+     .langues select {
+      width:fit-content;
+    }
+
+    
+  
 
     /* Animation for dynamic content */
     @keyframes fadeIn {
@@ -555,7 +580,7 @@
     </div>
 
     <div class="form-container">
-      <h3 class="form-title"><i class="fas fa-book me-2"></i>Ajouter des Modules à la Filière</h3>
+      <h3 class="form-title"><i class="fas fa-book me-2"></i>Ajouter des Modules à une filière</h3>
       
       <form id="moduleForm">
         <!-- Filière Selection -->
@@ -640,27 +665,8 @@
             <label class="form-label titles">Nom</label>
             <input type="text" class="form-control module-name" placeholder="Nom du module" required>
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label titles">Chef de module</label>
-            <select class="form-select module-chef prof-select" required>
-              <option value="">Sélectionner un chef de module</option>
-            </select>
-          </div>
-        </div>
         
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label titles">Langue d'enseignement</label>
-            <select class="form-select module-langue" required>
-              <option value="">Sélectionner une langue</option>
-              <option value="français">Français</option>
-              <option value="anglais">Anglais</option>
-              <option value="arabe">Arabe</option>
-              <option value="espagnol">Espagnol</option>
-              <option value="allemand">Allemand</option>
-            </select>
-          </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <label class="form-label titles">Type de module</label>
             <select class="form-select module-type" required>
               <option value="">Sélectionner un type</option>
@@ -669,7 +675,10 @@
               <option value="Module de spécialité">Module de spécialité</option>
             </select>
           </div>
+          
         </div>
+        
+        
       </div>
       
       <div class="module-section">
@@ -689,6 +698,23 @@
       
       <!-- Conteneur pour les coefficients du module (affiché quand "Non" est sélectionné) -->
       <div class="module-coefficients">
+        <div class="langues">
+          <label class="form-label titles mb-0 col-md-3">
+            <i class="bi bi-translate"></i> Langue d'enseignement
+          </label>
+          
+          <select class="form-select module-langue col-md-4" name="module-langue" >
+            <option value="">Sélectionner une langue</option>
+            <option value="français">Français</option>
+            <option value="anglais">Anglais</option>
+            <option value="arabe">Arabe</option>
+            <option value="espagnol">Espagnol</option>
+            <option value="allemand">Allemand</option>
+          </select>
+        </div>
+
+          
+      
          <div class="coefficient-group">
           <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
           <div class="coefficient-inputs">
@@ -709,10 +735,7 @@
               <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
             </div>
             
-            <div class="coefficient-item">
-              <label class="form-label titles">Coeff de Projet</label>
-              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
-            </div>
+           
           </div>
           <div class="alert alert-warning alert-coeff mt-2">
             <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
@@ -723,31 +746,26 @@
           <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
           <div class="row">
             
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-4">
               <label class="form-label titles">Prof de Cours</label>
               <select class="form-select prof-cours prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-4">
               <label class="form-label titles">Prof de TD</label>
               <select class="form-select prof-td prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-4">
               <label class="form-label titles">Prof de TP</label>
               <select class="form-select prof-tp prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
             
-            <div class="col-md-3 mb-3">
-              <label class="form-label titles">Chef d'élément</label>
-              <select class="form-select chef-element prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
+            
           </div>
         </div>
 
@@ -828,14 +846,26 @@
         <button type="button" class="btn-remove" title="Supprimer l'élément">×</button>
       </div>
       <div class="row">
-        <div class="col-md-8 mb-3">
+        <div class="col-md-4 mb-3">
           <label class="form-label titles">Nom de l'élément</label>
           <input type="text" class="form-control element-name" placeholder="Nom de l'élément" required>
         </div>
         <div class="col-md-4 mb-3">
+            <label class="form-label titles">Langue d'enseignement</label>
+            <select class="form-select element-langue" >
+              <option value="">Sélectionner une langue</option>
+              <option value="français">Français</option>
+              <option value="anglais">Anglais</option>
+              <option value="arabe">Arabe</option>
+              <option value="espagnol">Espagnol</option>
+              <option value="allemand">Allemand</option>
+            </select>
+          </div>
+        <div class="col-md-4 mb-3">
           <label class="form-label titles">Coefficient de l'élément</label>
           <input type="number" class="form-control element-coeff" min="0" max="1" step="0.01" required>
         </div>
+
       </div>
       
       <div class="coefficient-group">
@@ -858,10 +888,7 @@
               <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
             </div>
             
-            <div class="coefficient-item">
-              <label class="form-label titles">Coeff de Projet</label>
-              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
-            </div>
+         
           </div>
           <div class="alert alert-warning alert-coeff mt-2">
             <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
@@ -872,31 +899,26 @@
           <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
           <div class="row">
             
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
               <label class="form-label titles">Prof de Cours</label>
               <select class="form-select prof-cours prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
               <label class="form-label titles">Prof de TD</label>
               <select class="form-select prof-td prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
               <label class="form-label titles">Prof de TP</label>
               <select class="form-select prof-tp prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
             
-            <div class="col-md-3 mb-3">
-              <label class="form-label titles">Chef d'élément</label>
-              <select class="form-select chef-element prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
+           
           </div>
         </div>
       
@@ -992,7 +1014,7 @@
     
     // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
     function populateProfessorDropdowns() {
-      document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
+      document.querySelectorAll(' .prof-tp, .prof-td, .prof-cours').forEach(dropdown => {
         // Garder l'option par défaut "Aucun prof"
         while (dropdown.options.length > 1) {
           dropdown.remove(1);
@@ -1010,7 +1032,7 @@
     
     // Remplir les dropdowns d'un élément spécifique
     function populateElementDropdowns(elementContainer) {
-      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours, .chef-element');
+      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours');
       
       dropdowns.forEach(dropdown => {
         // Garder l'option par défaut "Aucun prof"
@@ -1378,7 +1400,7 @@
       
       // Remplir les dropdowns du module
       if (moduleContainer) {
-        const profDropdowns = moduleContainer.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element');
+        const profDropdowns = moduleContainer.querySelectorAll(' .prof-tp, .prof-td, .prof-cours');
         
         if (profDropdowns && profDropdowns.length > 0) {
           profDropdowns.forEach(dropdown => {
@@ -1527,8 +1549,6 @@
         const moduleData = {
           code: moduleContainer.querySelector('.module-code').value,
           nom: moduleContainer.querySelector('.module-name').value,
-          chef_id: moduleContainer.querySelector('.module-chef').value,
-          langue: moduleContainer.querySelector('.module-langue').value,
           type: moduleContainer.querySelector('.module-type').value,
           has_elements: hasElements,
           etape: parseInt(etape),
@@ -1553,11 +1573,12 @@
                 coeff_td: elementContainer.querySelector('.coeff-td').value || 0,
                 coeff_tp: elementContainer.querySelector('.coeff-tp').value || 0,
                 coeff_cc: elementContainer.querySelector('.coeff-cc').value || 0,
-                coeff_projet: elementContainer.querySelector('.coeff-projet').value || 0,
                 coeff_ecrit: elementContainer.querySelector('.coeff-ecrit').value || 0,
 
+                //langue
+                langue:elementContainer.querySelector('.element-langue').value,
+
                 // Professors
-                Ref_prof_element: elementContainer.querySelector('.chef-element').value || null,
                 Ref_prof_tp: elementContainer.querySelector('.prof-tp').value || null,
                 Ref_prof_td: elementContainer.querySelector('.prof-td').value || null,
                 Ref_prof_cours: elementContainer.querySelector('.prof-cours').value || null,
@@ -1579,16 +1600,16 @@
         } else {
           // Si le module n'a pas d'éléments
           const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+
           moduleData.coeff_tp = coeffInputs[0]?.value || 0;
           moduleData.coeff_td = coeffInputs[1]?.value || 0;
           moduleData.coeff_ecrit = coeffInputs[2]?.value || 0;
           moduleData.coeff_cc = coeffInputs[3]?.value || 0;
-          moduleData.coeff_projet = coeffInputs[4]?.value || 0;
           moduleData.coeff_element = 1; // ou un champ input si tu veux le laisser configurable
           moduleData.prof_tp = moduleContainer.querySelector('.prof-tp').value || null;
           moduleData.prof_td = moduleContainer.querySelector('.prof-td').value || null;
           moduleData.prof_cours = moduleContainer.querySelector('.prof-cours').value || null;
-          moduleData.chef_element = moduleContainer.querySelector('.chef-element').value || null;
+          moduleData.langue = moduleContainer.querySelector('.module-langue').value || null;
         }
         
         modules.push(moduleData);
