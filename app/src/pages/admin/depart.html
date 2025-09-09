@@ -192,6 +192,40 @@
         margin-top: 10px;
       }
     }
+    .dept-input-group {
+        display: flex;
+        align-items: stretch;
+        width: 100%;
+        max-width: 700px; /* limite optionnelle pour éviter trop grand */
+      }
+
+.input-dept {
+  width: 500px;
+  flex: 1; /* prend tout l’espace disponible */
+  padding: 10px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px 0 0 6px; /* arrondi à gauche seulement */
+  font-size: 0.95rem;
+  color: var(--secondary-color);
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+.input-dept:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 6px rgba(52, 152, 219, 0.25);
+}
+
+.btn-add {
+  border-radius: 0 6px 6px 0; /* arrondi à droite seulement */
+  padding: 10px 20px;
+}
+
+
+
+
+
   </style>
 </head>
 <body>
@@ -202,12 +236,19 @@
 
     <!-- Content Section -->
     <div class="content-card">
-      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-        <h2 class="section-title mb-3 mb-md-0">Liste des Départements</h2>
-        <button type="button" class="btn btn-add text-white" onclick="AjouterDepart()">
-          <i class="bi bi-plus-circle me-2"></i>Ajouter un département
-        </button>
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap line1">
+          <h2 class="section-title mb-3 mb-md-0">Liste des Départements</h2>
+        
+          <div class="dept-input-group">
+            <input type="text" id="deptName" class="input-dept" placeholder="Nom du département ex: Informatique">
+            <button type="button" class="btn btn-add text-white" onclick="AjouterDepart()">
+              <i class="bi bi-plus-circle me-2"></i>Ajouter un département
+            </button>
+          </div>
+
+
       </div>
+
       
       <div class="table-responsive">
         <table class="table table-hover">
@@ -239,16 +280,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      // Simuler un utilisateur connecté (pour test)
-      // let userData = localStorage.getItem("userData");
-      // if (!userData) {
-      //   localStorage.setItem("userData", JSON.stringify({ username: "admin", role: "Administrateur" }));
-      //   userData = localStorage.getItem("userData");
-      // }
-
-      // userData = JSON.parse(userData);
-      // document.getElementById('usernameDisplay').textContent = userData.username;
-      // document.getElementById('userRole').textContent = userData.role;
+      
 
       // Charger les départements
       fetch(adminURL+'/admin2.php?action=getAllDepart', {
@@ -375,9 +407,37 @@
         });
       }
     }
+    const nomDepart = document.getElementById('deptName');
 
     function AjouterDepart() {
-      window.location.href = "AjouterDepart.html";
+      const nom = nomDepart.value;  
+      // Basic validation
+      if ( !nom ) {
+        alert("Veuillez donnez un nom.");
+        return;
+      }
+      
+      
+      
+      // API call
+      fetch(adminURL+`/admin2.php?action=AjouterDepart&nomDepart=${encodeURIComponent(nom)}`, {
+        method: 'GET',
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log(result);
+        if (result.message === "Département créée avec succès") {
+          alert("Département créé avec succès !");
+          window.location.href = "depart.html";
+        } else {
+          alert("Erreur : " + (result.message || "Une erreur s'est produite"));
+        }
+      })
+      .catch(error => {
+        console.error("Erreur:", error);
+        alert("Erreur lors de l'ajout du département.");
+      });
     }
   </script>
 </body>
