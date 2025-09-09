@@ -40,18 +40,44 @@ class AdminModel2
     }
 
     
-    public function GetAllRegularProffessors($role){
+    public function GetAllRegularProffessors($role, $depart_id) {
+    if ($role) {
+        // Exclure le rôle donné + Chef_de_Filiere
         $stmt = $this->db->prepare("
             SELECT p.*
             FROM professeurs p
-            WHERE p.user_id NOT IN (
-                SELECT user_id FROM professor_roles WHERE role = :role
+            WHERE p.department_id = :depart_id
+            AND p.actuel=1
+            AND p.user_id NOT IN (
+                SELECT user_id 
+                FROM professor_roles 
+                WHERE role = :role OR role = 'Chef_de_Filiere'
             )
-
         ");
-        $stmt->execute([":role"=>$role]);
-        return $stmt->fetchAll();
+        $stmt->execute([
+            ":depart_id" => $depart_id,
+            ":role" => $role
+        ]);
+    } else {
+        // Exclure seulement Chef_de_Filiere
+        $stmt = $this->db->prepare("
+            SELECT p.*
+            FROM professeurs p
+            WHERE p.department_id = :depart_id
+            AND p.actuel=1
+
+            AND p.user_id NOT IN (
+                SELECT user_id 
+                FROM professor_roles 
+                WHERE role = 'Chef_de_Filiere'
+            )
+        ");
+        $stmt->execute([":depart_id" => $depart_id]);
     }
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 
      
 
@@ -160,76 +186,43 @@ class AdminModel2
   
 
     public function deleteDepart($depart_id) {
-    $this->db->beginTransaction();
+        $this->db->beginTransaction();
 
-    try {
-        // 1. Get the old chef info from the department
-        $stmt = $this->db->prepare("
-            SELECT head_professor_id, date_debut, date_fin 
-            FROM departements 
-            WHERE department_id = ?
-        ");
-        $stmt->execute([$depart_id]);
-        $oldChef = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($oldChef) {
-            $profId = $oldChef['head_professor_id'];
-            $dateDebut = $oldChef['date_debut'];
-            $dateFin   = $oldChef['date_fin'];
-
-            // 2. Check if professor_roles contains the same record
-            $stmtRole = $this->db->prepare("
-                SELECT role_id 
-                FROM professor_roles 
-                WHERE user_id = :profId
-                  AND role = 'Chef_de_Departement'
-                  AND (date_debut_affectation = :debut OR (:debut IS NULL AND date_debut_affectation IS NULL))
-                  AND (date_fin_affectation = :fin OR (:fin IS NULL AND date_fin_affectation IS NULL))
-                LIMIT 1
+        try {
+            // 1. Get the old chef info from the department
+            $stmt = $this->db->prepare("
+                SELECT head_professor_id
+                FROM departements 
+                WHERE department_id = ?
             ");
-            $stmtRole->execute([
-                ':profId' => $profId,
-                ':debut'  => $dateDebut,
-                ':fin'    => $dateFin
-            ]);
-            $role = $stmtRole->fetch(PDO::FETCH_ASSOC);
+            $stmt->execute([$depart_id]);
+            $oldChef = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // 3. If found, delete it
-            if ($role) {
-                $stmtDel = $this->db->prepare("DELETE FROM professor_roles WHERE role_id = :role_id");
-                $stmtDel->execute([':role_id' => $role['role_id']]);
+            $stmtDel = $this->db->prepare("UPDATE  professor_roles SET role='Regular' WHERE user_id = :user_id");
+            $stmtDel->execute([':user_id' => $oldChef['head_professor_id']]);
+
+            // 4. Delete the department
+            $stmtDelDep = $this->db->prepare("DELETE FROM departements WHERE department_id = ?");
+            $stmtDelDep->execute([$depart_id]);
+
+            if ($stmtDelDep->rowCount() === 0) {
+                throw new PDOException("No department found with department_id = $depart_id");
             }
+
+            $this->db->commit();
+            return true;
+
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            error_log("Error deleting department: " . $e->getMessage());
+            return false;
         }
-
-        // 4. Delete the department
-        $stmtDelDep = $this->db->prepare("DELETE FROM departements WHERE department_id = ?");
-        $stmtDelDep->execute([$depart_id]);
-
-        if ($stmtDelDep->rowCount() === 0) {
-            throw new PDOException("No department found with department_id = $depart_id");
-        }
-
-        $this->db->commit();
-        return true;
-
-    } catch (PDOException $e) {
-        $this->db->rollBack();
-        error_log("Error deleting department: " . $e->getMessage());
-        return false;
     }
-}
 
 
-            public function AjouterDepart($nom,$profId,$dateDebut,$dateFin) {
+            public function AjouterDepart($nom) {
 
-                $stmt = $this->db->prepare("
-                    INSERT INTO professor_roles (`role`, `user_id`,`date_debut_affectation`, `date_fin_affectation`) 
-                    VALUES ('Chef_de_Departement', :user_id , :debut ,:fin)
-                ");
-                $stmt->bindParam(':user_id', $profId, PDO::PARAM_INT);
-                $stmt->bindParam(':debut', $dateDebut, PDO::PARAM_STR);
-                $stmt->bindParam(':fin', $dateFin, PDO::PARAM_STR);
-                $stmt->execute();
+                
 
                 
                 $stmt = $this->db->query("SELECT annee_id FROM annees_academiques WHERE current_flag = 1 LIMIT 1");
@@ -242,15 +235,12 @@ class AdminModel2
 
                 $anneeId = $row['annee_id'];  // This is a string like "2023-2024"
 
-                $sql = "INSERT INTO departements (nom, head_professor_id, annee_accreditation , date_debut, date_fin, prof_actuel)
-                        VALUES (:nom,  :head_professor_id,  :annee_accreditation, :date_debut , :date_fin , 1 )";
+                $sql = "INSERT INTO departements (nom )
+                        VALUES (:nom)";
                 $stmt = $this->db->prepare($sql);
 
                 $stmt->bindParam(':nom', $nom, PDO::PARAM_STR);
-                $stmt->bindParam(':head_professor_id', $profId, PDO::PARAM_INT);
-                $stmt->bindParam(':annee_accreditation', $anneeId, PDO::PARAM_STR);  // <-- bind as string
-                $stmt->bindParam(':date_debut', $dateDebut, PDO::PARAM_STR);  // <-- bind as string
-                $stmt->bindParam(':date_fin', $dateFin, PDO::PARAM_STR);  // <-- bind as string
+           
 
                 return $stmt->execute();
             }
@@ -259,63 +249,35 @@ class AdminModel2
             public function updateDepart($departementId, $nom, $profId, $anneeAccreditation, $dateDebut, $dateFin) {
                     try {
                         $this->db->beginTransaction();
-
-                        // 1. Get the old chef + dates from departements
-                        $stmtOld = $this->db->prepare("
-                            SELECT head_professor_id, date_debut, date_fin
-                            FROM departements
-                            WHERE department_id = :id
+                        $stmt = $this->db->prepare("
+                            SELECT head_professor_id
+                            FROM departements 
+                            WHERE department_id = ?
                         ");
-                        $stmtOld->execute([':id' => $departementId]);
-                        $old = $stmtOld->fetch(PDO::FETCH_ASSOC);
+                        $stmt->execute([$depart_id]);
+                        $oldChef = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                        if ($old && !empty($old['head_professor_id'])) {
-                            // 2. Try updating existing professor_roles row
-                            $stmtRole = $this->db->prepare("
-                                UPDATE professor_roles
-                                SET user_id = :new_user,
-                                    date_debut_affectation = :new_debut,
-                                    date_fin_affectation   = :new_fin
-                                WHERE user_id = :old_user
-                                AND role = 'Chef_de_Departement'
-                                AND date_debut_affectation = :oldD
-                                AND date_fin_affectation   = :oldF
-                               
-                            ");
-                            $stmtRole->execute([
-                                ':new_user'  => $profId,
-                                ':new_debut' => $dateDebut,
-                                ':new_fin'   => $dateFin,
-                                ':oldD'=>  $old["date_debut"],
-                                ':oldF'=>$old["date_fin"],
-                                ':old_user'  => $old['head_professor_id'],
-                                
-                            ]);
+                        $stmtDel = $this->db->prepare("UPDATE  professor_roles SET role='Regular' WHERE user_id = :user_id");
+                        $stmtDel->execute([':user_id' => $oldChef['head_professor_id']]);
 
-                            // 3. If no rows were updated → insert new professor_roles row
-                            if ($stmtRole->rowCount() === 0) {
-                                $stmtInsert = $this->db->prepare("
-                                    INSERT INTO professor_roles (`role`, `user_id`, `date_debut_affectation`, `date_fin_affectation`)
-                                    VALUES ('Chef_de_Departement', :user_id, :debut, :fin)
-                                ");
-                                $stmtInsert->execute([
-                                    ':user_id' => $profId,
-                                    ':debut'   => $dateDebut,
-                                    ':fin'     => $dateFin
-                                ]);
-                            }
-                        } else {
-                            // 4. If no old chef → directly insert new one
-                            $stmtInsert = $this->db->prepare("
-                                INSERT INTO professor_roles (`role`, `user_id`, `date_debut_affectation`, `date_fin_affectation`)
-                                VALUES ('Chef_de_Departement', :user_id, :debut, :fin)
-                            ");
-                            $stmtInsert->execute([
-                                ':user_id' => $profId,
-                                ':debut'   => $dateDebut,
-                                ':fin'     => $dateFin
-                            ]);
-                        }
+
+                        // 🔹 1. Supprimer l’ancien rôle Chef_de_Departement de ce prof (s’il existe)
+                        $stmtDel = $this->db->prepare("
+                            DELETE FROM professor_roles
+                            WHERE user_id = :user_id
+                        ");
+                        $stmtDel->execute([':user_id' => $profId]);
+
+                        // 🔹 2. Insérer le nouveau rôle
+                        $stmtInsert = $this->db->prepare("
+                            INSERT INTO professor_roles (`role`, `user_id`, `date_debut_affectation`, `date_fin_affectation`)
+                            VALUES ('Chef_de_Departement', :user_id, :debut, :fin)
+                        ");
+                        $stmtInsert->execute([
+                            ':user_id' => $profId,
+                            ':debut'   => $dateDebut,
+                            ':fin'     => $dateFin
+                        ]);
 
                         // 5. Update the departement itself
                         $stmt = $this->db->prepare("
@@ -357,7 +319,9 @@ class AdminModel2
 
                     $stmt = $this->db->prepare("
                             SELECT *
-                            FROM professeurs 
+                            FROM professeurs
+                            WHERE actuel=1 
+                            ORDER BY nom
                         ");
                         $stmt->execute();
                         return $stmt->fetchAll();
@@ -365,9 +329,24 @@ class AdminModel2
                 }
                public function getNombreSemestresByFiliere($filiere_id)
                     {
-                        $query = "SELECT c.Nombre_semestre FROM filieres f 
-                                  JOIN cycles c ON c.cycle_id = f.cycle_id
-                                  WHERE f.field_id = :filiere_id";
+                        $query = "SELECT * FROM semestres
+                                  
+                                  WHERE field_id = :filiere_id
+                                  ORDER BY nom";
+
+                        $stmt = $this->db->prepare($query);
+                        $stmt->bindParam(':filiere_id', $filiere_id, PDO::PARAM_INT);
+                        $stmt->execute();
+
+                        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    }
+
+                public function getNombreSemestres($filiere_id)
+                    {
+                        $query = "SELECT c.Nombre_semestre FROM cycles c
+                                  JOIN filieres f ON f.cycle_id=c.cycle_id
+                                  WHERE field_id = :filiere_id
+                                  ";
 
                         $stmt = $this->db->prepare($query);
                         $stmt->bindParam(':filiere_id', $filiere_id, PDO::PARAM_INT);
@@ -376,7 +355,7 @@ class AdminModel2
                         return $stmt->fetch(PDO::FETCH_ASSOC);
                     }
 
-
+                 
                    public function getFilieresByYear($anneeAccreditation)
                         {
                             $query = "SELECT * FROM filieres WHERE annee_accreditation = :annee_id";
@@ -395,52 +374,10 @@ public function deleteModule($module_id) {
     $this->db->beginTransaction();
 
     try {
-        // 1. Get elements (ignore if none)
-        $stmt = $this->db->prepare("
-            SELECT Ref_prof_element, Ref_prof_tp, Ref_prof_cours, Ref_prof_td
-            FROM elements
-            WHERE module_id = ?
-        ");
-        $stmt->execute([$module_id]);
-        $profs = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        // 2. Delete roles
-        $roleMap = [
-            "Ref_prof_element" => "Chef_de_Element",
-            "Ref_prof_tp"      => "Regular",
-            "Ref_prof_cours"   => "Regular",
-            "Ref_prof_td"      => "Regular"
-        ];
 
-        foreach ($profs as $row) {
-            foreach ($roleMap as $col => $role) {
-                if (!empty($row[$col])) {
-                    $stmtRole = $this->db->prepare("
-                        DELETE FROM professor_roles
-                        WHERE user_id = :user_id AND role = :role
-                    ");
-                    $stmtRole->execute([':user_id' => $row[$col], ':role' => $role]);
-                }
-            }
-        }
 
-        // 3. Delete Chef de Module
-        $stmt = $this->db->prepare("
-            SELECT responsible_professor_id
-            FROM modules
-            WHERE module_id = ?
-        ");
-        $stmt->execute([$module_id]);
-        $chef = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!empty($chef['responsible_professor_id'])) {
-            $stmtRole = $this->db->prepare("
-                DELETE FROM professor_roles
-                WHERE user_id = :user_id AND role = 'Chef_de_Module'
-            ");
-            $stmtRole->execute([':user_id' => $chef['responsible_professor_id']]);
-        }
-
+      
         // 4. Delete elements
         $stmt = $this->db->prepare("DELETE FROM elements WHERE module_id = ?");
         $stmt->execute([$module_id]);
@@ -467,39 +404,7 @@ public function deleteElement($element_id) {
     $this->db->beginTransaction();
 
     try {
-        // 1. Get professors linked to this element
-        $stmt = $this->db->prepare("
-            SELECT Ref_prof_element, Ref_prof_tp, Ref_prof_cours, Ref_prof_td
-            FROM elements
-            WHERE element_id = ?
-        ");
-        $stmt->execute([$element_id]);
-        $prof = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($prof) {
-            // 2. Define mapping of columns => role
-            $roleMap = [
-                "Ref_prof_element" => "Chef_de_Element",
-                "Ref_prof_tp"      => "Regular",
-                "Ref_prof_cours"   => "Regular",
-                "Ref_prof_td"      => "Regular"
-            ];
-
-            foreach ($roleMap as $col => $role) {
-                if (!empty($prof[$col])) {
-                    $stmtRole = $this->db->prepare("
-                        DELETE FROM professor_roles
-                        WHERE user_id = :user_id AND role = :role
-                    ");
-                    $stmtRole->execute([
-                        ':user_id' => $prof[$col],
-                        ':role'    => $role
-                    ]);
-                }
-            }
-        }
-
-        // 3. Delete the element itself
+       
         $stmt = $this->db->prepare("DELETE FROM elements WHERE element_id = ?");
         $stmt->execute([$element_id]);
 
@@ -519,33 +424,6 @@ public function deleteElement($element_id) {
 
 
 
-public function addElementToModule($moduleId, $nom, $coeff_element, $coeff_ecrit, $coeff_cc, $coeff_tp, $filiereId, $semestreId, $profElement, $profTP)
-{
-    // Insert into elements
-    $sql = "INSERT INTO elements (nom, module_id, coeff_element, coeff_ecrit, coeff_cc, coeff_tp)
-            VALUES (:nom, :moduleId, :ce, :ecrit, :cc, :tp)";
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindParam(':nom', $nom);
-    $stmt->bindParam(':moduleId', $moduleId);
-    $stmt->bindParam(':ce', $coeff_element);
-    $stmt->bindParam(':ecrit', $coeff_ecrit);
-    $stmt->bindParam(':cc', $coeff_cc);
-    $stmt->bindParam(':tp', $coeff_tp);
-    $stmt->execute();
-
-    $elementId = $this->db->lastInsertId();
-
-    // Insert into element_filiere
-    $sql2 = "INSERT INTO element_filiere (Ref_element, Ref_filiere, Ref_semestre, Ref_prof_element, Ref_prof_tp)
-             VALUES (:eid, :fid, :sid, :pid1, :pid2)";
-    $stmt2 = $this->db->prepare($sql2);
-    $stmt2->bindParam(':eid', $elementId);
-    $stmt2->bindParam(':fid', $filiereId);
-    $stmt2->bindParam(':sid', $semestreId);
-    $stmt2->bindParam(':pid1', $profElement);
-    $stmt2->bindParam(':pid2', $profTP);
-    $stmt2->execute();
-}
 
 
 public function updateModuleSansElements($module_id, $code, $nom, $coeff_cc, $coeff_ecrit, $coeff_element, $coeff_tp, $filiere_id, $semestre_id, $prof_element_id, $prof_tp_id = null)
@@ -573,7 +451,7 @@ public function updateModuleSansElements($module_id, $code, $nom, $coeff_cc, $co
 
     // Insert new element for this module
     $sqlInsert = "INSERT INTO elements (
-        nom, module_id, coeff_element, coeff_cc, coeff_ecrit, coeff_tp, Ref_prof_element, Ref_prof_tp
+        nom, module_id, coeff_element, coeff_cc, coeff_ecrit, coeff_tp,  Ref_prof_tp
     ) VALUES (
         :nom_element, :module_id, :coeff_element, :coeff_cc, :coeff_ecrit, :coeff_tp, :prof_element_id, :prof_tp_id
     )";
@@ -608,53 +486,18 @@ public function updateModuleSansElements($module_id, $code, $nom, $coeff_cc, $co
     try {
         // 1. Get head_professor_id + dates from filiere
         $stmt = $this->db->prepare("
-            SELECT head_professor_id, debut_affectation, fin_affectation
+            SELECT head_professor_id
             FROM filieres
             WHERE field_id = ?
         ");
         $stmt->execute([$fieldId]);
         $filiere = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$filiere) {
-            $this->db->rollBack();
-            error_log("Rollback: filière not found");
-            return false;
-        }
+        // Delete the exact matching role
+        $stmtRole = $this->db->prepare("DELETE FROM professor_roles WHERE user_id= ? AND role='Chef_de_Filiere'");
+        $stmtRole->execute([$filiere['head_professor_id']]);
 
-        $headProfessorId = $filiere['head_professor_id'];
-        $dateDebut       = $filiere['debut_affectation'];
-        $dateFin         = $filiere['fin_affectation'];
-
-        error_log("Head professor = $headProfessorId, debut = $dateDebut, fin = $dateFin");
-
-        // 2. Check if the exact role exists
-        if (!empty($headProfessorId)) {
-            $stmtCheck = $this->db->prepare("
-                SELECT Role_ID
-                FROM professor_roles
-                WHERE user_id = :user_id
-                  AND role = 'Chef_de_Filiere'
-                  AND date_debut_affectation = :dateDebut
-                  AND date_fin_affectation = :dateFin
-                LIMIT 1
-            ");
-            $stmtCheck->execute([
-                ':user_id'   => $headProfessorId,
-                ':dateDebut' => $dateDebut,
-                ':dateFin'   => $dateFin
-            ]);
-
-            $role = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
-            if ($role) {
-                // Delete the exact matching role
-                $stmtRole = $this->db->prepare("DELETE FROM professor_roles WHERE Role_ID = ?");
-                $stmtRole->execute([$role['Role_ID']]);
-                error_log("Deleted matching professor_role, rows = " . $stmtRole->rowCount());
-            } else {
-                error_log("No matching professor_role found → skipping role deletion");
-            }
-        }
+        
 
         // 3. Always delete the filiere
         $stmt = $this->db->prepare("DELETE FROM filieres WHERE field_id = ?");
@@ -895,20 +738,18 @@ public function getModules($annee   = null,  $fieldId = null, $semestreId = null
             m.code AS code_module, 
             m.nom AS nom_module,
             m.coefficient AS coeff_module,
-            m.annee_id AS annee,
             m.semestre_id AS id_semestre,
             m.field_id AS id_filiere,
-            m.responsible_professor_id AS id_prof_responsable,
             f.nom AS nom_filiere, 
             s.nom AS semestre,
             m.type,
 
-            -- Prof responsable du module
-            CONCAT(pm.nom, ' ', pm.prenom) AS prof_responsable,
+            
 
             -- === ELEMENTS ===
             e.element_id,
             e.nom AS nom_element,
+            e.langue,
             e.coeff_ecrit, 
             e.coeff_cc, 
             e.coeff_tp,
@@ -921,17 +762,13 @@ public function getModules($annee   = null,  $fieldId = null, $semestreId = null
             e.horraire_cours,
             e.horraire_evaluation,
             e.horraire_activite_pratique,
-            e.coeff_projet,
-            e.Chef_element,
 
             -- IDs des profs liés aux éléments
-            e.Ref_prof_element AS id_prof_element,
             e.Ref_prof_tp AS id_prof_tp,
             e.Ref_prof_cours AS id_prof_cours,
             e.Ref_prof_td AS id_prof_td,
 
             -- Noms concaténés des profs liés
-            CONCAT(pe.nom, ' ', pe.prenom) AS prof_element, 
             CONCAT(pt.nom, ' ', pt.prenom) AS prof_tp,
             CONCAT(pc.nom, ' ', pc.prenom) AS prof_cours,
             CONCAT(pd.nom, ' ', pd.prenom) AS prof_td
@@ -943,10 +780,8 @@ public function getModules($annee   = null,  $fieldId = null, $semestreId = null
             ON f.field_id = m.field_id
         LEFT JOIN semestres s 
             ON s.semestre_id = m.semestre_id
-        LEFT JOIN professeurs pm 
-            ON pm.user_id = m.responsible_professor_id
-        LEFT JOIN professeurs pe 
-            ON pe.user_id = e.Ref_prof_element
+       
+   
         LEFT JOIN professeurs pt 
             ON pt.user_id = e.Ref_prof_tp
         LEFT JOIN professeurs pc 
@@ -987,19 +822,15 @@ public function infoModules(){
             -- === MODULES ===
             m.module_id,
             m.code AS code_module, 
-            m.langue, 
             m.nom AS nom_module,
             m.coefficient AS coeff_module,
-            m.annee_id AS annee,
             m.semestre_id AS id_semestre,
             m.field_id AS id_filiere,
-            m.responsible_professor_id AS id_prof_responsable,
             f.nom AS nom_filiere, 
             s.nom AS semestre,
             m.type,
 
-            -- Prof responsable du module
-            CONCAT(pm.nom, ' ', pm.prenom) AS prof_responsable,
+         
 
             -- === ELEMENTS ===
             e.element_id,
@@ -1008,6 +839,8 @@ public function infoModules(){
             e.coeff_cc, 
             e.coeff_tp,
             e.coeff_td,
+            e.langue, 
+
 
             e.coeff_element,
             e.presentiel,
@@ -1018,17 +851,13 @@ public function infoModules(){
             e.horraire_cours,
             e.horraire_evaluation,
             e.horraire_activite_pratique,
-            e.coeff_projet,
-            e.Chef_element,
 
             -- IDs des profs liés aux éléments
-            e.Ref_prof_element AS id_prof_element,
             e.Ref_prof_tp AS id_prof_tp,
             e.Ref_prof_cours AS id_prof_cours,
             e.Ref_prof_td AS id_prof_td,
 
             -- Noms concaténés des profs liés
-            CONCAT(pe.nom, ' ', pe.prenom) AS prof_element, 
             CONCAT(pt.nom, ' ', pt.prenom) AS prof_tp,
             CONCAT(pc.nom, ' ', pc.prenom) AS prof_cours,
             CONCAT(pd.nom, ' ', pd.prenom) AS prof_td
@@ -1040,10 +869,8 @@ public function infoModules(){
             ON f.field_id = m.field_id
         LEFT JOIN semestres s 
             ON s.semestre_id = m.semestre_id
-        LEFT JOIN professeurs pm 
-            ON pm.user_id = m.responsible_professor_id
-        LEFT JOIN professeurs pe 
-            ON pe.user_id = e.Ref_prof_element
+      
+      
         LEFT JOIN professeurs pt 
             ON pt.user_id = e.Ref_prof_tp
         LEFT JOIN professeurs pc 
@@ -1083,18 +910,14 @@ public function infoModules(){
         ]);
 
         $filiereId = $this->db->lastInsertId();
-        // --- 2. Get Current Academic Year ---
-        $stmtAnnee = $this->db->query("SELECT annee_id FROM annees_academiques WHERE current_flag=1 LIMIT 1");
-        $annee = $stmtAnnee->fetch(PDO::FETCH_ASSOC);
-        if (!$annee) throw new Exception("Aucune année académique courante trouvée");
-        $anneeId = $annee['annee_id'];
+ 
 
         $sql = "INSERT INTO semestres 
-                (nom, annee_id, cycle_id, field_id, etape_id)
-                VALUES (:nom, :annee_id, :cycle_id, :field_id, :etape_id)";
+                (nom,  cycle_id, field_id, etape_id)
+                VALUES (:nom,  :cycle_id, :field_id, :etape_id)";
         $stmt = $this->db->prepare($sql);
 
-        $nombre_semestre = $this->getNombreSemestresByFiliere($filiereId);
+        $nombre_semestre = $this->getNombreSemestres($filiereId);
         error_log("Nombre_semestre = " . $nombre_semestre["Nombre_semestre"]);
 
             for ($i = 1; $i < $nombre_semestre["Nombre_semestre"] + 1; $i++) {
@@ -1102,7 +925,6 @@ public function infoModules(){
 
                 $stmt->execute([
                     ':nom'       => "Semestre $i",
-                    ':annee_id'  => $anneeId,
                     ':cycle_id'  => $data['cycle_id'],
                     ':field_id'  => $filiereId,
                     ':etape_id'  => $etape,
@@ -1120,30 +942,51 @@ public function infoModules(){
                 ':field_id'  => $filiereId,
                 ':cycle_id'  => $data['cycle_id'],
             ]);
-
+            $db = $this->db;
             // --- Helper function for inserting roles ---
-            $insertRole = function($userId, $role, $start = null, $end = null) {
-                    // Check if this role already exists for the user
-                    $checkSql = "SELECT 1 FROM professor_roles WHERE user_id = :user_id AND role = :role LIMIT 1";
-                    $stmtCheck = $this->db->prepare($checkSql);
-                    $stmtCheck->execute([
-                        ':user_id' => $userId,
-                        ':role'    => $role
-                    ]);
+            $insertRole = function($userId, $role, $start = null, $end = null) use ($db) {
+            if ($role === 'Regular') {
+                // Vérifier si ce prof est déjà Chef de Département ou Chef de Filière
+                $checkSql = "
+                    SELECT COUNT(*) 
+                    FROM professor_roles 
+                    WHERE user_id = :user_id 
+                    AND role IN ('Chef_de_Departement', 'Chef_de_Filiere')
+                ";
+                $stmtCheck = $db->prepare($checkSql);
+                $stmtCheck->execute([':user_id' => $userId]);
+                $exists = $stmtCheck->fetchColumn();
 
-                    // If not exists, insert
-                    if (!$stmtCheck->fetchColumn()) {
-                        $sqlRole = "INSERT INTO professor_roles (user_id, role, date_debut_affectation, date_fin_affectation)
-                                    VALUES (:user_id, :role, :date_debut, :date_fin)";
-                        $stmtRole = $this->db->prepare($sqlRole);
-                        $stmtRole->execute([
-                            ':user_id' => $userId,
-                            ':role'    => $role,
-                            ':date_debut' => $start,
-                            ':date_fin'   => $end
-                        ]);
-                    }
-            };
+                // S’il est déjà chef → on ne fait rien
+                if ($exists > 0) {
+                    return; 
+                }else{
+                    // Pour tous les autres rôles → supprimer les anciens rôles de ce prof
+                    $delSql = "DELETE FROM professor_roles WHERE user_id = :user_id";
+                    $stmtDel = $db->prepare($delSql);
+                    $stmtDel->execute([':user_id' => $userId]);
+
+                }
+            } else {
+                // Pour tous les autres rôles → supprimer les anciens rôles de ce prof
+                $delSql = "DELETE FROM professor_roles WHERE user_id = :user_id";
+                $stmtDel =$db->prepare($delSql);
+                $stmtDel->execute([':user_id' => $userId]);
+            }
+
+            // Insérer le rôle
+            $sqlRole = "
+                INSERT INTO professor_roles (user_id, role)
+                VALUES (:user_id, :role)
+            ";
+            $stmtRole =$db->prepare($sqlRole);
+            $stmtRole->execute([
+                ':user_id'    => $userId,
+                ':role'       => $role,
+               
+            ]);
+        };
+
 
             // --- Assign Filière Head Role ---
             $insertRole($data['prof_id'], "Chef_de_Filiere", $data['date_debut_affectation'] ?? null, $data['date_fin_affectation'] ?? null);
@@ -1176,27 +1019,21 @@ public function infoModules(){
 
                                         // Insert module
                                         $sqlModule = "INSERT INTO modules 
-                                                    (code, langue, nom, coefficient, semestre_id, field_id, responsible_professor_id, annee_id, type) 
+                                                    (code,  nom, coefficient, semestre_id, field_id,  type) 
                                                     VALUES 
-                                                    (:code, :langue, :nom, :coefficient, :semestre_id, :field_id, :responsible_professor_id, :annee_id, :type)";
+                                                    (:code, :nom, :coefficient, :semestre_id, :field_id, :type)";
                                         $stmtModule = $this->db->prepare($sqlModule);
                                         $stmtModule->execute([
                                             ':code' => $module['code'],
-                                            ':langue' => $module['langue'],
                                             ':nom' => $module['nom'],
                                             ':coefficient' => $module['coefficient'] ?? 1,
                                             ':semestre_id' => $matchedSemestre["semestre_id"],
                                             ':field_id' => $filiereId,
-                                            ':responsible_professor_id' => $module['chef_id'] ?? null,
-                                            ':annee_id' => $anneeId,
                                             ':type' => $module['type'] ?? 'standard'
                                         ]);
                                         $moduleId = $this->db->lastInsertId();
 
-                                        // Role chef de module
-                                        if (!empty($module['chef_id'])) {
-                                            $insertRole($module['chef_id'], "Chef_de_Module");
-                                        }
+                                        
 
                                         // Elements
                                         $elements = !empty($module['has_elements']) ? $module['elements'] : [[
@@ -1206,8 +1043,7 @@ public function infoModules(){
                                             'coeff_ecrit' => $module['coeff_ecrit'] ?? 0,
                                             'coeff_tp' => $module['coeff_tp'] ?? 0,
                                             'coeff_cc' => $module['coeff_cc'] ?? 0,
-                                            'coeff_projet' => $module['coeff_projet'] ?? 0,
-                                            'Ref_prof_element' => $module['chef_element'] ?? $module['chef_id'] ?? null,
+                                            'langue' => $module['langue'] ?? null,
                                             'Ref_prof_tp' => $module['prof_tp'] ?? null,
                                             'Ref_prof_td' => $module['prof_td'] ?? null,
                                             'Ref_prof_cours' => $module['prof_cours'] ?? null,
@@ -1224,7 +1060,6 @@ public function infoModules(){
                                         foreach ($elements as $element) {
                                             $this->insertElement(array_merge($element, ['module_id' => $moduleId]));
 
-                                            if (!empty($element['Ref_prof_element'])) $insertRole($element['Ref_prof_element'], "Chef_de_Element");
                                             if (!empty($element['Ref_prof_tp'])) $insertRole($element['Ref_prof_tp'], "Regular");
                                             if (!empty($element['Ref_prof_td'])) $insertRole($element['Ref_prof_td'], "Regular");
                                             if (!empty($element['Ref_prof_cours'])) $insertRole($element['Ref_prof_cours'], "Regular");
@@ -1254,6 +1089,12 @@ public function infoModules(){
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':fieldId' => $data['fieldId']]);
         $prvs_role = $stmt->fetch(PDO::FETCH_ASSOC);
+        if($prvs_role["head_professor_id"]){
+            $delSql = "UPDATE  professor_roles SET role ='Regular' WHERE user_id = :user_id";
+            $stmtDel = $this->db->prepare($delSql);
+            $stmtDel->execute([':user_id' => $prvs_role["head_professor_id"]]);
+        }
+        
 
         // 1. Update filiere
         $sql = "UPDATE filieres 
@@ -1313,161 +1154,101 @@ public function infoModules(){
         }
 
 
-        // --- 2. Get Current Academic Year ---
-        $stmtAnnee = $this->db->query("SELECT annee_id FROM annees_academiques WHERE current_flag=1 LIMIT 1");
-        $annee = $stmtAnnee->fetch(PDO::FETCH_ASSOC);
-        if (!$annee) throw new Exception("Aucune année académique courante trouvée");
-        $anneeId = $annee['annee_id'];
-
+     
         // Only rebuild semestres if cycle has changed
         if ($prvs_role["cycle_id"] != $data["cycle_id"]) {
 
-    // 1. Delete old semestres (only if exist)
-    $sql = "DELETE FROM semestres WHERE field_id = :fieldId";
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute([':fieldId' => $data['fieldId']]);
+            // 1. Delete old semestres (only if exist)
+            $sql = "DELETE FROM semestres WHERE field_id = :fieldId";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':fieldId' => $data['fieldId']]);
 
-    // 2. Get the number of semestres for the new cycle
-    $nombre_semestre = $this->getNombreSemestresByFiliere($data['fieldId']);
-    error_log("Nombre_semestre (new cycle) = " . $nombre_semestre["Nombre_semestre"]);
+            // 2. Get the number of semestres for the new cycle
+            $nombre_semestre = $this->getNombreSemestres($data['fieldId']);
+            error_log("Nombre_semestre (new cycle) = " . $nombre_semestre["Nombre_semestre"]);
 
-    // 3. Insert new semestres
-    $sql = "INSERT INTO semestres 
-            (nom, annee_id, cycle_id, field_id, etape_id)
-            VALUES (:nom, :annee_id, :cycle_id, :field_id, :etape_id)";
-    $stmt = $this->db->prepare($sql);
+            // 3. Insert new semestres
+            $sql = "INSERT INTO semestres 
+                    (nom,  cycle_id, field_id, etape_id)
+                    VALUES (:nom,  :cycle_id, :field_id, :etape_id)";
+            $stmt = $this->db->prepare($sql);
 
-    for ($i = 1; $i <= $nombre_semestre["Nombre_semestre"]; $i++) {
-        $etape = ceil($i / 2);
+            for ($i = 1; $i <= $nombre_semestre["Nombre_semestre"]; $i++) {
+                $etape = ceil($i / 2);
 
-        $stmt->execute([
-            ':nom'       => "Semestre $i",
-            ':annee_id'  => $anneeId, 
-            ':cycle_id'  => $data['cycle_id'],
-            ':field_id'  => $data['fieldId'],
-            ':etape_id'  => $etape,
-        ]);
-    }
-
-} else {
-    // First check if semestres exist for this field_id
-    $check = $this->db->prepare("SELECT COUNT(*) FROM semestres WHERE field_id = :fieldId");
-    $check->execute([':fieldId' => $data['fieldId']]);
-    $count = $check->fetchColumn();
-    $nombre_semestre = $this->getNombreSemestresByFiliere($data['fieldId']);
-
-    if ($count === $nombre_semestre["Nombre_semestre"] ) {
-
-        // Update existing ones
-        $sql = "UPDATE semestres SET annee_id = :annee_id WHERE field_id = :field_id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            ':annee_id'  => $anneeId,
-            ':field_id'  => $data['fieldId'],
-        ]);
-    } else {
-        // Insert fresh if no semestres exist
-        $nombre_semestre = $this->getNombreSemestresByFiliere($data['fieldId']);
-        error_log("Nombre_semestre (no existing) = " . $nombre_semestre["Nombre_semestre"]);
-
-        $sql = "INSERT INTO semestres 
-                (nom, annee_id, cycle_id, field_id, etape_id)
-                VALUES (:nom, :annee_id, :cycle_id, :field_id, :etape_id)";
-        $stmt = $this->db->prepare($sql);
-
-        for ($i = 1; $i <= $nombre_semestre["Nombre_semestre"]; $i++) {
-            $etape = ceil($i / 2);
-
-            $stmt->execute([
-                ':nom'       => "Semestre $i",
-                ':annee_id'  => $anneeId, 
-                ':cycle_id'  => $data['cycle_id'],
-                ':field_id'  => $data['fieldId'],
-                ':etape_id'  => $etape,
-            ]);
-        }
-    }
-}
-
-
-        
-
-        // 2. Essayer un UPDATE exact
-        $stmtRole = $this->db->prepare("
-            UPDATE professor_roles
-            SET user_id = :user_id,
-                role = :role,
-                date_debut_affectation = :date_debut,
-                date_fin_affectation = :date_fin
-            WHERE user_id = :old_user_id
-            AND role = 'Chef_de_Filiere'
-            
-        ");
-
-        $insertRole = function($userId, $role, $start = null, $end = null) {
-            // Check if this role already exists for the user
-            $checkSql = "SELECT 1 FROM professor_roles WHERE user_id = :user_id AND role = :role LIMIT 1";
-            $stmtCheck = $this->db->prepare($checkSql);
-            $stmtCheck->execute([
-                ':user_id' => $userId,
-                ':role'    => $role
-            ]);
-
-            // If not exists, insert
-            if (!$stmtCheck->fetchColumn()) {
-                $sqlRole = "INSERT INTO professor_roles (user_id, role, date_debut_affectation, date_fin_affectation)
-                            VALUES (:user_id, :role, :date_debut, :date_fin)";
-                $stmtRole = $this->db->prepare($sqlRole);
-                $stmtRole->execute([
-                    ':user_id' => $userId,
-                    ':role'    => $role,
-                    ':date_debut' => $start,
-                    ':date_fin'   => $end
+                $stmt->execute([
+                    ':nom'       => "Semestre $i",
+                    ':cycle_id'  => $data['cycle_id'],
+                    ':field_id'  => $data['fieldId'],
+                    ':etape_id'  => $etape,
                 ]);
             }
+
+        } 
+
+
+        
+        $db=$this->db;
+        // --- Helper function for inserting roles ---
+            $insertRole = function($userId, $role, $start = null, $end = null) use ($db) {
+            if ($role === 'Regular') {
+                // Vérifier si ce prof est déjà Chef de Département ou Chef de Filière
+                $checkSql = "
+                    SELECT COUNT(*) 
+                    FROM professor_roles 
+                    WHERE user_id = :user_id 
+                    AND role IN ('Chef_de_Departement', 'Chef_de_Filiere')
+                ";
+                $stmtCheck = $db->prepare($checkSql);
+                $stmtCheck->execute([':user_id' => $userId]);
+                $exists = $stmtCheck->fetchColumn();
+
+                // S’il est déjà chef → on ne fait rien
+                if ($exists > 0) {
+                    return; 
+                }else{
+                    // Pour tous les autres rôles → supprimer les anciens rôles de ce prof
+                    $delSql = "DELETE FROM professor_roles WHERE user_id = :user_id";
+                    $stmtDel = $db->prepare($delSql);
+                    $stmtDel->execute([':user_id' => $userId]);
+
+                }
+            } else {
+                // Pour tous les autres rôles → supprimer les anciens rôles de ce prof
+                $delSql = "DELETE FROM professor_roles WHERE user_id = :user_id";
+                $stmtDel = $db->prepare($delSql);
+                $stmtDel->execute([':user_id' => $userId]);
+            }
+
+            // Insérer le rôle
+            $sqlRole = "
+                INSERT INTO professor_roles (user_id, role)
+                VALUES (:user_id, :role)
+            ";
+            $stmtRole = $db->prepare($sqlRole);
+            $stmtRole->execute([
+                ':user_id'    => $userId,
+                ':role'       => $role,
+               
+            ]);
         };
 
-        // --- Check if a Chef_de_Filiere exists for the old professor ---
-        $stmtCheck = $this->db->prepare("
-            SELECT 1 FROM professor_roles
-            WHERE user_id = :old_user_id AND role = 'Chef_de_Filiere'
-        ");
-        $stmtCheck->execute([':old_user_id' => $prvs_role['head_professor_id'] ?? 0]);
-        $exists = $stmtCheck->fetchColumn();
 
-        // --- Update if exists, else insert ---
-        if ($exists) {
-            $stmtRole = $this->db->prepare("
-                UPDATE professor_roles
-                SET user_id = :user_id,
-                    role = :role,
-                    date_debut_affectation = :date_debut,
-                    date_fin_affectation = :date_fin
-                WHERE user_id = :old_user_id
-                AND role = 'Chef_de_Filiere'
-                AND  date_debut_affectation = :oldD
-                AND   date_fin_affectation = :oldF
-            ");
-            $stmtRole->execute([
-                ':user_id'     => $data['prof_id'],
-                ':role'        => 'Chef_de_Filiere',
-                ':date_debut'  => $data['date_debut_affectation'] ?? null,
-                ':date_fin'    => $data['date_fin_affectation'] ?? null,
-                ':old_user_id' => $prvs_role['head_professor_id'] ?? 0,
-                ':oldD'=>$prvs_role['debut_affectation'] ?? 0,
-                ':oldF'=>$prvs_role['fin_affectation'] ?? 0
-            ]);
-        } else {
+            // --- Assign Filière Head Role ---
+            $insertRole($data['prof_id'], "Chef_de_Filiere", $data['date_debut_affectation'] ?? null, $data['date_fin_affectation'] ?? null);
+
         
 
-            $insertRole($data['prof_id'], "Chef_de_Filiere", $data['date_debut_affectation'] ?? null, $data['date_fin_affectation'] ?? null);
-        }
+
+      
+        
+
         // --- 3. Ajouter les nouveaux modules (sans supprimer les anciens) ---
         if (!empty($data['modules']) && is_array($data['modules'])) {
                                                        // Get all semestres once
                                     $sql = "SELECT * FROM semestres WHERE field_id = :field_id";
                                     $stmt = $this->db->prepare($sql);
-                                    $stmt->execute([':field_id' => $filiereId]);
+                                    $stmt->execute([':field_id' => $data['fieldId']]);
                                     $semestres = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                                     foreach ($data['modules'] as $module) {
@@ -1488,28 +1269,21 @@ public function infoModules(){
 
                                         // Insert module
                                         $sqlModule = "INSERT INTO modules 
-                                                    (code, langue, nom, coefficient, semestre_id, field_id, responsible_professor_id, annee_id, type) 
+                                                    (code,  nom, coefficient, semestre_id, field_id,   type) 
                                                     VALUES 
-                                                    (:code, :langue, :nom, :coefficient, :semestre_id, :field_id, :responsible_professor_id, :annee_id, :type)";
+                                                    (:code,  :nom, :coefficient, :semestre_id, :field_id,   :type)";
                                         $stmtModule = $this->db->prepare($sqlModule);
                                         $stmtModule->execute([
                                             ':code' => $module['code'],
-                                            ':langue' => $module['langue'],
                                             ':nom' => $module['nom'],
                                             ':coefficient' => $module['coefficient'] ?? 1,
                                             ':semestre_id' => $matchedSemestre["semestre_id"],
-                                            ':field_id' => $filiereId,
-                                            ':responsible_professor_id' => $module['chef_id'] ?? null,
-                                            ':annee_id' => $anneeId,
+                                            ':field_id' => $data['fieldId'],
                                             ':type' => $module['type'] ?? 'standard'
                                         ]);
                                         $moduleId = $this->db->lastInsertId();
 
-                                        // Role chef de module
-                                        if (!empty($module['chef_id'])) {
-                                            $insertRole($module['chef_id'], "Chef_de_Module");
-                                        }
-
+                   
                                         // Elements
                                         $elements = !empty($module['has_elements']) ? $module['elements'] : [[
                                             'nom' => $module['nom'],
@@ -1518,8 +1292,7 @@ public function infoModules(){
                                             'coeff_ecrit' => $module['coeff_ecrit'] ?? 0,
                                             'coeff_tp' => $module['coeff_tp'] ?? 0,
                                             'coeff_cc' => $module['coeff_cc'] ?? 0,
-                                            'coeff_projet' => $module['coeff_projet'] ?? 0,
-                                            'Ref_prof_element' => $module['chef_element'] ?? $module['chef_id'] ?? null,
+                                            'langue' => $module['langue'] ?? null,
                                             'Ref_prof_tp' => $module['prof_tp'] ?? null,
                                             'Ref_prof_td' => $module['prof_td'] ?? null,
                                             'Ref_prof_cours' => $module['prof_cours'] ?? null,
@@ -1536,7 +1309,6 @@ public function infoModules(){
                                         foreach ($elements as $element) {
                                             $this->insertElement(array_merge($element, ['module_id' => $moduleId]));
 
-                                            if (!empty($element['Ref_prof_element'])) $insertRole($element['Ref_prof_element'], "Chef_de_Element");
                                             if (!empty($element['Ref_prof_tp'])) $insertRole($element['Ref_prof_tp'], "Regular");
                                             if (!empty($element['Ref_prof_td'])) $insertRole($element['Ref_prof_td'], "Regular");
                                             if (!empty($element['Ref_prof_cours'])) $insertRole($element['Ref_prof_cours'], "Regular");
@@ -1621,123 +1393,128 @@ public function AjouterModules($data) {
     try {
         $filiereId = $data['filiere_id'];
 
-        // --- 1. Get Current Academic Year ---
-        $stmtAnnee = $this->db->query("SELECT annee_id FROM annees_academiques WHERE current_flag=1 LIMIT 1");
-        $annee = $stmtAnnee->fetch(PDO::FETCH_ASSOC);
-        if (!$annee) throw new Exception("Aucune année académique courante trouvée");
-        $anneeId = $annee['annee_id'];
+       
 
+        $db = $this->db; // local alias for closure
 
-        $db = $this->db;
+        // --- Helper function for inserting roles ---
+        $insertRole = function($userId, $role, $start = null, $end = null) use ($db) {
+            if ($role === 'Regular') {
+                // Vérifier si ce prof est déjà Chef de Département ou Chef de Filière
+                $checkSql = "
+                    SELECT COUNT(*) 
+                    FROM professor_roles 
+                    WHERE user_id = :user_id 
+                    AND role IN ('Chef_de_Departement', 'Chef_de_Filiere')
+                ";
+                $stmtCheck = $db->prepare($checkSql);
+                $stmtCheck->execute([':user_id' => $userId]);
+                $exists = $stmtCheck->fetchColumn();
 
-        $insertRole = function($userId, $role, $start = null, $end = null) {
-            // Check if this role already exists for the user
-            $checkSql = "SELECT 1 FROM professor_roles WHERE user_id = :user_id AND role = :role LIMIT 1";
-            $stmtCheck = $this->db->prepare($checkSql);
-            $stmtCheck->execute([
-                ':user_id' => $userId,
-                ':role'    => $role
-            ]);
+                // S’il est déjà chef → on ne fait rien
+                if ($exists > 0) {
+                    return; 
+                }else{
+                    // Pour tous les autres rôles → supprimer les anciens rôles de ce prof
+                    $delSql = "DELETE FROM professor_roles WHERE user_id = :user_id";
+                    $stmtDel = $db->prepare($delSql);
+                    $stmtDel->execute([':user_id' => $userId]);
 
-            // If not exists, insert
-            if (!$stmtCheck->fetchColumn()) {
-                $sqlRole = "INSERT INTO professor_roles (user_id, role, date_debut_affectation, date_fin_affectation)
-                            VALUES (:user_id, :role, :date_debut, :date_fin)";
-                $stmtRole = $this->db->prepare($sqlRole);
-                $stmtRole->execute([
-                    ':user_id' => $userId,
-                    ':role'    => $role,
-                    ':date_debut' => $start,
-                    ':date_fin'   => $end
-                ]);
+                }
+            } else {
+                // Pour tous les autres rôles → supprimer les anciens rôles de ce prof
+                $delSql = "DELETE FROM professor_roles WHERE user_id = :user_id";
+                $stmtDel = $db->prepare($delSql);
+                $stmtDel->execute([':user_id' => $userId]);
             }
+
+            // Insérer le rôle
+            $sqlRole = "
+                INSERT INTO professor_roles (user_id, role)
+                VALUES (:user_id, :role)
+            ";
+            $stmtRole = $db->prepare($sqlRole);
+            $stmtRole->execute([
+                ':user_id'    => $userId,
+                ':role'       => $role,
+               
+            ]);
         };
 
         // --- 2. Insert Modules & Elements ---
         if (!empty($data['modules']) && is_array($data['modules'])) {
-                                            // Get all semestres once
-                                    $sql = "SELECT * FROM semestres WHERE field_id = :field_id";
-                                    $stmt = $this->db->prepare($sql);
-                                    $stmt->execute([':field_id' => $filiereId]);
-                                    $semestres = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Get all semestres once
+            $sql = "SELECT * FROM semestres WHERE field_id = :field_id";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([':field_id' => $filiereId]);
+            $semestres = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                                    foreach ($data['modules'] as $module) {
-                                        $semestreGlobal = ($module['etape'] - 1) * 2 + $module['semestre'];
+            foreach ($data['modules'] as $module) {
+                $semestreGlobal = ($module['etape'] - 1) * 2 + $module['semestre'];
 
-                                        // Find the matching semestre
-                                        $matchedSemestre = null;
-                                        foreach ($semestres as $row) {
-                                            if ($row["nom"] === "Semestre " . $semestreGlobal) {
-                                                $matchedSemestre = $row;
-                                                break;
-                                            }
-                                        }
+                // Find the matching semestre
+                $matchedSemestre = null;
+                foreach ($semestres as $row) {
+                    if ($row["nom"] === "Semestre " . $semestreGlobal) {
+                        $matchedSemestre = $row;
+                        break;
+                    }
+                }
 
-                                        if (!$matchedSemestre) {
-                                            throw new Exception("No matching semestre found for module '{$module['nom']}'");
-                                        }
+                if (!$matchedSemestre) {
+                    throw new Exception("No matching semestre found for module '{$module['nom']}'");
+                }
 
-                                        // Insert module
-                                        $sqlModule = "INSERT INTO modules 
-                                                    (code, langue, nom, coefficient, semestre_id, field_id, responsible_professor_id, annee_id, type) 
-                                                    VALUES 
-                                                    (:code, :langue, :nom, :coefficient, :semestre_id, :field_id, :responsible_professor_id, :annee_id, :type)";
-                                        $stmtModule = $this->db->prepare($sqlModule);
-                                        $stmtModule->execute([
-                                            ':code' => $module['code'],
-                                            ':langue' => $module['langue'],
-                                            ':nom' => $module['nom'],
-                                            ':coefficient' => $module['coefficient'] ?? 1,
-                                            ':semestre_id' => $matchedSemestre["semestre_id"],
-                                            ':field_id' => $filiereId,
-                                            ':responsible_professor_id' => $module['chef_id'] ?? null,
-                                            ':annee_id' => $anneeId,
-                                            ':type' => $module['type'] ?? 'standard'
-                                        ]);
-                                        $moduleId = $this->db->lastInsertId();
+                // Insert module
+                $sqlModule = "INSERT INTO modules 
+                            (code,  nom, coefficient, semestre_id, field_id,  type) 
+                            VALUES 
+                            (:code,  :nom, :coefficient, :semestre_id, :field_id,  :type)";
+                $stmtModule = $db->prepare($sqlModule);
+                $stmtModule->execute([
+                    ':code' => $module['code'],
+                    ':nom' => $module['nom'],
+                    ':coefficient' => $module['coefficient'] ?? 1,
+                    ':semestre_id' => $matchedSemestre["semestre_id"],
+                    ':field_id' => $filiereId,
+                    ':type' => $module['type'] ?? 'standard'
+                ]);
+                $moduleId = $db->lastInsertId();
 
-                                        // Role chef de module
-                                        if (!empty($module['chef_id'])) {
-                                            $insertRole($module['chef_id'], "Chef_de_Module");
-                                        }
+                // Elements
+                $elements = !empty($module['has_elements']) ? $module['elements'] : [[
+                    'nom' => $module['nom'],
+                    'coeff_element' => 1,
+                    'coeff_td' => $module['coeff_td'] ?? 0,
+                    'coeff_ecrit' => $module['coeff_ecrit'] ?? 0,
+                    'coeff_tp' => $module['coeff_tp'] ?? 0,
+                    'coeff_cc' => $module['coeff_cc'] ?? 0,
+                    'langue' => $module['langue'] ?? null,
+                    'Ref_prof_tp' => $module['prof_tp'] ?? null,
+                    'Ref_prof_td' => $module['prof_td'] ?? null,
+                    'Ref_prof_cours' => $module['prof_cours'] ?? null,
+                    'presentiel' => $module['volume_presentiel'] ?? 0,
+                    'a_distance' => $module['volume_distance'] ?? 0,
+                    'en_alternance' => $module['volume_alternance'] ?? 0,
+                    'horraire_tp' => $module['volume_tp'] ?? 0,
+                    'horraire_td' => $module['volume_td'] ?? 0,
+                    'horraire_cours' => $module['volume_cours'] ?? 0,
+                    'horraire_evaluation' => $module['volume_evaluation'] ?? 0,
+                    'horraire_activite_pratique' => $module['volume_pratique'] ?? 0
+                ]];
 
-                                        // Elements
-                                        $elements = !empty($module['has_elements']) ? $module['elements'] : [[
-                                            'nom' => $module['nom'],
-                                            'coeff_element' => 1,
-                                            'coeff_td' => $module['coeff_td'] ?? 0,
-                                            'coeff_ecrit' => $module['coeff_ecrit'] ?? 0,
-                                            'coeff_tp' => $module['coeff_tp'] ?? 0,
-                                            'coeff_cc' => $module['coeff_cc'] ?? 0,
-                                            'coeff_projet' => $module['coeff_projet'] ?? 0,
-                                            'Ref_prof_element' => $module['chef_element'] ?? $module['chef_id'] ?? null,
-                                            'Ref_prof_tp' => $module['prof_tp'] ?? null,
-                                            'Ref_prof_td' => $module['prof_td'] ?? null,
-                                            'Ref_prof_cours' => $module['prof_cours'] ?? null,
-                                            'presentiel' => $module['volume_presentiel'] ?? 0,
-                                            'a_distance' => $module['volume_distance'] ?? 0,
-                                            'en_alternance' => $module['volume_alternance'] ?? 0,
-                                            'horraire_tp' => $module['volume_tp'] ?? 0,
-                                            'horraire_td' => $module['volume_td'] ?? 0,
-                                            'horraire_cours' => $module['volume_cours'] ?? 0,
-                                            'horraire_evaluation' => $module['volume_evaluation'] ?? 0,
-                                            'horraire_activite_pratique' => $module['volume_pratique'] ?? 0
-                                        ]];
+                foreach ($elements as $element) {
+                    $this->insertElement(array_merge($element, ['module_id' => $moduleId]));
 
-                                        foreach ($elements as $element) {
-                                            $this->insertElement(array_merge($element, ['module_id' => $moduleId]));
-
-                                            if (!empty($element['Ref_prof_element'])) $insertRole($element['Ref_prof_element'], "Chef_de_Element");
-                                            if (!empty($element['Ref_prof_tp'])) $insertRole($element['Ref_prof_tp'], "Regular");
-                                            if (!empty($element['Ref_prof_td'])) $insertRole($element['Ref_prof_td'], "Regular");
-                                            if (!empty($element['Ref_prof_cours'])) $insertRole($element['Ref_prof_cours'], "Regular");
-                                        }
-                                    }
-
+                    if (!empty($element['Ref_prof_tp'])) $insertRole($element['Ref_prof_tp'], "Regular");
+                    if (!empty($element['Ref_prof_td'])) $insertRole($element['Ref_prof_td'], "Regular");
+                    if (!empty($element['Ref_prof_cours'])) $insertRole($element['Ref_prof_cours'], "Regular");
+                }
+            }
         }
 
         $this->db->commit();
-        return true; 
+        return true;
 
     } catch (Exception $e) {
         $this->db->rollBack();
@@ -1747,18 +1524,20 @@ public function AjouterModules($data) {
 }
 
 
+
 // helper: insérer un élément
 private function insertElement($elementData) {
     $sql = "INSERT INTO elements 
-            (nom,module_id,coeff_element,coeff_td,coeff_ecrit,coeff_tp,coeff_cc,coeff_projet,
-             Ref_prof_element,Ref_prof_tp,Ref_prof_td,Ref_prof_cours,
-             presentiel,a_distance,en_alternance,
-             horraire_tp,horraire_td,horraire_cours,horraire_evaluation,horraire_activite_pratique)
-            VALUES
-            (:nom,:module_id,:coeff_element,:coeff_td,:coeff_ecrit,:coeff_tp,:coeff_cc,:coeff_projet,
-             :Ref_prof_element,:Ref_prof_tp,:Ref_prof_td,:Ref_prof_cours,
-             :presentiel,:a_distance,:en_alternance,
-             :horraire_tp,:horraire_td,:horraire_cours,:horraire_evaluation,:horraire_activite_pratique)";
+        (nom,module_id,langue,coeff_element,coeff_td,coeff_ecrit,coeff_tp,coeff_cc,
+         Ref_prof_tp,Ref_prof_td,Ref_prof_cours,
+         presentiel,a_distance,en_alternance,
+         horraire_tp,horraire_td,horraire_cours,horraire_evaluation,horraire_activite_pratique)
+        VALUES
+        (:nom,:module_id,:langue,:coeff_element,:coeff_td,:coeff_ecrit,:coeff_tp,:coeff_cc,
+         :Ref_prof_tp,:Ref_prof_td,:Ref_prof_cours,
+         :presentiel,:a_distance,:en_alternance,
+         :horraire_tp,:horraire_td,:horraire_cours,:horraire_evaluation,:horraire_activite_pratique)";
+
     $stmt = $this->db->prepare($sql);
 
     $stmt->execute([
@@ -1769,8 +1548,7 @@ private function insertElement($elementData) {
         ':coeff_ecrit'=>$elementData['coeff_ecrit'] ?? 0,
         ':coeff_tp'=>$elementData['coeff_tp'] ?? 0,
         ':coeff_cc'=>$elementData['coeff_cc'] ?? 0,
-        ':coeff_projet'=>$elementData['coeff_projet'] ?? 0,
-        ':Ref_prof_element'=>$elementData['Ref_prof_element'] ?? null,
+        ':langue'=>$elementData['langue'] ?? null,
         ':Ref_prof_tp'=>$elementData['Ref_prof_tp'] ?? null,
         ':Ref_prof_td'=>$elementData['Ref_prof_td'] ?? null,
         ':Ref_prof_cours'=>$elementData['Ref_prof_cours'] ?? null,
@@ -1785,7 +1563,6 @@ private function insertElement($elementData) {
     ]);
 }
 
-
 public function updateModule($data) {
     $this->db->beginTransaction();
     try {
@@ -1796,297 +1573,216 @@ public function updateModule($data) {
         $moduleId  = $data['module_id'];
         $filiereId = $data['filiere_id'];
 
-        // --- 1) Année académique courante
-        $stmtAnnee = $this->db->query("SELECT annee_id FROM annees_academiques WHERE current_flag = 1 LIMIT 1");
-        $annee = $stmtAnnee->fetch(PDO::FETCH_ASSOC);
-        if (!$annee) throw new Exception("Aucune année académique courante trouvée");
-        $anneeId = $annee['annee_id'];
-
-        // Helpers (consistent with AjouterModules)
-        $db = $this->db;
-
-        $insertRole = function($userId, $role, $start = null, $end = null) {
-            // Check if this role already exists for the user
-            $checkSql = "SELECT 1 FROM professor_roles WHERE user_id = :user_id AND role = :role LIMIT 1";
-            $stmtCheck = $this->db->prepare($checkSql);
-            $stmtCheck->execute([
-                ':user_id' => $userId,
-                ':role'    => $role
-            ]);
-
-            // If not exists, insert
-            if (!$stmtCheck->fetchColumn()) {
-                $sqlRole = "INSERT INTO professor_roles (user_id, role, date_debut_affectation, date_fin_affectation)
-                            VALUES (:user_id, :role, :date_debut, :date_fin)";
-                $stmtRole = $this->db->prepare($sqlRole);
-                $stmtRole->execute([
-                    ':user_id' => $userId,
-                    ':role'    => $role,
-                    ':date_debut' => $start,
-                    ':date_fin'   => $end
-                ]);
-            }
-        };
-
-        $deleteRole = function($userId, $role) use ($db) {
-            if (empty($userId)) return;
-            $sql = "DELETE FROM professor_roles WHERE user_id = :user_id AND role = :role";
-            $st = $db->prepare($sql);
-            $st->execute([
-                ':user_id' => $userId,
-                ':role'    => $role
-            ]);
-        };
-
-        // --- 2) Avant toute mise à jour: nettoyer les rôles existants
-
-        // 2.a) Chef de module actuel -> supprimer son rôle
-        $stmt = $this->db->prepare("SELECT responsible_professor_id FROM modules WHERE module_id = :mid");
+        // Vérifier les éléments existants
+        $stmt = $this->db->prepare("SELECT * FROM elements WHERE module_id = :mid");
         $stmt->execute([':mid' => $moduleId]);
-        $oldChef = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($oldChef && !empty($oldChef['responsible_professor_id'])) {
-            $deleteRole($oldChef['responsible_professor_id'], "Chef_de_Module");
-        }
+        $existingElements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 2.b) Rôles profs d'éléments actuels du module -> supprimer
+        $hadElements = count($existingElements) > 1;   // règle : 1 row = pas d’éléments, >1 = éléments
+        $hasElements = !empty($data['has_elements']) && $data['has_elements'];
+
+        // --- 1. Update du module ---
         $stmt = $this->db->prepare("
-            SELECT Ref_prof_element, Ref_prof_tp, Ref_prof_cours, Ref_prof_td
-            FROM elements
-            WHERE module_id = :mid
+            UPDATE modules 
+            SET code=:code, nom=:nom, semestre_id=:semestre_id, field_id=:field_id, type=:type, coefficient=1
+            WHERE module_id=:mid
         ");
-        $stmt->execute([':mid' => $moduleId]);
-        $oldElementProfs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        if ($oldElementProfs) {
-            $roleMapDelete = [
-                'Ref_prof_element' =>'Chef_de_Element', // keep exact casing as in AjouterModules
-                'Ref_prof_tp'      => 'Regular',
-                'Ref_prof_cours'   => 'Regular',
-                'Ref_prof_td'      => 'Regular',
-            ];
-            foreach ($oldElementProfs as $row) {
-                foreach ($roleMapDelete as $col => $role) {
-                    if (!empty($row[$col])) {
-                        $deleteRole($row[$col], $role);
-                    }
-                }
-            }
-        }
-
-        // --- 3) Mettre à jour le module
-        $sqlModule = "UPDATE modules SET 
-                        code = :code,
-                        langue = :langue,
-                        nom = :nom,
-                        type = :type,
-                        coefficient = :coefficient,
-                        semestre_id = :semestre_id,
-                        field_id = :field_id,
-                        responsible_professor_id = :responsible_professor_id,
-                        annee_id = :annee_id
-                      WHERE module_id = :module_id";
-        $stmtModule = $this->db->prepare($sqlModule);
-
-        // Si tu dois recalcule: ($data['etape'] - 1) * 2 + $data['semestre_local']
-        $semestreGlobal = $data['semestre'];
-        // Get all semestres once
-        $sql = "SELECT * FROM semestres WHERE field_id = :field_id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':field_id' => $filiereId]);
-        $semestres = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $matchedSemestre = null;
-        foreach ($semestres as $row) {
-            if ($row["nom"] === "Semestre " . $semestreGlobal) {
-                $matchedSemestre = $row;
-                break;
-            }
-        }
-
-        if (!$matchedSemestre) {
-            throw new Exception("No matching semestre found for module '{$module['nom']}'");
-        }
-        $stmtModule->execute([
-            ':code'                     => $data['code'],
-            ':langue'                   => $data['langue'],
-            ':nom'                      => $data['nom'],
-            ':type'                     => $data['type'] ?? 'standard',
-            ':coefficient'              => $data['coefficient'] ?? 1,
-            ':semestre_id'              => $matchedSemestre['semestre_id'], 
-            ':field_id'                 => $filiereId,
-            ':responsible_professor_id' => $data['chef_id'] ?? null,
-            ':annee_id'                 => $anneeId,
-            ':module_id'                => $moduleId
+        $stmt->execute([
+            ':code'        => $data['code'],
+            ':nom'         => $data['nom'],
+            ':semestre_id' => $data['semestre'],
+            ':field_id'    => $filiereId,
+            ':type'        => $data['type'],
+            ':mid'         => $moduleId
         ]);
 
-        // 3.b) Nouveau Chef de Module -> insérer
-        if (!empty($data['chef_id'])) {
-            $insertRole($data['chef_id'], "Chef_de_Module");
+        $newElements = $data['elements'] ?? [];
+
+        // --- 2. Cas 1 : avait des éléments → n’en a plus ---
+        if ($hadElements && !$hasElements) {
+            $this->db->prepare("DELETE FROM elements WHERE module_id=:mid")->execute([':mid'=>$moduleId]);
+
+            $this->insertElement([
+                'module_id'                  => $moduleId,
+                'nom'                        => $data['nom'],
+                'coeff_element'              => 1,
+                'coeff_td'                   => $data['coeff_td'] ?? 0,
+                'coeff_ecrit'                => $data['coeff_ecrit'] ?? 0,
+                'coeff_tp'                   => $data['coeff_tp'] ?? 0,
+                'coeff_cc'                   => $data['coeff_cc'] ?? 0,
+                'langue'                     => $data['langue'] ?? null,
+                'Ref_prof_tp'                => $data['prof_tp'] ?? null,
+                'Ref_prof_td'                => $data['prof_td'] ?? null,
+                'Ref_prof_cours'             => $data['prof_cours'] ?? null,
+                'presentiel'                 => $data['presentiel'] ?? 0,
+                'a_distance'                 => $data['a_distance'] ?? 0,
+                'en_alternance'              => $data['en_alternance'] ?? 0,
+                'horraire_tp'                => $data['horraire_tp'] ?? 0,
+                'horraire_td'                => $data['horraire_td'] ?? 0,
+                'horraire_cours'             => $data['horraire_cours'] ?? 0,
+                'horraire_evaluation'        => $data['horraire_evaluation'] ?? 0,
+                'horraire_activite_pratique' => $data['horraire_activite_pratique'] ?? 0
+            ]);
         }
 
-        // --- 4) Mettre à jour / insérer les éléments + insérer les nouveaux rôles
-        $insertElementRoles = function(array $elementRow) use ($insertRole) {
-            if (!empty($elementRow['Ref_prof_element'])) $insertRole($elementRow['Ref_prof_element'], "Chef_de_Element");
-            if (!empty($elementRow['Ref_prof_tp']))      $insertRole($elementRow['Ref_prof_tp'],      "Regular");
-            if (!empty($elementRow['Ref_prof_td']))      $insertRole($elementRow['Ref_prof_td'],      "Regular");
-            if (!empty($elementRow['Ref_prof_cours']))   $insertRole($elementRow['Ref_prof_cours'],   "Regular");
-        };
+        // --- 3. Cas 2 : n’avait pas d’éléments → en a maintenant ---
+        elseif (!$hadElements && $hasElements) {
+            $this->db->prepare("DELETE FROM elements WHERE module_id=:mid")->execute([':mid'=>$moduleId]);
 
-        if (!empty($data['has_elements']) && !empty($data['elements']) && is_array($data['elements'])) {
-            foreach ($data['elements'] as $element) {
-                if (!empty($element['element_id'])) {
-                    // Update existing element
-                    $sqlElement = "UPDATE elements SET
-                        nom = :nom,
-                        coeff_element = :coeff_element,
-                        coeff_td = :coeff_td,
-                        coeff_ecrit = :coeff_ecrit,
-                        coeff_tp = :coeff_tp,
-                        coeff_cc = :coeff_cc,
-                        coeff_projet = :coeff_projet,
-                        Ref_prof_element = :Ref_prof_element,
-                        Ref_prof_tp = :Ref_prof_tp,
-                        Ref_prof_td = :Ref_prof_td,
-                        Ref_prof_cours = :Ref_prof_cours,
-                        presentiel = :presentiel,
-                        a_distance = :a_distance,
-                        en_alternance = :en_alternance,
-                        horraire_tp = :horraire_tp,
-                        horraire_td = :horraire_td,
-                        horraire_cours = :horraire_cours,
-                        horraire_evaluation = :horraire_evaluation,
-                        horraire_activite_pratique = :horraire_activite_pratique
-                        WHERE element_id = :element_id AND module_id = :module_id";
-
-                    $stmtElement = $this->db->prepare($sqlElement);
-                    $stmtElement->execute([
-                        ':nom'                         => $element['nom'],
-                        ':coeff_element'               => $element['coeff_element'] ?? 1,
-                        ':coeff_td'                    => $element['coeff_td'] ?? 0,
-                        ':coeff_ecrit'                 => $element['coeff_ecrit'] ?? 0,
-                        ':coeff_tp'                    => $element['coeff_tp'] ?? 0,
-                        ':coeff_cc'                    => $element['coeff_cc'] ?? 0,
-                        ':coeff_projet'                => $element['coeff_projet'] ?? 0,
-                        ':Ref_prof_element'            => $element['Ref_prof_element'] ?? null,
-                        ':Ref_prof_tp'                 => $element['Ref_prof_tp'] ?? null,
-                        ':Ref_prof_td'                 => $element['Ref_prof_td'] ?? null,
-                        ':Ref_prof_cours'              => $element['Ref_prof_cours'] ?? null,
-                        ':presentiel'                  => $element['presentiel'] ?? 0,
-                        ':a_distance'                  => $element['a_distance'] ?? 0,
-                        ':en_alternance'               => $element['en_alternance'] ?? 0,
-                        ':horraire_tp'                 => $element['horraire_tp'] ?? 0,
-                        ':horraire_td'                 => $element['horraire_td'] ?? 0,
-                        ':horraire_cours'              => $element['horraire_cours'] ?? 0,
-                        ':horraire_evaluation'         => $element['horraire_evaluation'] ?? 0,
-                        ':horraire_activite_pratique'  => $element['horraire_activite_pratique'] ?? 0,
-                        ':element_id'                  => $element['element_id'],
-                        ':module_id'                   => $moduleId
-                    ]);
-
-                    // Insert roles for the updated assignment
-                    $insertElementRoles($element);
-
-                } else {
-                    // Insert new element (uses your existing helper)
-                    $this->insertElement(array_merge($element, [
-                        'module_id'      => $moduleId,
-                        'coeff_element'  => $element['coeff_element'] ?? 1,
-                        'nom'            => $element['nom']
-                    ]));
-
-                    // Insert roles for the new assignment
-                    $insertElementRoles($element);
-                }
+            foreach ($newElements as $el) {
+                $this->insertElement([
+                    'module_id'                  => $moduleId,
+                    'nom'                        => $el['nom'],
+                    'coeff_element'              => $el['coeff_element'] ?? 1,
+                    'coeff_td'                   => $el['coeff_td'] ?? 0,
+                    'coeff_ecrit'                => $el['coeff_ecrit'] ?? 0,
+                    'coeff_tp'                   => $el['coeff_tp'] ?? 0,
+                    'coeff_cc'                   => $el['coeff_cc'] ?? 0,
+                    'langue'                     => $el['langue'] ?? null,
+                    'Ref_prof_tp'                => $el['Ref_prof_tp'] ?? null,
+                    'Ref_prof_td'                => $el['Ref_prof_td'] ?? null,
+                    'Ref_prof_cours'             => $el['Ref_prof_cours'] ?? null,
+                    'presentiel'                 => $el['presentiel'] ?? 0,
+                    'a_distance'                 => $el['a_distance'] ?? 0,
+                    'en_alternance'              => $el['en_alternance'] ?? 0,
+                    'horraire_tp'                => $el['horraire_tp'] ?? 0,
+                    'horraire_td'                => $el['horraire_td'] ?? 0,
+                    'horraire_cours'             => $el['horraire_cours'] ?? 0,
+                    'horraire_evaluation'        => $el['horraire_evaluation'] ?? 0,
+                    'horraire_activite_pratique' => $el['horraire_activite_pratique'] ?? 0
+                ]);
             }
-        } else {
-            // Module sans éléments explicites : maintenir/mettre à jour 1 élément "agrégat"
-            $stmtGetElement = $this->db->prepare("SELECT element_id FROM elements WHERE module_id = :module_id LIMIT 1");
-            $stmtGetElement->execute([':module_id' => $moduleId]);
-            $existingElement = $stmtGetElement->fetch(PDO::FETCH_ASSOC);
+        }
 
-            if ($existingElement) {
-                $sqlUpdate = "UPDATE elements SET
-                    nom = :nom,
-                    coeff_element = :coeff_element,
-                    coeff_td = :coeff_td,
-                    coeff_tp = :coeff_tp,
-                    coeff_cc = :coeff_cc,
-                    coeff_projet = :coeff_projet,
-                    coeff_ecrit = :coeff_ecrit,
-                    Ref_prof_element = :Ref_prof_element,
-                    Ref_prof_tp = :Ref_prof_tp,
-                    Ref_prof_td = :Ref_prof_td,
-                    Ref_prof_cours = :Ref_prof_cours,
-                    presentiel = :presentiel,
-                    a_distance = :a_distance,
-                    en_alternance = :en_alternance,
-                    horraire_tp = :horraire_tp,
-                    horraire_td = :horraire_td,
-                    horraire_cours = :horraire_cours,
-                    horraire_evaluation = :horraire_evaluation,
-                    horraire_activite_pratique = :horraire_activite_pratique
-                    WHERE module_id = :module_id";
-
-                $stmtUpdate = $this->db->prepare($sqlUpdate);
-                $stmtUpdate->execute([
+        // --- 4. Cas 3 : avait pas d’éléments → toujours pas ---
+        elseif (!$hadElements && !$hasElements) {
+            if (!empty($existingElements)) {
+                $this->db->prepare("
+                    UPDATE elements
+                    SET nom=:nom, coeff_element=1,
+                        coeff_td=:coeff_td, coeff_ecrit=:coeff_ecrit, coeff_tp=:coeff_tp, coeff_cc=:coeff_cc,
+                        langue=:langue, Ref_prof_tp=:prof_tp, Ref_prof_td=:prof_td, Ref_prof_cours=:prof_cours,
+                        presentiel=:presentiel, a_distance=:a_distance, en_alternance=:en_alternance,
+                        horraire_tp=:horraire_tp, horraire_td=:horraire_td, horraire_cours=:horraire_cours,
+                        horraire_evaluation=:horraire_evaluation, horraire_activite_pratique=:horraire_activite_pratique
+                    WHERE module_id=:mid
+                ")->execute([
                     ':nom'                        => $data['nom'],
-                    ':coeff_element'              => 1,
                     ':coeff_td'                   => $data['coeff_td'] ?? 0,
+                    ':coeff_ecrit'                => $data['coeff_ecrit'] ?? 0,
                     ':coeff_tp'                   => $data['coeff_tp'] ?? 0,
                     ':coeff_cc'                   => $data['coeff_cc'] ?? 0,
-                    ':coeff_projet'               => $data['coeff_projet'] ?? 0,
-                    ':coeff_ecrit'                => $data['coeff_ecrit'] ?? 0,
-                    ':Ref_prof_element'           => $data['chef_element'] ?? null,
-                    ':Ref_prof_tp'                => $data['prof_tp'] ?? null,
-                    ':Ref_prof_td'                => $data['prof_td'] ?? null,
-                    ':Ref_prof_cours'             => $data['prof_cours'] ?? null,
-                    ':presentiel'                 => $data['volume_presentiel'] ?? 0,
-                    ':a_distance'                 => $data['volume_distance'] ?? 0,
-                    ':en_alternance'              => $data['volume_alternance'] ?? 0,
-                    ':horraire_tp'                => $data['volume_tp'] ?? 0,
-                    ':horraire_td'                => $data['volume_td'] ?? 0,
-                    ':horraire_cours'             => $data['volume_cours'] ?? 0,
-                    ':horraire_evaluation'        => $data['volume_evaluation'] ?? 0,
-                    ':horraire_activite_pratique' => $data['volume_pratique'] ?? 0,
-                    ':module_id'                  => $moduleId     
+                    ':langue'                     => $data['langue'] ?? null,
+                    ':prof_tp'                    => $data['prof_tp'] ?? null,
+                    ':prof_td'                    => $data['prof_td'] ?? null,
+                    ':prof_cours'                 => $data['prof_cours'] ?? null,
+                    ':presentiel'                 => $data['presentiel'] ?? 0,
+                    ':a_distance'                 => $data['a_distance'] ?? 0,
+                    ':en_alternance'              => $data['en_alternance'] ?? 0,
+                    ':horraire_tp'                => $data['horraire_tp'] ?? 0,
+                    ':horraire_td'                => $data['horraire_td'] ?? 0,
+                    ':horraire_cours'             => $data['horraire_cours'] ?? 0,
+                    ':horraire_evaluation'        => $data['horraire_evaluation'] ?? 0,
+                    ':horraire_activite_pratique' => $data['horraire_activite_pratique'] ?? 0,
+                    ':mid'                        => $moduleId
                 ]);
-
-                // Insert roles for the single-element path
-                $insertElementRoles([
-                    'Ref_prof_element' => $data['chef_element'] ?? null,
-                    'Ref_prof_tp'      => $data['prof_tp'] ?? null,
-                    'Ref_prof_td'      => $data['prof_td'] ?? null,
-                    'Ref_prof_cours'   => $data['prof_cours'] ?? null,
-                ]);
-
             } else {
-                // Aucun élément -> en créer un et affecter les rôles
-                $this->insertElement(array_merge($data, [
-                    'module_id'     => $moduleId,
-                    'coeff_element' => 1,
-                    'nom'           => $data['nom']
-                ]));
-
-                $insertElementRoles([
-                    'Ref_prof_element' => $data['chef_element'] ?? null,
-                    'Ref_prof_tp'      => $data['prof_tp'] ?? null,
-                    'Ref_prof_td'      => $data['prof_td'] ?? null,
-                    'Ref_prof_cours'   => $data['prof_cours'] ?? null,
+                $this->insertElement([
+                    'module_id'                  => $moduleId,
+                    'nom'                        => $data['nom'],
+                    'coeff_element'              => 1,
+                    'coeff_td'                   => $data['coeff_td'] ?? 0,
+                    'coeff_ecrit'                => $data['coeff_ecrit'] ?? 0,
+                    'coeff_tp'                   => $data['coeff_tp'] ?? 0,
+                    'coeff_cc'                   => $data['coeff_cc'] ?? 0,
+                    'langue'                     => $data['langue'] ?? null,
+                    'Ref_prof_tp'                => $data['prof_tp'] ?? null,
+                    'Ref_prof_td'                => $data['prof_td'] ?? null,
+                    'Ref_prof_cours'             => $data['prof_cours'] ?? null,
+                    'presentiel'                 => $data['presentiel'] ?? 0,
+                    'a_distance'                 => $data['a_distance'] ?? 0,
+                    'en_alternance'              => $data['en_alternance'] ?? 0,
+                    'horraire_tp'                => $data['horraire_tp'] ?? 0,
+                    'horraire_td'                => $data['horraire_td'] ?? 0,
+                    'horraire_cours'             => $data['horraire_cours'] ?? 0,
+                    'horraire_evaluation'        => $data['horraire_evaluation'] ?? 0,
+                    'horraire_activite_pratique' => $data['horraire_activite_pratique'] ?? 0
                 ]);
+            }
+        }
+
+        // --- 5. Cas 4 : avait des éléments → en a encore ---
+        elseif ($hadElements && $hasElements) {
+            $allNull = true;
+            foreach ($newElements as $el) {
+                if (!empty($el['nom']) || !empty($el['coeff_element'])) {
+                    $allNull = false; break;
+                }
+            }
+
+            if ($allNull) {
+                $this->db->prepare("DELETE FROM elements WHERE module_id=:mid")->execute([':mid'=>$moduleId]);
+
+                $this->insertElement([
+                    'module_id'                  => $moduleId,
+                    'nom'                        => $data['nom'],
+                    'coeff_element'              => 1,
+                    'coeff_td'                   => $data['coeff_td'] ?? 0,
+                    'coeff_ecrit'                => $data['coeff_ecrit'] ?? 0,
+                    'coeff_tp'                   => $data['coeff_tp'] ?? 0,
+                    'coeff_cc'                   => $data['coeff_cc'] ?? 0,
+                    'langue'                     => $data['langue'] ?? null,
+                    'Ref_prof_tp'                => $data['prof_tp'] ?? null,
+                    'Ref_prof_td'                => $data['prof_td'] ?? null,
+                    'Ref_prof_cours'             => $data['prof_cours'] ?? null,
+                    'presentiel'                 => $data['presentiel'] ?? 0,
+                    'a_distance'                 => $data['a_distance'] ?? 0,
+                    'en_alternance'              => $data['en_alternance'] ?? 0,
+                    'horraire_tp'                => $data['horraire_tp'] ?? 0,
+                    'horraire_td'                => $data['horraire_td'] ?? 0,
+                    'horraire_cours'             => $data['horraire_cours'] ?? 0,
+                    'horraire_evaluation'        => $data['horraire_evaluation'] ?? 0,
+                    'horraire_activite_pratique' => $data['horraire_activite_pratique'] ?? 0
+                ]);
+            } else {
+                $this->db->prepare("DELETE FROM elements WHERE module_id=:mid")->execute([':mid'=>$moduleId]);
+
+                foreach ($newElements as $el) {
+                    $this->insertElement([
+                        'module_id'                  => $moduleId,
+                        'nom'                        => $el['nom'],
+                        'coeff_element'              => $el['coeff_element'] ?? 1,
+                        'coeff_td'                   => $el['coeff_td'] ?? 0,
+                        'coeff_ecrit'                => $el['coeff_ecrit'] ?? 0,
+                        'coeff_tp'                   => $el['coeff_tp'] ?? 0,
+                        'coeff_cc'                   => $el['coeff_cc'] ?? 0,
+                        'langue'                     => $el['langue'] ?? null,
+                        'Ref_prof_tp'                => $el['Ref_prof_tp'] ?? null,
+                        'Ref_prof_td'                => $el['Ref_prof_td'] ?? null,
+                        'Ref_prof_cours'             => $el['Ref_prof_cours'] ?? null,
+                        'presentiel'                 => $el['presentiel'] ?? 0,
+                        'a_distance'                 => $el['a_distance'] ?? 0,
+                        'en_alternance'              => $el['en_alternance'] ?? 0,
+                        'horraire_tp'                => $el['horraire_tp'] ?? 0,
+                        'horraire_td'                => $el['horraire_td'] ?? 0,
+                        'horraire_cours'             => $el['horraire_cours'] ?? 0,
+                        'horraire_evaluation'        => $el['horraire_evaluation'] ?? 0,
+                        'horraire_activite_pratique' => $el['horraire_activite_pratique'] ?? 0
+                    ]);
+                }
             }
         }
 
         $this->db->commit();
-        return ["status" => "success", "message" => "Module mis à jour avec succès", "module_id" => $moduleId];
+        return ["status"=>"success","message"=>"Module mis à jour avec succès","module_id"=>$moduleId];
 
     } catch (Exception $e) {
         $this->db->rollBack();
-        error_log("Erreur UpdateModule: " . $e->getMessage());
         throw $e;
     }
 }
 
 
 
-
 }
+
