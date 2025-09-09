@@ -16,7 +16,7 @@
       --light: #f8f9fa;
       --dark: #2c3e50;
       --success: #27ae60;
-      --warning: #f39c12;
+      --warning: #000000;
       --danger: #e74c3c;
       --border: #e0e0e0;
       --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
@@ -270,7 +270,6 @@
       display: flex;
       align-items: center;
     }
-    
     .titles {
       font-weight: 600;
       color: var(--dark);
@@ -293,7 +292,13 @@
       display: flex;
       flex-direction: column;
     }
-
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--dark);
+    }
     .alert-coeff {
       margin-top: 10px;
       display: none;
@@ -405,6 +410,28 @@
         grid-template-columns: 1fr;
       }
     }
+
+      .langues {
+        display: flex;
+        align-items: center;     /* vertical alignment */
+        gap: 1rem;               /* space between label and select */
+        background-color: #e9ecef;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.2rem;
+        border-left: 4px solid var(--dark);
+      }
+
+    .langues i {
+      color: #0d6efd; /* Bootstrap primary blue */
+      margin-right: 0.5rem; /* space between icon and text */
+    }
+
+     .langues select {
+      width:fit-content;
+    }
+
+    
   </style>
 </head>
 <body>
@@ -478,47 +505,31 @@
           </div>
           
           <div class="module-section">
-            <div class="section-label"><i class="fas fa-info-circle me-2"></i>Informations de base</div>
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label titles">Code</label>
-                <input type="text" class="form-control module-code" placeholder="Code de module" required>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label titles">Nom</label>
-                <input type="text" class="form-control module-name" placeholder="Nom du module" required>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label titles">Chef de module</label>
-                <select class="form-select module-chef prof-select" required>
-                  <option value="">Sélectionner un chef de module</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label titles">Langue d'enseignement</label>
-                <select class="form-select module-langue" required>
-                  <option value="">Sélectionner une langue</option>
-                  <option value="français">Français</option>
-                  <option value="anglais">Anglais</option>
-                  <option value="arabe">Arabe</option>
-                  <option value="espagnol">Espagnol</option>
-                  <option value="allemand">Allemand</option>
-                </select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label titles">Type de module</label>
-                <select class="form-select module-type" required>
-                  <option value="">Sélectionner un type</option>
-                  <option value="Soft Skills">Soft Skills</option>
-                  <option value="Module d'éducation">Module d'éducation</option>
-                  <option value="Module de spécialité">Module de spécialité</option>
-                </select>
-              </div>
-            </div>
-          </div>
+                <div class="section-label"><i class="fas fa-info-circle me-2"></i>Informations de base</div>
+                <div class="row">
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label titles">Code</label>
+                    <input type="text" class="form-control module-code" placeholder="Code de module" required>
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label titles">Nom</label>
+                    <input type="text" class="form-control module-name" placeholder="Nom du module" required>
+                  </div>
+                
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label titles">Type de module</label>
+                    <select class="form-select module-type" required>
+                      <option value="">Sélectionner un type</option>
+                      <option value="Soft Skills">Soft Skills</option>
+                      <option value="Module d'éducation">Module d'éducation</option>
+                      <option value="Module de spécialité">Module de spécialité</option>
+                    </select>
+                  </div>
+                  
+                </div>
+        
+        
+      </div>
           
           <div class="module-section">
             <div class="has-elements-group">
@@ -536,59 +547,71 @@
           
           <!-- Conteneur pour les coefficients du module (affiché quand "Non" est sélectionné) -->
           <div class="module-coefficients">
-            <div class="coefficient-inputs">
-              <div class="coefficient-item">
-                <label class="form-label titles">Coeff d'Ecrit</label>
-                <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            <div class="langues">
+                <label class="form-label titles mb-0 col-md-3">
+                  <i class="bi bi-translate"></i> Langue d'enseignement
+                </label>
+                
+                <select class="form-select module-langue col-md-4" >
+                  <option value="">Sélectionner une langue</option>
+                  <option value="français">Français</option>
+                  <option value="anglais">Anglais</option>
+                  <option value="arabe">Arabe</option>
+                  <option value="espagnol">Espagnol</option>
+                  <option value="allemand">Allemand</option>
+                </select>
               </div>
-              <div class="coefficient-item titles">
-                <label class="form-label">Coeff de CC</label>
-                <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
-              </div>
-              <div class="coefficient-item">
-                <label class="form-label titles">Coeff de TP</label>
-                <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
-              </div>
-              <div class="coefficient-item">
-                <label class="form-label titles">Coeff de TD</label>
-                <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
-              </div>
-              
-              <div class="coefficient-item">
-                <label class="form-label titles">Coeff de Projet</label>
-                <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
-              </div>
-            </div>  
+            <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+           
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div>
           
             <div class="professeurs-group">
               <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
               <div class="row">
                 
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
                   <label class="form-label titles">Prof de Cours</label>
                   <select class="form-select prof-cours prof-select">
                     <option value="">Aucun prof</option>
                   </select>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
                   <label class="form-label titles">Prof de TD</label>
                   <select class="form-select prof-td prof-select">
                     <option value="">Aucun prof</option>
                   </select>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
                   <label class="form-label titles">Prof de TP</label>
                   <select class="form-select prof-tp prof-select">
                     <option value="">Aucun prof</option>
                   </select>
                 </div>
                 
-                <div class="col-md-3 mb-3">
-                  <label class="form-label titles">Chef d'élément</label>
-                  <select class="form-select chef-element prof-select">
-                    <option value="">Aucun prof</option>
-                  </select>
-                </div>
+                
               </div>
             </div>
 
@@ -687,14 +710,26 @@
         <button type="button" class="btn-remove" title="Supprimer l'élément">×</button>
       </div>
       <div class="row">
-        <div class="col-md-8 mb-3">
+        <div class="col-md-4 mb-3">
           <label class="form-label titles">Nom de l'élément</label>
           <input type="text" class="form-control element-name" placeholder="Nom de l'élément" required>
         </div>
         <div class="col-md-4 mb-3">
+            <label class="form-label titles">Langue d'enseignement</label>
+            <select class="form-select element-langue" >
+              <option value="">Sélectionner une langue</option>
+              <option value="français">Français</option>
+              <option value="anglais">Anglais</option>
+              <option value="arabe">Arabe</option>
+              <option value="espagnol">Espagnol</option>
+              <option value="allemand">Allemand</option>
+            </select>
+          </div>
+        <div class="col-md-4 mb-3">
           <label class="form-label titles">Coefficient de l'élément</label>
           <input type="number" class="form-control element-coeff" min="0" max="1" step="0.01" required>
         </div>
+
       </div>
       
       <div class="coefficient-group">
@@ -717,10 +752,7 @@
               <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
             </div>
             
-            <div class="coefficient-item">
-              <label class="form-label titles">Coeff de Projet</label>
-              <input type="number" class="form-control coefficient-input coeff-projet" min="0" max="1" step="0.01" value="0">
-            </div>
+            
           </div>
           <div class="alert alert-warning alert-coeff mt-2">
             <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
@@ -731,31 +763,26 @@
           <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
           <div class="row">
             
-            <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
               <label class="form-label titles">Prof de Cours</label>
               <select class="form-select prof-cours prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
               <label class="form-label titles">Prof de TD</label>
               <select class="form-select prof-td prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
-            <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
               <label class="form-label titles">Prof de TP</label>
               <select class="form-select prof-tp prof-select">
                 <option value="">Aucun prof</option>
               </select>
             </div>
             
-            <div class="col-md-3 mb-3">
-              <label class="form-label titles">Chef d'élément</label>
-              <select class="form-select chef-element prof-select">
-                <option value="">Aucun prof</option>
-              </select>
-            </div>
+           
           </div>
         </div>
       
@@ -831,19 +858,19 @@
 
           if (filiereId) {
             fetch(adminURL+`/admin2.php?action=getNombreSemestresByFiliere&field_id=${filiereId}`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.status === "success") {
-                  const nombreSemestre = data.nombre_semestre;
-                  for (let i = 1; i <= nombreSemestre; i++) {
-                    const option = document.createElement("option");
-                    option.value = i;
-                    option.textContent = "Semestre " + i;
-                    semestreSelect.appendChild(option);
-                  }
-                }
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === "success") {
+              data.data.forEach(semestre =>{
+                const option = document.createElement("option");
+                option.value = semestre.semestre_id;
+                option.textContent = semestre.nom;
+                semestreSelect.appendChild(option);
               })
-              .catch(() => console.error("Erreur lors du chargement des semestres"));
+              
+             
+            }
+          }).catch(() => console.error("Erreur lors du chargement des semestres"));
           }
         });
     // Variables globales
@@ -881,7 +908,7 @@
     
     // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
     function populateProfessorDropdowns() {
-      document.querySelectorAll('.module-chef, .prof-tp, .prof-td, .prof-cours, .chef-element').forEach(dropdown => {
+      document.querySelectorAll('.prof-tp, .prof-td, .prof-cours').forEach(dropdown => {
         // Garder l'option par défaut "Aucun prof"
         while (dropdown.options.length > 1) {
           dropdown.remove(1);
@@ -899,7 +926,7 @@
     
     // Remplir les dropdowns d'un élément spécifique
     function populateElementDropdowns(elementContainer) {
-      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours, .chef-element');
+      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours');
       
       dropdowns.forEach(dropdown => {
         // Garder l'option par défaut "Aucun prof"
@@ -1074,31 +1101,19 @@ function setSelectValue(name, value, { container = document, triggerChange = fal
     
   // Fonction pour charger les données du module depuis le localStorage
 function loadModuleData() {
+  console.log(localStorage.getItem("moduleToUpdate"));
   // Récupérer les infos de base du module
   const nomModule = localStorage.getItem("nom_module");
   const codeModule = localStorage.getItem("code_module");
-  const chefModule = localStorage.getItem("chef_module");
-  const langueModule = localStorage.getItem("langue_module");
   const typeModule = localStorage.getItem("type_module");
   const filiereId = localStorage.getItem("filiere_id");
   const semestreModule = localStorage.getItem("semestre_module");
-  const anneeModule = localStorage.getItem("annee_module");
-//  localStorage.setItem("module_id", module.module_id);
-//       localStorage.setItem("nom_module", module.nom_module);
-//       localStorage.setItem("code_module", module.code_module);
-//       localStorage.setItem("chef_module", module.id_prof_responsable || "");
-//       localStorage.setItem("langue_module", module.langue || "");
-//       localStorage.setItem("type_module", module.type || "");
-//       localStorage.setItem("filiere_id", module.id_filiere || "");
-//       localStorage.setItem("semestre_module", module.id_semestre || "");
-//       localStorage.setItem("annee_module", module.annee || "");
+
        
 
   // Remplir les champs du formulaire
   document.querySelector('.module-code').value = codeModule || '';
   document.querySelector('.module-name').value = nomModule || '';
-  setSelectValue("module-chef", chefModule ?? "");
-  setSelectValue("module-langue", langueModule ?? "");
   setSelectValue("module-type", typeModule ?? "");
 
   if (filiereId) {
@@ -1136,11 +1151,10 @@ setSelectValue("semestre", semestreModule ?? "");
         coeff_cc: localStorage.getItem(`cc_${i}`) || "0",
         coeff_tp: localStorage.getItem(`tp_${i}`) || "0",
         coeff_td: localStorage.getItem(`td_${i}`) || "0",
-        coeff_projet: localStorage.getItem(`projet_${i}`) || "0",
         Ref_prof_cours: localStorage.getItem(`prof_cours_element${i}`) || "",
         Ref_prof_td: localStorage.getItem(`prof_td_element${i}`) || "",
         Ref_prof_tp: localStorage.getItem(`prof_tp_element${i}`) || "",
-        Ref_prof_element: localStorage.getItem(`chef_element${i}`) || "",
+        langue:localStorage.getItem(`element-langue${i}`) || "",
         horraire_tp: localStorage.getItem(`volume_tp_element${i}`) || "0",
         horraire_td: localStorage.getItem(`volume_td_element${i}`) || "0",
         horraire_cours: localStorage.getItem(`volume_cours_element${i}`) || "0",
@@ -1150,6 +1164,7 @@ setSelectValue("semestre", semestreModule ?? "");
         a_distance: localStorage.getItem(`volume_distance_element${i}`) || "0",
         en_alternance: localStorage.getItem(`volume_alternance_element${i}`) || "0"
       };
+      console.log(elementData);
 
       addNewElement(null, elementData);
     }
@@ -1173,11 +1188,11 @@ setSelectValue("semestre", semestreModule ?? "");
       coeff_cc: localStorage.getItem("cc_0") || "0",
       coeff_tp: localStorage.getItem("tp_0") || "0",
       coeff_td: localStorage.getItem("td_0") || "0",
-      coeff_projet: localStorage.getItem("projet_0") || "0",
       Ref_prof_cours: localStorage.getItem("prof_cours_element0") || "",
       Ref_prof_td: localStorage.getItem("prof_td_element0") || "",
       Ref_prof_tp: localStorage.getItem("prof_tp_element0") || "",
-      Ref_prof_element: localStorage.getItem("chef_element0") || "",
+      langue:localStorage.getItem(`element-langue0`) || "",
+
       horraire_tp: localStorage.getItem("volume_tp_element0") || "0",
       horraire_td: localStorage.getItem("volume_td_element0") || "0",
       horraire_cours: localStorage.getItem("volume_cours_element0") || "0",
@@ -1195,7 +1210,6 @@ setSelectValue("semestre", semestreModule ?? "");
     moduleContainer.querySelector('.coeff-cc').value = elementData.coeff_cc;
     moduleContainer.querySelector('.coeff-tp').value = elementData.coeff_tp;
     moduleContainer.querySelector('.coeff-td').value = elementData.coeff_td;
-    moduleContainer.querySelector('.coeff-projet').value = elementData.coeff_projet;
 
     moduleContainer.querySelector('.volume-tp').value = elementData.horraire_tp;
     moduleContainer.querySelector('.volume-td').value = elementData.horraire_td;
@@ -1205,12 +1219,13 @@ setSelectValue("semestre", semestreModule ?? "");
     moduleContainer.querySelector('.volume-presentiel').value = elementData.presentiel;
     moduleContainer.querySelector('.volume-distance').value = elementData.a_distance;
     moduleContainer.querySelector('.volume-alternance').value = elementData.en_alternance;
+    setSelectValue("module-langue", elementData.langue, { container: moduleContainer });
 
     // Gérer les professeurs (mêmes problèmes que dans ton template : options dynamiques)
     setSelectValue("prof-cours", elementData.Ref_prof_cours, { container: moduleContainer });
     setSelectValue("prof-td", elementData.Ref_prof_td, { container: moduleContainer });
     setSelectValue("prof-tp", elementData.Ref_prof_tp, { container: moduleContainer });
-    setSelectValue("chef-element", elementData.Ref_prof_element, { container: moduleContainer });
+
   }
 }
 
@@ -1289,13 +1304,11 @@ setSelectValue("semestre", semestreModule ?? "");
         elementContainer.querySelector('.coeff-cc').value = elementData.coeff_cc || 0;
         elementContainer.querySelector('.coeff-tp').value = elementData.coeff_tp || 0;
         elementContainer.querySelector('.coeff-td').value = elementData.coeff_td || 0;
-        elementContainer.querySelector('.coeff-projet').value = elementData.coeff_projet || 0;
-        console.log(elementData.Ref_prof_cours);
+        setSelectValue("element-langue", elementData.langue, { container: elementContainer });
          // Important: scope `setSelectValue` to THIS container
         setSelectValue("prof-cours", elementData.Ref_prof_cours, { container: elementContainer });
         setSelectValue("prof-tp", elementData.Ref_prof_tp, { container: elementContainer });
         setSelectValue("prof-td", elementData.Ref_prof_td, { container: elementContainer });
-        setSelectValue("chef-element", elementData.Ref_prof_element, { container: elementContainer });
         elementContainer.querySelector('.volume-cours').value = elementData.horraire_cours || 0;
         elementContainer.querySelector('.volume-td').value = elementData.horraire_td || 0;
         elementContainer.querySelector('.volume-tp').value = elementData.horraire_tp || 0;
@@ -1370,8 +1383,6 @@ setSelectValue("semestre", semestreModule ?? "");
     module_id: moduleId,
     code: moduleContainer.querySelector('.module-code').value,
     nom: moduleContainer.querySelector('.module-name').value,
-    chef_id: moduleContainer.querySelector('.module-chef').value,
-    langue: moduleContainer.querySelector('.module-langue').value,
     type: moduleContainer.querySelector('.module-type').value,
     has_elements: hasElements,
     filiere_id: document.getElementById('filiere').value,
@@ -1396,15 +1407,17 @@ setSelectValue("semestre", semestreModule ?? "");
         coeff_td: elementContainer.querySelector('.coeff-td').value || 0,
         coeff_tp: elementContainer.querySelector('.coeff-tp').value || 0,
         coeff_cc: elementContainer.querySelector('.coeff-cc').value || 0,
-        coeff_projet: elementContainer.querySelector('.coeff-projet').value || 0,
         coeff_ecrit: elementContainer.querySelector('.coeff-ecrit').value || 0,
 
         // Professeurs
-        Ref_prof_element: elementContainer.querySelector('.chef-element').value || null,
         Ref_prof_tp: elementContainer.querySelector('.prof-tp').value || null,
         Ref_prof_td: elementContainer.querySelector('.prof-td').value || null,
         Ref_prof_cours: elementContainer.querySelector('.prof-cours').value || null,
 
+
+        //langue
+        langue:elementContainer.querySelector('.element-langue').value,
+        
         // Volumes
         horraire_tp: elementContainer.querySelector('.volume-tp').value || 0,
         horraire_td: elementContainer.querySelector('.volume-td').value || 0,
@@ -1419,16 +1432,15 @@ setSelectValue("semestre", semestreModule ?? "");
     });
   } else {
     const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+    moduleData.langue= moduleContainer.querySelector('.module-langue').value || null,
     moduleData.coeff_tp = coeffInputs[0]?.value || 0;
     moduleData.coeff_td = coeffInputs[1]?.value || 0;
     moduleData.coeff_ecrit = coeffInputs[2]?.value || 0;
     moduleData.coeff_cc = coeffInputs[3]?.value || 0;
-    moduleData.coeff_projet = coeffInputs[4]?.value || 0;
     moduleData.coeff_element = 1;
     moduleData.prof_tp = moduleContainer.querySelector('.prof-tp').value || null;
     moduleData.prof_td = moduleContainer.querySelector('.prof-td').value || null;
     moduleData.prof_cours = moduleContainer.querySelector('.prof-cours').value || null;
-    moduleData.chef_element = moduleContainer.querySelector('.chef-element').value || null;
   }
 
   // 🔑 Encapsuler dans l’objet attendu par le backend
@@ -1522,33 +1534,57 @@ setSelectValue("semestre", semestreModule ?? "");
       }
       
       // Configurer les radios pour afficher/masquer les éléments
-      const elementRadios = document.querySelectorAll('input[name="hasElements"]');
-      elementRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-          const moduleContainer = document.getElementById('moduleContainer');
-          if (!moduleContainer) return;
-          
-          if (this.value === 'yes') {
-            const elementsContainer = moduleContainer.querySelector('.elements-main-container');
-            const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
-            
-            if (elementsContainer) elementsContainer.style.display = 'block';
-            if (coefficientsContainer) coefficientsContainer.style.display = 'none';
-            
-            // Ajouter le premier élément s'il n'y en a pas
-            const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
-            if (dynamicContainer && dynamicContainer.children.length === 0) {
-              addNewElement(moduleContainer);
-            }
-          } else {
-            const elementsContainer = moduleContainer.querySelector('.elements-main-container');
-            const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
-            
-            if (elementsContainer) elementsContainer.style.display = 'none';
-            if (coefficientsContainer) coefficientsContainer.style.display = 'block';
-          }
+     const elementRadios = document.querySelectorAll('input[name="hasElements"]');
+elementRadios.forEach(radio => {
+  radio.addEventListener('change', function() {
+    const moduleContainer = document.getElementById('moduleContainer');
+    if (!moduleContainer) return;
+
+    const elementsContainer = moduleContainer.querySelector('.elements-main-container');
+    const coefficientsContainer = moduleContainer.querySelector('.module-coefficients');
+    const dynamicContainer = moduleContainer.querySelector('.dynamic-elements-container');
+
+    if (this.value === 'yes') {
+      // ✅ Show elements, hide coefficients
+      if (elementsContainer) elementsContainer.style.display = 'block';
+      if (coefficientsContainer) coefficientsContainer.style.display = 'none';
+
+      // ✅ Clear inputs/selects inside coefficients
+      if (coefficientsContainer) {
+        const fields = coefficientsContainer.querySelectorAll('input, select');
+        fields.forEach(f => {
+          f.value = "";
+          f.removeAttribute("required");
         });
-      });
+      }
+
+      // ✅ Add first element if none
+      if (dynamicContainer && dynamicContainer.children.length === 0) {
+        addNewElement(moduleContainer);
+      }
+
+    } else {
+      // ✅ Show coefficients, hide elements
+      if (elementsContainer) elementsContainer.style.display = 'none';
+      if (coefficientsContainer) coefficientsContainer.style.display = 'block';
+
+      // ✅ Remove all dynamic elements
+      if (dynamicContainer) {
+        dynamicContainer.innerHTML = '';
+      }
+
+      // ✅ Clear inputs/selects inside elements
+      if (elementsContainer) {
+        const fields = elementsContainer.querySelectorAll('input, select');
+        fields.forEach(f => {
+          f.value = "";
+          f.removeAttribute("required");
+        });
+      }
+    }
+  });
+});
+
       
       // Configurer le bouton d'ajout d'élément
       const addElementBtn = document.querySelector('.add-element-btn');
