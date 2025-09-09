@@ -14,7 +14,7 @@ class AdminModel3
 
      /////////////////////////////////////profs_Model/////////////////////////////////////////////////////////
 
-     public function addProfessor($userData, $profData, $roles = []) {
+public function addProfessor($userData, $profData, $roles = []) {
         $this->db->beginTransaction();
         try {
             // Validation des données
@@ -56,12 +56,12 @@ class AdminModel3
                 INSERT INTO utilisateurs (username, password_hash, email, role, actuel)
                 VALUES (?, ?, ?, ?, ?)
             ");
-            $passwordHash = password_hash($userData['password'], PASSWORD_DEFAULT);
+            $passwordHash = password_hash($userData['password'], PASSWORD_BCRYPT);
             $stmt->execute([
                 $userData['username'],
                 $passwordHash,
                 $userData['email'],
-                $userData['role'],
+                "prof",
                 1
             ]);
             $userId = $this->db->lastInsertId();
@@ -119,8 +119,24 @@ class AdminModel3
                 }
             }
 
-            // Mise à jour du chef de département, si applicable
-            if ($userData['role'] === 'chef_dep') {
+            // --- Mise à jour du chef de département ---
+            if ($userData['role'] === 'chef_dep' && !empty($profData['department_id'])) {
+                // 1. Récupérer l'ancien chef
+                $stmt = $this->db->prepare("
+                    SELECT head_professor_id 
+                    FROM departements 
+                    WHERE department_id = ?
+                ");
+                $stmt->execute([$profData['department_id']]);
+                $oldChef = $stmt->fetchColumn();
+
+                $stmt = $this->db->prepare("
+                        DELETE FROM professor_roles 
+                        WHERE user_id = ? AND role = 'Chef_de_Departement'
+                    ");
+                $stmt->execute([$oldChef]);
+
+                // 3. Assigner le nouveau chef
                 $stmt = $this->db->prepare("
                     UPDATE departements SET head_professor_id = ?
                     WHERE department_id = ?
@@ -128,14 +144,31 @@ class AdminModel3
                 $stmt->execute([$userId, $profData['department_id']]);
             }
 
-            // Mise à jour du chef de filière, si applicable
+            // --- Mise à jour du chef de filière ---
             if ($userData['role'] === 'chef_fill' && !empty($profData['field_id'])) {
+                // 1. Récupérer l'ancien chef
+                $stmt = $this->db->prepare("
+                    SELECT head_professor_id 
+                    FROM filieres 
+                    WHERE field_id = ?
+                ");
+                $stmt->execute([$profData['field_id']]);
+                $oldChef = $stmt->fetchColumn();
+
+                $stmt = $this->db->prepare("
+                        DELETE FROM professor_roles 
+                        WHERE user_id = ? AND role = 'Chef_de_Filiere'
+                    ");
+                $stmt->execute([$oldChef]);
+
+                // 3. Assigner le nouveau chef
                 $stmt = $this->db->prepare("
                     UPDATE filieres SET head_professor_id = ?
                     WHERE field_id = ?
                 ");
                 $stmt->execute([$userId, $profData['field_id']]);
             }
+
 
             $this->db->commit();
             return [
@@ -161,7 +194,6 @@ class AdminModel3
             ];
         }
     }
-
     public function getAllYears()
     {
         $stmt = $this->db->query("SELECT * FROM annees_academiques");
@@ -180,6 +212,7 @@ class AdminModel3
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+   
      public function getYear()
     {
         $stmt = $this->db->query("SELECT annee_id, current_flag 
@@ -193,11 +226,19 @@ class AdminModel3
 {
     try {
         $query = "
-            SELECT p.*, u.email, u.role, d.nom AS department_nom 
+            SELECT 
+                p.*, 
+                u.email, 
+                pr.role, 
+                d.nom AS department_nom
             FROM professeurs p
-            JOIN utilisateurs u ON p.user_id = u.user_id
-            JOIN departements d ON p.department_id = d.department_id
-            WHERE p.actuel = 1
+            LEFT JOIN departements d 
+                ON p.department_id = d.department_id
+            LEFT JOIN utilisateurs u 
+                ON p.user_id = u.user_id
+            LEFT JOIN professor_roles pr 
+                ON p.user_id = pr.user_id
+            WHERE p.actuel = 1;
         ";
         if ($search) {
             $query .= " AND (p.nom LIKE :search OR p.prenom LIKE :search OR u.email LIKE :search)";
@@ -267,7 +308,7 @@ class AdminModel3
                 ");
                 $stmt->execute([
                     $profData['email'],
-                    $profData['role'],
+                    "prof",
                     $passwordHash,
                     1,
                     $userId
@@ -280,7 +321,7 @@ class AdminModel3
                 ");
                 $stmt->execute([
                     $profData['email'],
-                    $profData['role'],
+                    "prof",
                     1,
                     $userId
                 ]);
@@ -313,6 +354,60 @@ class AdminModel3
             'chef_element' => 'Chef_de_Element'
         ];
 
+        // Mise à jour du chef de département, si applicable
+        if ($profData['role'] === 'chef_dep') {
+            $stmt = $this->db->prepare("
+                    SELECT head_professor_id 
+                    FROM departements 
+                    WHERE department_id = ?
+                ");
+                $stmt->execute([$profData['department_id']]);
+                $oldChef = $stmt->fetchColumn();
+
+                $stmt = $this->db->prepare("
+                        UPDATE   professor_roles SET role='Regular'
+                        WHERE user_id = ? 
+                    ");
+                $stmt->execute([$oldChef]);
+            $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+            $stmt = $this->db->prepare("
+                UPDATE departements SET head_professor_id = ?
+                WHERE department_id = ?
+            ");
+            $stmt->execute([$userId, $profData['department_id']]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+        }
+
+        // Mise à jour du chef de filière, si applicable
+        if ($profData['role'] === 'chef_fill' && !empty($profData['field_id'])) {
+            $stmt = $this->db->prepare("
+                    SELECT head_professor_id 
+                    FROM filieres 
+                    WHERE field_id = ?
+                ");
+                $stmt->execute([$profData['field_id']]);
+                $oldChef = $stmt->fetchColumn();
+
+                $stmt = $this->db->prepare("
+                        UPDATE   professor_roles SET role='Regular'
+                        WHERE user_id = ? 
+                    ");
+                $stmt->execute([$oldChef]);
+            $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+            $stmt = $this->db->prepare("
+                UPDATE filieres SET head_professor_id = ?
+                WHERE field_id = ?
+            ");
+            $stmt->execute([$userId, $profData['field_id']]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+        }
+
         // Supprimer les anciens rôles pour cet utilisateur
         $stmt = $this->db->prepare("DELETE FROM professor_roles WHERE user_id = ?");
         $stmt->execute([$userId]);
@@ -344,33 +439,7 @@ class AdminModel3
             }
         }
 
-        // Mise à jour du chef de département, si applicable
-        if ($profData['role'] === 'chef_dep') {
-            $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
-            $stmt->execute([$userId]);
-            $stmt = $this->db->prepare("
-                UPDATE departements SET head_professor_id = ?
-                WHERE department_id = ?
-            ");
-            $stmt->execute([$userId, $profData['department_id']]);
-        } else {
-            $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
-            $stmt->execute([$userId]);
-        }
-
-        // Mise à jour du chef de filière, si applicable
-        if ($profData['role'] === 'chef_fill' && !empty($profData['field_id'])) {
-            $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
-            $stmt->execute([$userId]);
-            $stmt = $this->db->prepare("
-                UPDATE filieres SET head_professor_id = ?
-                WHERE field_id = ?
-            ");
-            $stmt->execute([$userId, $profData['field_id']]);
-        } else {
-            $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
-            $stmt->execute([$userId]);
-        }
+        
 
         $this->db->commit();
         return [
@@ -397,7 +466,7 @@ class AdminModel3
     }
 }
 
-    public function deleteProfessor($userId)
+     public function deleteProfessor($userId)
     {
         try {
             $this->db->beginTransaction();
@@ -408,6 +477,8 @@ class AdminModel3
             $stmt = $this->db->prepare("UPDATE departements SET head_professor_id = NULL WHERE head_professor_id = ?");
             $stmt->execute([$userId]);
             $stmt = $this->db->prepare("UPDATE filieres SET head_professor_id = NULL WHERE head_professor_id = ?");
+            $stmt->execute([$userId]);
+            $stmt = $this->db->prepare("DELETE FROM  professor_roles  WHERE user_id = ?");
             $stmt->execute([$userId]);
             $this->db->commit();
             return true;
@@ -422,10 +493,11 @@ class AdminModel3
 {
     try {
         $stmt = $this->db->prepare("
-            SELECT u.user_id, u.username, u.email, u.role AS system_role, 
+            SELECT u.user_id, u.username, u.email, pr.role AS system_role, 
                    p.cin, p.nom, p.prenom, p.telephone, p.department_id, 
                    f.field_id AS assigned_field_id
             FROM utilisateurs u
+            LEFT JOIN professor_roles pr ON pr.user_id=u.user_id
             JOIN professeurs p ON u.user_id = p.user_id
             LEFT JOIN filieres f ON f.head_professor_id = u.user_id
             WHERE u.user_id = ? AND u.actuel = 1 AND p.actuel = 1
@@ -457,7 +529,9 @@ class AdminModel3
             $stmt = $this->db->prepare("
                 SELECT p.*, u.email 
                 FROM professeurs p
-                JOIN utilisateurs u ON p.user_id = u.user_id
+                LEFT JOIN professor_roles pr ON pr.user_id=p.user_id
+
+            JOIN utilisateurs u ON p.user_id = u.user_id
                 WHERE p.department_id = ? AND p.actuel = 1
             ");
             $stmt->execute([$departmentId]);
@@ -472,8 +546,9 @@ class AdminModel3
 {
     try {
         $query = "
-            SELECT DISTINCT p.user_id, p.nom, p.prenom, p.telephone, p.cin, u.email, u.role, d.nom AS department_nom
+            SELECT DISTINCT p.user_id, p.nom, p.prenom, p.telephone, p.cin, u.email, pr.role, d.nom AS department_nom
             FROM professeurs p
+            LEFT JOIN professor_roles pr ON pr.user_id=p.user_id
             JOIN utilisateurs u ON p.user_id = u.user_id
             JOIN departements d ON p.department_id = d.department_id
             WHERE (p.annee_id = ? OR p.annee_id IS NULL) AND (p.actuel = 1 OR p.actuel IS NULL)
@@ -503,8 +578,9 @@ class AdminModel3
 {
     try {
         $query = "
-            SELECT DISTINCT p.user_id, p.nom, p.prenom, p.telephone, p.cin, u.email, u.role, d.nom AS department_nom
+            SELECT DISTINCT p.user_id, p.nom, p.prenom, p.telephone, p.cin, u.email, pr.role, d.nom AS department_nom
             FROM professeurs p
+            LEFT JOIN professor_roles pr ON pr.user_id=p.user_id
             JOIN utilisateurs u ON p.user_id = u.user_id
             LEFT JOIN departements d ON p.department_id = d.department_id
             WHERE p.department_id = ? AND (p.annee_id = ? OR p.annee_id IS NULL) AND p.actuel = 1
@@ -540,7 +616,7 @@ class AdminModel3
                 GROUP_CONCAT(DISTINCT m.nom SEPARATOR ', ') AS modules,
                 GROUP_CONCAT(DISTINCT ts.nom SEPARATOR ', ') AS tp_sessions
             FROM professeurs p
-            JOIN utilisateurs u ON p.user_id = u.user_id
+            LEFT JOIN professor_roles pr ON pr.user_id=p.user_id
             LEFT JOIN departements d ON p.department_id = d.department_id
             LEFT JOIN professor_module pm ON p.user_id = pm.user_id
             LEFT JOIN modules m ON pm.module_id = m.module_id
