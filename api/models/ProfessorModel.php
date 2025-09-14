@@ -97,27 +97,29 @@ class ProfessorModel {
      * @return array Les éléments enseignés avec les rôles associés.
      */
     public function getProfessorElements($userId, $semestreId = null, $etapeId = null, $fieldId = null) {
-        try {
-            $sql = "
-                SELECT
-                    e.element_id,
-                    e.nom,
-                    m.code AS module_code,
-                    m.nom AS module_name,
-                    s.nom AS semestre_nom,
-                    aa.annee_id AS annee_academique,
-                    f.nom AS filiere_nom,
-                    eta.nom_etape AS etape_nom, -- Ajout du nom de l'étape
-                    e.Ref_prof_element,
-                    e.Ref_prof_tp
-                FROM elements e
-                JOIN modules m ON e.module_id = m.module_id
-                LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
-                LEFT JOIN annees_academiques aa ON m.annee_id = aa.annee_id
-                LEFT JOIN filieres f ON m.field_id = f.field_id
-                LEFT JOIN etapes eta ON s.etape_id = eta.etape_id -- Jointure avec la table etapes
-                WHERE (e.Ref_prof_element = :userId OR e.Ref_prof_tp = :userId)
-            ";
+    try {
+        $sql = "
+            SELECT
+                e.element_id,
+                e.nom,
+                m.module_id, -- AJOUTER CETTE LIGNE
+                m.code AS module_code,
+                m.nom AS module_name,
+                m.field_id, -- AJOUTER CETTE LIGNE
+                s.nom AS semestre_nom,
+                aa.annee_id AS annee_academique,
+                f.nom AS filiere_nom,
+                eta.nom_etape AS etape_nom,
+                e.Ref_prof_element,
+                e.Ref_prof_tp
+            FROM elements e
+            JOIN modules m ON e.module_id = m.module_id
+            LEFT JOIN semestres s ON m.semestre_id = s.semestre_id
+            LEFT JOIN annees_academiques aa ON m.annee_id = aa.annee_id
+            LEFT JOIN filieres f ON m.field_id = f.field_id
+            LEFT JOIN etapes eta ON s.etape_id = eta.etape_id
+            WHERE (e.Ref_prof_element = :userId OR e.Ref_prof_tp = :userId)
+        ";
             $params = [':userId' => $userId];
 
             if ($semestreId !== null && $semestreId !== '') {
@@ -1101,33 +1103,57 @@ public function getAllCycles() {
         return [];
     }
 }
-public function getProfessorNotesForModuleCSV($userId, $moduleId, $fieldId, $semestreId = null, $etapeId = null) {
-        try {
-           
 
-            // Vérifier que le module appartient à la filière spécifiée
+    /**
+     * Récupère les notes d'un module spécifique pour un professeur donné,
+     * formatées pour une exportation CSV.
+     * La méthode vérifie que le professeur enseigne bien dans le module spécifié.
+     *
+     * @param int $userId L'ID du professeur.
+     * @param int $moduleId L'ID du module.
+     * @param int $fieldId L'ID de la filière (pour s'assurer du contexte).
+     * @param int|null $semestreId Filtre optionnel par semestre.
+     * @param int|null $etapeId Filtre optionnel par étape.
+     * @return array Les données des notes prêtes pour le CSV.
+     */
+    public function getProfessorNotesForModuleCSV($userId, $moduleId, $fieldId, $semestreId = null, $etapeId = null) {
+        try {
+            // 1. Vérifier que le professeur enseigne au moins un élément dans ce module.
+            // C'est une vérification de sécurité cruciale.
+            $stmtAuth = $this->db->prepare("
+                SELECT 1 FROM elements 
+                WHERE module_id = ? AND (Ref_prof_element = ? OR Ref_prof_tp = ?)
+                LIMIT 1
+            ");
+            $stmtAuth->execute([$moduleId, $userId, $userId]);
+            if ($stmtAuth->fetch() === false) {
+                return []; // Le professeur n'enseigne pas dans ce module, il ne peut pas exporter.
+            }
+
+            // 2. Vérifier que le module appartient bien à la filière spécifiée.
             $stmtCheckField = $this->db->prepare("SELECT 1 FROM modules WHERE module_id = ? AND field_id = ?");
             $stmtCheckField->execute([$moduleId, $fieldId]);
             if ($stmtCheckField->fetch() === false) {
-                return []; // Le module n'appartient pas à cette filière
+                return []; // Le module n'appartient pas à cette filière, la requête est incohérente.
             }
 
+            // 3. Si les vérifications passent, récupérer les données.
             $sql = "
                 SELECT
+                    et.user_id AS student_id,
                     et.nom AS student_nom,
                     et.prenom AS student_prenom,
-                    et.user_id AS student_id, -- ID étudiant pour référence
-                    el.nom AS element_name,
-                    m.nom AS module_name,
                     f.nom AS filiere_nom,
+                    s.nom AS semestre_nom,
+                    eta.nom_etape AS etape_nom,
+                    m.nom AS module_name,
+                    el.nom AS element_name,
                     n.note_tp,
                     n.note_td,
                     n.note_cc,
                     n.note_exam,
                     n.note_rattrapage,
-                    n.note_finale,
-                    s.nom AS semestre_nom,
-                    eta.nom_etape AS etape_nom
+                    n.note_finale
                 FROM notes n
                 JOIN etudiants et ON n.student_id = et.user_id
                 JOIN elements el ON n.element_id = el.element_id
@@ -1137,12 +1163,10 @@ public function getProfessorNotesForModuleCSV($userId, $moduleId, $fieldId, $sem
                 LEFT JOIN etapes eta ON s.etape_id = eta.etape_id
                 WHERE m.module_id = :moduleId
                   AND m.field_id = :fieldId
-                  AND (el.Ref_prof_element = :userId OR el.Ref_prof_tp = :userId)
             ";
             $params = [
                 ':moduleId' => $moduleId,
-                ':fieldId' => $fieldId,
-                ':userId' => $userId
+                ':fieldId' => $fieldId
             ];
 
             if ($semestreId !== null && $semestreId !== '') {
@@ -1154,15 +1178,15 @@ public function getProfessorNotesForModuleCSV($userId, $moduleId, $fieldId, $sem
                 $params[':etapeId'] = $etapeId;
             }
 
-            $sql .= " ORDER BY student_nom, student_prenom, element_name";
+            $sql .= " ORDER BY et.nom, et.prenom, el.nom";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         } catch (PDOException $e) {
             error_log("Database error in getProfessorNotesForModuleCSV: " . $e->getMessage());
             return [];
         }
     }
-    
 }

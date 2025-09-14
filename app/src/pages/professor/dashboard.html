@@ -1046,104 +1046,138 @@
          * Met à jour la variable globale `elementTeachingRoles` avec les rôles spécifiques.
          */
         async function loadTeachingElements() {
-            console.log('[DEBUG] loadTeachingElements called.'); // Debug: Vérifie l'appel de la fonction
-            try {
-                if (!currentUser || !currentUser.user_id) {
-                    console.error("[DEBUG] User data not found in localStorage or user_id is missing.");
-                    // Optionally redirect to login or show an error
-                    return;
+        console.log('[DEBUG] loadTeachingElements called.');
+        try {
+            const currentUserId = currentUser.user_id;
+            const semestreId = document.getElementById('professorSemestreFilter').value;
+            const etapeId = document.getElementById('professorEtapeFilter').value;
+
+            let url = `${adminURL}/professor/elements`;
+            const params = new URLSearchParams();
+            if (semestreId) params.append('semestre_id', semestreId);
+            if (etapeId) params.append('etape_id', etapeId);
+            if (params.toString()) {
+                url += `?${params.toString()}`;
+            }
+
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Erreur lors du chargement des éléments.');
+            }
+
+            const elements = result.data;
+            const container = document.getElementById('elementsList');
+            container.innerHTML = '';
+            elementTeachingRoles = {};
+
+            if (!Array.isArray(elements) || elements.length === 0) {
+                container.innerHTML = '<div class="list-group-item text-center text-muted">Aucun élément enseigné trouvé avec les filtres actuels.</div>';
+                return;
+            }
+
+            // Regrouper les éléments par module
+            const modules = {};
+            elements.forEach(element => {
+                if (!modules[element.module_id]) {
+                    modules[element.module_id] = {
+                        name: element.module_name,
+                        code: element.module_code,
+                        field_id: element.field_id, // Cette valeur ne sera plus undefined
+                        filiere_nom: element.filiere_nom,
+                        elements: []
+                    };
                 }
-                const currentUserId = currentUser.user_id; // Get the current logged-in user's ID
+                modules[element.module_id].elements.push(element);
+            });
 
-                const semestreId = document.getElementById('professorSemestreFilter').value;
-                const etapeId = document.getElementById('professorEtapeFilter').value; // Changed from anneeId
-                const fieldId = document.getElementById('professorFiliereFilter')?.value; // Only if visible and selected
+            // Afficher les modules et leurs éléments
+            for (const moduleId in modules) {
+                const moduleData = modules[moduleId];
+                
+                const moduleDiv = document.createElement('div');
+                moduleDiv.className = 'content-section mb-4';
+                moduleDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">${moduleData.code} - ${moduleData.name}</h5>
+                            <span class="badge bg-dark">${moduleData.filiere_nom}</span>
+                        </div>
+                        <!-- CET APPEL EST MAINTENANT CORRECT -->
+                        <button class="btn btn-sm btn-outline-success" onclick="exportModuleNotes(${moduleId}, ${moduleData.field_id})">
+                            <i class="fas fa-file-csv me-2"></i>Exporter les notes du module
+                        </button>
+                    </div>
+                    <hr>
+                    <div class="list-group">
+                        <!-- Les éléments seront ajoutés ici -->
+                    </div>
+                `;
+                
+                const elementsContainer = moduleDiv.querySelector('.list-group');
 
-                let url = adminURL+'/professor/elements';
-                const params = new URLSearchParams();
-                // userId is handled by the backend session, no need to send it as query param
-                if (semestreId) params.append('semestre_id', semestreId);
-                if (etapeId) params.append('etape_id', etapeId); // Changed from annee_id
-                // Only append field_id if the filter is visible (meaning user is chef_dep) and a value is selected
-                if (document.getElementById('professorFiliereFilterContainer')?.style.display !== 'none' && fieldId) {
-                    params.append('field_id', fieldId);
-                }
-                if (params.toString()) {
-                    url += `?${params.toString()}`;
-                }
-                console.log('[DEBUG] Fetching elements from URL:', url);
+                moduleData.elements.forEach(element => {
+                    const isMainProf = (element.Ref_prof_element == currentUserId);
+                    const isTpProf = (element.Ref_prof_tp == currentUserId);
+                    elementTeachingRoles[element.element_id] = { is_main_prof: isMainProf, is_tp_prof: isTpProf };
 
-                const response = await fetch(url);
-                // Check if response is JSON before parsing
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    const result = await response.json(); // Read response body once
-                    console.log('[DEBUG] API response for teaching elements:', result);
+                    let roleIndicator = '';
+                    if (isMainProf && isTpProf) roleIndicator = '<span class="badge bg-success rounded-pill ms-2">Prof. Principal & TP</span>';
+                    else if (isMainProf) roleIndicator = '<span class="badge bg-success rounded-pill ms-2">Prof. Principal</span>';
+                    else if (isTpProf) roleIndicator = '<span class="badge bg-info rounded-pill ms-2">Prof. TP</span>';
 
-                    if (!response.ok) {
-                        throw new Error(result.error || 'Erreur lors du chargement des éléments enseignés.');
-                    }
-                    const elements = result.data;
-
-                    const container = document.getElementById('elementsList');
-                    container.innerHTML = '';
-                    elementTeachingRoles = {}; // Reset previous roles
-
-                    if (!Array.isArray(elements) || elements.length === 0) {
-                        container.innerHTML = '<div class="list-group-item text-center text-muted">Aucun élément enseigné trouvé.</div>';
-                        return;
-                    }
-
-                    elements.forEach(element => {
-                        // Détermine si le professeur actuel est le prof principal ou le prof de TP pour cet élément
-                        const isMainProf = (element.Ref_prof_element == currentUserId);
-                        const isTpProf = (element.Ref_prof_tp == currentUserId);
-
-                        // Stocke ces rôles pour une utilisation ultérieure lors de l'affichage des notes
-                        elementTeachingRoles[element.element_id] = {
-                            is_main_prof: isMainProf,
-                            is_tp_prof: isTpProf
-                        };
-
-                        const elem = document.createElement('a');
-                        elem.href = '#';
-                        elem.className = 'list-group-item list-group-item-action rounded';
-                        let roleIndicator = '';
-                        if (isMainProf && isTpProf) {
-                            roleIndicator = '<span class="badge bg-success rounded-pill ms-2">Prof. Principal & TP</span>';
-                        } else if (isMainProf) {
-                            roleIndicator = '<span class="badge bg-success rounded-pill ms-2">Prof. Principal</span>';
-                        } else if (isTpProf) {
-                            roleIndicator = '<span class="badge bg-info rounded-pill ms-2">Prof. TP</span>';
-                        }
-
-                        elem.innerHTML = `
-                            <strong>${element.module_code}</strong> - ${element.nom}
-                            <span class="badge bg-secondary rounded-pill">ID: ${element.element_id}</span>
+                    const elemLink = document.createElement('a');
+                    elemLink.href = '#';
+                    elemLink.className = 'list-group-item list-group-item-action';
+                    elemLink.innerHTML = `
+                        ${element.nom}
+                        <div>
                             ${roleIndicator}
                             <span class="badge bg-primary rounded-pill ms-2">${element.semestre_nom || 'N/A'}</span>
-                            <span class="badge bg-warning text-dark rounded-pill ms-2">${element.etape_nom || 'N/A'}</span> <!-- Changed from annee_academique -->
-                            ${element.filiere_nom ? `<span class="badge bg-dark rounded-pill ms-2">${element.filiere_nom}</span>` : ''}
-                        `;
-                        elem.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            console.log('[DEBUG] Element link clicked for element ID:', element.element_id); // Debug
-                            loadElementNotes(element.element_id, element.nom);
-                        });
-                        container.appendChild(elem);
+                            <span class="badge bg-warning text-dark rounded-pill ms-2">${element.etape_nom || 'N/A'}</span>
+                        </div>
+                    `;
+                    elemLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        loadElementNotes(element.element_id, element.nom);
                     });
-                } else {
-                    // If not JSON, it's likely a PHP error page
-                    const errorText = await response.text();
-                    console.error('[DEBUG] Non-JSON response received:', errorText);
-                    throw new Error('Réponse non-JSON reçue du serveur. Vérifiez les logs PHP pour les erreurs.');
-                }
-            } catch (error) {
-                console.error('[DEBUG] Erreur lors du chargement des éléments enseignés:', error);
-                document.getElementById('elementsList').innerHTML = `<div class="list-group-item text-center text-danger">Erreur de chargement des éléments: ${error.message}</div>`;
-            }
-        }
+                    elementsContainer.appendChild(elemLink);
+                });
 
+                container.appendChild(moduleDiv);
+            }
+
+        } catch (error) {
+            console.error('[DEBUG] Erreur lors du chargement des éléments enseignés:', error);
+            document.getElementById('elementsList').innerHTML = `<div class="alert alert-danger">Erreur de chargement: ${error.message}</div>`;
+        }
+    }
+
+/**
+ * Déclenche le téléchargement du fichier CSV pour un module et une filière donnés.
+ * @param {int} moduleId L'ID du module à exporter.
+ * @param {int} fieldId L'ID de la filière associée.
+ */
+function exportModuleNotes(moduleId, fieldId) {
+    console.log(`[DEBUG] Exporting notes for module ${moduleId} in field ${fieldId}`);
+
+    // Récupérer les filtres actuels pour les passer à l'export
+    const semestreId = document.getElementById('professorSemestreFilter').value;
+    const etapeId = document.getElementById('professorEtapeFilter').value;
+
+    const params = new URLSearchParams();
+    if (semestreId) params.append('semestre_id', semestreId);
+    if (etapeId) params.append('etape_id', etapeId);
+
+    let exportUrl = `${adminURL}/professor/export/module/${moduleId}/field/${fieldId}`;
+    if (params.toString()) {
+        exportUrl += `?${params.toString()}`;
+    }
+
+    // Rediriger le navigateur vers l'URL d'export, ce qui lancera le téléchargement.
+    window.location.href = exportUrl;
+}
         /**
          * Charge et affiche les notes pour un élément spécifique.
          * Active/désactive les champs de saisie en fonction du rôle d'enseignement du professeur

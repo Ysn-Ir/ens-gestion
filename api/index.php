@@ -262,6 +262,14 @@ try {
             require_once __DIR__.'/controllers/ProfessorController.php';
             (new ProfessorController())->getEtapesForDepartment($matches[1]);
             break;
+
+        //🔐 Professeur - Exporter les notes d'un module/filière en CSV
+        case preg_match('/^professor\/export\/module\/(\d+)\/field\/(\d+)$/', $request, $matches) && $_SERVER['REQUEST_METHOD'] === 'GET':
+            require_once __DIR__.'/middlewares/ProfessorMiddleware.php';
+            // La vérification se fera dans le contrôleur
+            require_once __DIR__.'/controllers/ProfessorController.php';
+            (new ProfessorController())->exportProfessorModuleNotesCSV($matches[1], $matches[2]); // $matches[1] = moduleId, $matches[2] = fieldId
+            break;
         //////////////////////////////////////////////////////////////////////////////////////
 
         case 'getAdminProfile':

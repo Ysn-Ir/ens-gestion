@@ -605,82 +605,71 @@ public function getEtapesForDepartment($departmentId) {
         $this->response->send(500, ['error' => 'Erreur interne.']);
     }
 }
-public function exportProfessorModuleNotesCSV($moduleId, $fieldId) {
+
+    /**
+     * Exporte les notes d'un module et d'une filière spécifiques pour le professeur connecté au format CSV.
+     * @param int $moduleId L'ID du module.
+     * @param int $fieldId L'ID de la filière.
+     */
+    public function exportProfessorModuleNotesCSV($moduleId, $fieldId) {
         try {
             (new ProfessorMiddleware())->verifyProfessor();
             $userId = $_SESSION['user']['user_id'];
 
-            // Récupérer les paramètres de requête optionnels
+            // Récupérer les paramètres de requête optionnels pour le filtrage
             $semestreId = filter_input(INPUT_GET, 'semestre_id', FILTER_VALIDATE_INT);
             $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
 
-            // Récupérer les notes à l'aide de la méthode du modèle
+            // Récupérer les notes à l'aide de la nouvelle méthode du modèle
             $notes = $this->model->getProfessorNotesForModuleCSV($userId, $moduleId, $fieldId, $semestreId, $etapeId);
 
             if (empty($notes)) {
-                $this->response->send(404, ['error' => 'Aucune note trouvée pour ce module et cette filière, ou vous n\'êtes pas autorisé.']);
+                // Si aucune note n'est trouvée (ou si le prof n'est pas autorisé), on envoie une erreur.
+                $this->response->send(404, ['error' => 'Aucune note trouvée pour cet export, ou vous n\'êtes pas autorisé à accéder à ce module.']);
                 return;
             }
 
             // Définir les en-têtes HTTP pour le téléchargement du fichier CSV
             header('Content-Type: text/csv; charset=utf-8');
-            header('Content-Disposition: attachment; filename="notes_module_' . $moduleId . 'filiere' . $fieldId . '.csv"');
-            header('Cache-Control: no-cache, no-store, must-revalidate');
-            header('Pragma: no-cache');
-            header('Expires: 0');
-
-            // Ouvrir la sortie pour écrire le CSV
+            header('Content-Disposition: attachment; filename="export_notes_module_' . $moduleId . '_filiere_' . $fieldId . '.csv"');
+            
             $output = fopen('php://output', 'w');
 
-            // Ajouter l'en-tête BOM pour UTF-8 (important pour les caractères spéciaux dans Excel)
             fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            // Définir les colonnes du CSV
-            $columns = [
-                'ID Étudiant',
-                'Nom Étudiant',
-                'Prénom Étudiant',
-                'Filière',
-                'Semestre',
-                'Étape',
-                'Module',
-                'Élément',
-                'Note TP',
-                'Note TD',
-                'Note CC',
-                'Note Examen',
-                'Note Rattrapage',
-                'Note Finale'
-            ];
-            fputcsv($output, $columns);
+            // MODIFICATION ICI : Ajouter le point-virgule comme séparateur
+            fputcsv($output, [
+                'ID Etudiant', 'Nom', 'Prenom', 'Filiere', 'Semestre', 'Etape',
+                'Module', 'Element', 'Note TP', 'Note TD', 'Note CC', 'Note Examen',
+                'Note Rattrapage', 'Note Finale'
+            ], ';');
 
-            // Écrire les données des notes
+            // Écrire les données des notes dans le fichier
             foreach ($notes as $note) {
-                $row = [
+                // MODIFICATION ICI : Ajouter le point-virgule comme séparateur
+                fputcsv($output, [
                     $note['student_id'],
                     $note['student_nom'],
                     $note['student_prenom'],
-                    $note['filiere_nom'],   
+                    $note['filiere_nom'],
                     $note['semestre_nom'],
                     $note['etape_nom'],
                     $note['module_name'],
                     $note['element_name'],
-                    $note['note_tp'] !== null ? $note['note_tp'] : '',
-                    $note['note_td'] !== null ? $note['note_td'] : '',
-                    $note['note_cc'] !== null ? $note['note_cc'] : '',
-                    $note['note_exam'] !== null ? $note['note_exam'] : '',
-                    $note['note_rattrapage'] !== null ? $note['note_rattrapage'] : '',
-                    $note['note_finale'] !== null ? $note['note_finale'] : ''
-                ];
-                fputcsv($output, $row);
+                    $note['note_tp'] ?? '',
+                    $note['note_td'] ?? '',
+                    $note['note_cc'] ?? '',
+                    $note['note_exam'] ?? '',
+                    $note['note_rattrapage'] ?? '',
+                    $note['note_finale'] ?? ''
+                ], ';');
             }
 
-            // Fermer le flux de sortie
             fclose($output);
-            exit; // Terminer l'exécution pour éviter tout contenu supplémentaire
+            exit;
+
         } catch (Exception $e) {
             error_log("Error in exportProfessorModuleNotesCSV: " . $e->getMessage());
-            $this->response->send(500, ['error' => 'Une erreur interne est survenue lors de l\'exportation des notes au format CSV.']);
         }
     }
 }
