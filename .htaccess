@@ -1,0 +1,12 @@
+RewriteEngine On
+RewriteBase /ens-gestion/api/
+
+# Ne pas réécrire les fichiers/dossiers existants
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Ne pas réécrire si déjà index.php
+RewriteCond %{REQUEST_URI} !index\.php$
+
+# Rediriger tout le reste vers index.php
+RewriteRule ^ index.php [QSA,L]

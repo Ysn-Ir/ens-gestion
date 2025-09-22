@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - Gestion des Inscriptions</title>
+    <style>
+        :root {
+            --primary-color: #667eea; --secondary-color: #764ba2; --danger-color: #dc3545;
+            --warning-color: #ffc107; --success-color: #28a745; --info-color: #17a2b8;
+            --light-color: #f5f7fa; --dark-color: #343a40; --text-color: #555;
+            --border-color: #dee2e6; --navbar-bg: #1e293b; --navbar-height: 60px;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05); --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'Roboto', sans-serif; background-color: var(--light-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* Top Navbar */
+        .navbar { background-color: var(--navbar-bg); color: white; height: var(--navbar-height); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; position: fixed; top: 0; left: 0; width: 100%; z-index: 100; box-shadow: var(--shadow-md); }
+        .navbar-header { font-size: 1.5rem; font-weight: bold; }
+        .navbar-nav { display: flex; gap: 1.5rem; }
+        .nav-item { color: #cbd5e1; text-decoration: none; font-size: 1rem; display: flex; align-items: center; transition: color 0.3s; cursor: pointer; }
+        .nav-item:hover { color: white; }
+        .nav-item.active { color: var(--primary-color); font-weight: 600; }
+        .nav-item .icon { margin-right: 0.5rem; font-size: 1.2rem; }
+        
+        /* Hamburger Menu for Mobile */
+        .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 0.3rem; }
+        .hamburger span { width: 25px; height: 3px; background-color: white; transition: all 0.3s; }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(7px, -6px); }
+        
+        /* Main Content */
+        .main-content { margin-top: var(--navbar-height); padding: 2rem; flex-grow: 1; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .main-header h1 { font-size: 2.2rem; color: var(--dark-color); margin-bottom: 0.5rem; }
+        .main-header .subtitle { font-size: 1.1rem; color: #6c757d; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 10px; box-shadow: var(--shadow-sm); display: flex; align-items: center; transition: transform 0.3s, box-shadow 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+        .stat-icon { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; color: white; margin-right: 1.5rem; }
+        .stat-icon.total { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+        .stat-icon.annee-nv { background: var(--danger-color); }
+        .stat-icon.modules-nv { background: var(--warning-color); }
+        .stat-icon.next-cycle { background: var(--success-color); }
+        .stat-info .stat-label { font-size: 0.9rem; color: #6c757d; }
+        .stat-info .stat-number { font-size: 2rem; font-weight: 700; color: var(--dark-color); }
+        
+        .card { background: white; border-radius: 10px; box-shadow: var(--shadow-sm); margin-bottom: 2rem; overflow: hidden; transition: box-shadow 0.3s; }
+        .card:hover { box-shadow: var(--shadow-md); }
+        .card-header { padding: 1rem 1.5rem; background-color: #f8f9fa; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .card-header h3 { font-size: 1.1rem; color: var(--dark-color); display: flex; align-items: center; }
+        .card-header .icon { margin-right: 0.75rem; }
+        .card-body { padding: 1.5rem; }
+        
+        .btn { padding: 0.7rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #5a67d8; }
+        .btn-secondary { background-color: #6c757d; color: white; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .actions { display: flex; gap: 0.5rem; }
+        
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        th { background-color: #f8f9fa; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        tbody tr { transition: background-color 0.3s; }
+        tbody tr:hover { background-color: #f1f3f5; }
+        
+        .message { padding: 1rem; margin-bottom: 1.5rem; border-radius: 5px; border: 1px solid transparent; display: none; animation: fadeIn 0.5s; }
+        .message.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .message.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        
+        .loading, .empty-state { text-align: center; padding: 3rem; color: #6c757d; font-style: italic; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: var(--shadow-md); }
+        .modal-header { border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-header h4 { font-size: 1.5rem; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .modal-body select { width: 100%; padding: 0.7rem; font-size: 1rem; border-radius: 5px; border: 1px solid var(--border-color); }
+        .modal-footer { border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem; }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .navbar { flex-direction: column; height: auto; padding: 1rem; }
+            .navbar-nav { flex-direction: column; gap: 1rem; display: none; width: 100%; }
+            .navbar-nav.active { display: flex; }
+            .hamburger { display: flex; position: absolute; right: 1.5rem; top: 1.5rem; }
+            .main-content { padding: 1rem; margin-top: 60px; } /* Adjust for mobile navbar */
+            .stats-grid { grid-template-columns: 1fr; }
+            .card-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+            .actions { flex-direction: column; }
+            th, td { padding: 0.75rem; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="navbar-header">🎓 ENS-Gestion</div>
+        <nav class="navbar-nav">
+            <a href="#dashboard" class="nav-item active"><span class="icon">🔄</span><span>Inscriptions</span></a>
+            <a href="#passing" class="nav-item"><span class="icon">👍</span><span>Passage Simple</span></a>
+        </nav>
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div id="message" class="message"></div>
+        
+        <div id="dashboard-page" class="page active">
+            <header class="main-header"><h1>Gestion des Inscriptions</h1><p class="subtitle">Suivi des étudiants pour la prochaine année académique.</p></header>
+            <div class="stats-grid" id="stats-grid"></div>
+            <div class="card" id="next-cycle-container">
+                <div class="card-header"><h3><span class="icon">🚀</span> Prêts pour le Cycle Suivant</h3></div>
+                <div class="card-body table-wrapper">
+                    <table><thead><tr><th>Nom</th><th>Prénom</th><th>CNE</th><th>Cycle Terminé</th><th>Action</th></tr></thead><tbody id="next-cycle-table-body"></tbody></table>
+                </div>
+            </div>
+            <div class="card" id="year-failed-container">
+                <div class="card-header"><h3><span class="icon">❌</span> Étudiants en Redoublement</h3></div>
+                <div class="card-body table-wrapper">
+                    <table><thead><tr><th>Nom</th><th>Prénom</th><th>CNE</th><th>Étape</th><th>Modules en Dette</th><th>Action</th></tr></thead><tbody id="year-failed-table-body"></tbody></table>
+                </div>
+            </div>
+            <div class="card" id="modules-remaining-container">
+                <div class="card-header"><h3><span class="icon">⚠️</span> Étudiants Passant avec Dette</h3></div>
+                <div class="card-body table-wrapper">
+                    <table><thead><tr><th>Nom</th><th>Prénom</th><th>CNE</th><th>Étape</th><th>Modules en Dette</th><th>Action</th></tr></thead><tbody id="modules-remaining-table-body"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <div id="passing-page" class="page">
+            <header class="main-header"><h1>Passage Simple</h1><p class="subtitle">Étudiants ayant validé et passant à l'étape suivante.</p></header>
+            <div class="card">
+                <div class="card-header"><h3><span class="icon">👍</span> Liste des Étudiants Passants</h3><button class="btn btn-primary" id="btn-enroll-all-passing">Inscrire les Étudiants Visibles</button></div>
+                <div class="card-body table-wrapper">
+                    <table><thead><tr><th>Nom</th><th>Prénom</th><th>CNE</th><th>Étape Actuelle</th><th>Prochaine Étape</th><th>Action</th></tr></thead><tbody id="passing-table-body"></tbody></table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="field-choice-modal">
+        <div class="modal-content"><div class="modal-header"><h4>Choisir une Filière</h4><p>Pour <strong id="modal-student-name"></strong>.</p></div><div class="modal-body"><label for="field-select">Filières disponibles :</label><select id="field-select"></select></div><div class="modal-footer"><button type="button" class="btn btn-secondary" id="modal-btn-cancel">Annuler</button><button type="button" class="btn btn-primary" id="modal-btn-confirm">Confirmer</button></div></div>
+    </div>
+    <div class="modal-overlay" id="history-modal">
+        <div class="modal-content"><div class="modal-header"><h4>Historique du Parcours</h4><p>De <strong id="history-student-name"></strong>.</p></div><div class="modal-body"><div class="table-wrapper"><table><thead><tr><th>Année</th><th>Cycle</th><th>Étape</th><th>Note</th><th>Décision</th><th>Dette</th></tr></thead><tbody id="history-table-body"></tbody></table></div></div><div class="modal-footer"><button type="button" class="btn btn-primary" id="history-modal-btn-close">Fermer</button></div></div>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // --- VARIABLES GLOBALES ---
+    const API_URL = "http://localhost/ens-gestion/api/reinscription.php";
+
+    // Sélecteurs DOM
+    const mainContent = document.querySelector(".main-content");
+    const navLinks = document.querySelectorAll(".navbar-nav a");
+    const pages = document.querySelectorAll(".page");
+    const statsGrid = document.getElementById("stats-grid");
+    const yearFailedTableBody = document.getElementById("year-failed-table-body");
+    const modulesRemainingTableBody = document.getElementById("modules-remaining-table-body");
+    const nextCycleTableBody = document.getElementById("next-cycle-table-body");
+    const passingTableBody = document.getElementById("passing-table-body");
+    
+    // Modale Choix Filière
+    const fieldChoiceModal = document.getElementById("field-choice-modal");
+    const modalStudentName = document.getElementById("modal-student-name");
+    const fieldSelect = document.getElementById("field-select");
+    const modalBtnCancel = document.getElementById("modal-btn-cancel");
+    const modalBtnConfirm = document.getElementById("modal-btn-confirm");
+
+    // Modale Historique
+    const historyModal = document.getElementById("history-modal");
+    const historyStudentName = document.getElementById("history-student-name");
+    const historyTableBody = document.getElementById("history-table-body");
+    const historyModalBtnClose = document.getElementById("history-modal-btn-close");
+    
+    // Hamburger Menu
+    const hamburger = document.querySelector('.hamburger');
+    const navbarNav = document.querySelector('.navbar-nav');
+    
+    // Variable pour stocker l'étudiant en cours de traitement dans une modale
+    let currentStudentForModal = null;
+
+    // --- FONCTIONS UTILITAIRES ---
+    function showMessage(text, type = "info") {
+        const messageDiv = document.getElementById("message");
+        if (!messageDiv) return;
+        messageDiv.textContent = text;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = "block";
+        setTimeout(() => { messageDiv.style.display = "none"; }, 5000);
+    }
+
+    // --- GESTION DE LA NAVIGATION ---
+    function switchPage(pageId) {
+        pages.forEach(p => p.classList.remove('active'));
+        const activePage = document.getElementById(pageId + '-page');
+        if (activePage) activePage.classList.add('active');
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === '#' + pageId) link.classList.add('active');
+        });
+
+        // Charger les données de la page sélectionnée
+        if (pageId === 'dashboard') {
+            setDashboardLoading();
+            fetchDashboardData();
+        }
+        if (pageId === 'passing') {
+            passingTableBody.innerHTML = '<tr><td colspan="6" class="loading">Chargement...</td></tr>';
+            fetchPassingStudents();
+        }
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener("click", e => {
+            e.preventDefault();
+            const pageId = e.currentTarget.getAttribute("href").substring(1);
+            history.pushState(null, '', '#' + pageId);
+            switchPage(pageId);
+            if (window.innerWidth <= 768) {
+                navbarNav.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
+        });
+    });
+    
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navbarNav.classList.toggle('active');
+    });
+
+    // --- FONCTIONS D'APPEL API ---
+    async function fetchDashboardData() {
+        try {
+            const [reinscriptionResponse, nextCycleResponse] = await Promise.all([
+                fetch(API_URL + '?action=get_reinscription_data'), // Correct !
+                fetch(API_URL + '?action=get_next_cycle_students') // Correct !
+            ]);
+
+            if (!reinscriptionResponse.ok) {
+                const errorData = await reinscriptionResponse.json().catch(() => ({ message: 'Réponse non-JSON pour réinscriptions' }));
+                throw new Error(errorData.message || 'Erreur serveur (réinscriptions)');
+            }
+            const reinscriptionResult = await reinscriptionResponse.json();
+
+            if (!nextCycleResponse.ok) {
+                const errorData = await nextCycleResponse.json().catch(() => ({ message: 'Réponse non-JSON pour cycle suivant' }));
+                throw new Error(errorData.message || 'Erreur serveur (cycle suivant)');
+            }
+            const nextCycleResult = await nextCycleResponse.json();
+
+            renderStats(reinscriptionResult.data, nextCycleResult.data);
+            renderReinscriptionTables(reinscriptionResult.data);
+            renderNextCycleTable(nextCycleResult.data);
+
+        } catch (error) {
+            console.error('Erreur fetchDashboardData:', error);
+            showMessage(error.message, "error");
+            // Reset to empty on error
+            renderStats({}, []);
+            yearFailedTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Erreur de chargement.</td></tr>';
+            modulesRemainingTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Erreur de chargement.</td></tr>';
+            nextCycleTableBody.innerHTML = '<tr><td colspan="5" class="empty-state">Erreur de chargement.</td></tr>';
+        }
+    }
+
+    async function fetchPassingStudents() {
+        try {
+            const response = await fetch(API_URL + '?action=get_passing_students');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Réponse non-JSON' }));
+                throw new Error(errorData.message || 'Erreur serveur');
+            }
+            const result = await response.json();
+            renderPassingTable(result.data);
+        } catch (error) {
+            console.error('Erreur fetchPassingStudents:', error);
+            showMessage(error.message, "error");
+            passingTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Erreur de chargement.</td></tr>';
+        }
+    }
+
+    // --- FONCTIONS DE RENDU (AFFICHAGE) ---
+    function setDashboardLoading() {
+        statsGrid.innerHTML = '';
+        yearFailedTableBody.innerHTML = '<tr><td colspan="6" class="loading">Chargement...</td></tr>';
+        modulesRemainingTableBody.innerHTML = '<tr><td colspan="6" class="loading">Chargement...</td></tr>';
+        nextCycleTableBody.innerHTML = '<tr><td colspan="5" class="loading">Chargement...</td></tr>';
+    }
+
+    function renderStats(reinscriptionData, nextCycleStudents) {
+        const anneeNvCount = reinscriptionData.annee_non_valide?.length || 0;
+        const modulesRestantsCount = reinscriptionData.modules_restants?.length || 0;
+        const nextCycleCount = nextCycleStudents?.length || 0;
+        const total = anneeNvCount + modulesRestantsCount + nextCycleCount;
+
+        statsGrid.innerHTML = `
+            <div class="stat-card">
+                <div class="stat-icon total">📊</div>
+                <div class="stat-info">
+                    <div class="stat-label">Total Étudiants</div>
+                    <div class="stat-number">${total}</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon annee-nv">❌</div>
+                <div class="stat-info">
+                    <div class="stat-label">Redoublement</div>
+                    <div class="stat-number">${anneeNvCount}</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon modules-nv">⚠️</div>
+                <div class="stat-info">
+                    <div class="stat-label">Avec Dette</div>
+                    <div class="stat-number">${modulesRestantsCount}</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon next-cycle">🚀</div>
+                <div class="stat-info">
+                    <div class="stat-label">Cycle Suivant</div>
+                    <div class="stat-number">${nextCycleCount}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderReinscriptionTables(data) {
+        const render = (tbody, students, isFail) => {
+            tbody.innerHTML = "";
+            if (!students || students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Aucun étudiant dans cette catégorie.</td></tr>`;
+                return;
+            }
+            students.forEach(s => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${s.nom}</td><td>${s.prenom}</td><td>${s.cne}</td>
+                    <td>${s.current_etape_nom || 'N/A'}</td>
+                    <td class="modules-list">${s.modules_nv_noms || (isFail ? '<i>Redoublement complet</i>' : 'Aucune dette')}</td>
+                    <td class="actions">
+                        <button class="btn btn-primary btn-re-enroll" data-student-id="${s.user_id}">Inscrire</button>
+                        <button class="btn btn-secondary btn-history" data-student-id="${s.user_id}" data-student-name="${s.prenom} ${s.nom}">Historique</button>
+                    </td>`;
+                tbody.appendChild(row);
+            });
+        };
+        render(yearFailedTableBody, data.annee_non_valide, true);
+        render(modulesRemainingTableBody, data.modules_restants, false);
+    }
+
+    function renderNextCycleTable(students) {
+        nextCycleTableBody.innerHTML = "";
+        if (!students || !Array.isArray(students) || students.length === 0) {
+            nextCycleTableBody.innerHTML = `<tr><td colspan="5" class="empty-state">Aucun étudiant prêt.</td></tr>`;
+            return;
+        }
+        students.forEach(s => {
+            const row = document.createElement("tr");
+            const nextCycleId = parseInt(s.current_cycle_id) + 1;
+            row.innerHTML = `
+                <td>${s.nom}</td><td>${s.prenom}</td><td>${s.cne}</td>
+                <td>${s.current_cycle_nom}</td>
+                <td class="actions">
+                    <button class="btn btn-primary btn-enroll-next-cycle" data-student-id="${s.user_id}" data-student-name="${s.prenom} ${s.nom}" data-next-cycle-id="${nextCycleId}">Inscrire</button>
+                    <button class="btn btn-secondary btn-history" data-student-id="${s.user_id}" data-student-name="${s.prenom} ${s.nom}">Historique</button>
+                </td>`;
+            nextCycleTableBody.appendChild(row);
+        });
+    }
+
+    function renderPassingTable(students) {
+        passingTableBody.innerHTML = "";
+        if (!students || students.length === 0) {
+            passingTableBody.innerHTML = `<tr><td colspan="6" class="empty-state">Aucun étudiant.</td></tr>`;
+            return;
+        }
+        students.forEach(s => {
+            const row = document.createElement("tr");
+            row.dataset.studentId = s.user_id;
+            row.innerHTML = `
+                <td>${s.nom}</td><td>${s.prenom}</td><td>${s.cne}</td>
+                <td>${s.etape_actuelle}</td><td>${s.prochaine_etape}</td>
+                <td class="actions"><button class="btn btn-secondary btn-exclude" data-student-id="${s.user_id}">Exclure</button></td>`;
+            passingTableBody.appendChild(row);
+        });
+    }
+
+    // --- FONCTIONS DES MODALES ---
+    async function openHistoryModal(studentId, studentName) {
+        historyStudentName.textContent = studentName;
+        historyTableBody.innerHTML = `<tr><td colspan="6" class="loading">Chargement...</td></tr>`;
+        historyModal.classList.add('active');
+        try {
+            const response = await fetch(`${API_URL}?action=get_student_history&student_id=${studentId}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Réponse non-JSON' }));
+                throw new Error(errorData.message || 'Erreur serveur');
+            }
+            const result = await response.json();
+            renderHistoryTable(result.data);
+        } catch (error) {
+            console.error('Erreur openHistoryModal:', error);
+            historyTableBody.innerHTML = `<tr><td colspan="6" class="empty-state">Erreur: ${error.message}</td></tr>`;
+        }
+    }
+
+    function renderHistoryTable(historyData) {
+        historyTableBody.innerHTML = "";
+        if (!historyData || historyData.length === 0) {
+            historyTableBody.innerHTML = `<tr><td colspan="6" class="empty-state">Aucun historique.</td></tr>`;
+        } else {
+            historyData.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${record.annee_id}</td><td>${record.nom_cycle || 'N/A'}</td><td>${record.nom_etape || 'N/A'}</td><td>${record.note_annee || 'N/A'}</td><td class="decision-${record.decision_annee}">${record.decision_annee || 'N/A'}</td><td>${record.modules_en_dette || 'Aucun'}</td>`;
+                historyTableBody.appendChild(row);
+            });
+        }
+    }
+
+    function closeHistoryModal() { historyModal.classList.remove('active'); }
+
+    async function openFieldChoiceModal(studentId, studentName, nextCycleId) {
+        currentStudentForModal = { studentId, studentName, nextCycleId };
+        modalStudentName.textContent = studentName;
+        fieldSelect.innerHTML = '<option>Chargement...</option>';
+        modalBtnConfirm.disabled = true;
+        fieldChoiceModal.classList.add('active');
+        try {
+            const response = await fetch(`${API_URL}?action=get_fields_for_cycle&cycle_id=${nextCycleId}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Réponse non-JSON' }));
+                throw new Error(errorData.message || 'Erreur serveur');
+            }
+            const result = await response.json();
+            fieldSelect.innerHTML = "";
+            if (result.data.length === 0) {
+                fieldSelect.innerHTML = '<option>Aucune filière trouvée</option>';
+                modalBtnConfirm.disabled = true;
+            } else {
+                result.data.forEach(field => { fieldSelect.innerHTML += `<option value="${field.field_id}">${field.nom}</option>`; });
+                modalBtnConfirm.disabled = false;
+            }
+        } catch (error) {
+            console.error('Erreur openFieldChoiceModal:', error);
+            fieldSelect.innerHTML = `<option>Erreur: ${error.message}</option>`;
+            modalBtnConfirm.disabled = true;
+        }
+    }
+
+    function closeFieldChoiceModal() { fieldChoiceModal.classList.remove('active'); }
+
+    // --- FONCTIONS DE TRAITEMENT ---
+    async function processEnrollment(studentId, newFieldId = null) {
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: 'reenroll_student',
+                    student_id: studentId, 
+                    new_field_id: newFieldId 
+                })
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Réponse non-JSON' }));
+                throw new Error(errorData.message || "Erreur serveur lors de l'inscription.");
+            }
+            const result = await response.json();
+            showMessage(result.message, "success");
+            if (fieldChoiceModal.classList.contains('active')) closeFieldChoiceModal();
+            
+            fetchDashboardData(); 
+        } catch (error) { 
+            console.error('Erreur processEnrollment:', error);
+            showMessage(error.message, "error"); 
+        }
+    }
+
+    async function processBulkEnrollment() {
+        const studentRows = passingTableBody.querySelectorAll('tr[data-student-id]');
+        if (studentRows.length === 0) {
+            showMessage("Aucun étudiant à inscrire.", "warning");
+            return;
+        }
+
+        const studentIdsToEnroll = Array.from(studentRows).map(row => row.dataset.studentId);
+
+        if (!confirm(`Voulez-vous vraiment tenter d'inscrire ${studentIdsToEnroll.length} étudiant(s) à l'étape suivante ?`)) return;
+        
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: 'enroll_all_passing', 
+                    student_ids: studentIdsToEnroll
+                })
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Réponse non-JSON' }));
+                throw new Error(errorData.message || 'Erreur serveur');
+            }
+            const result = await response.json();
+            
+            showMessage(result.message, "success");
+            fetchPassingStudents();
+            fetchDashboardData();
+        } catch (error) {
+            console.error('Erreur processBulkEnrollment:', error);
+            showMessage(error.message, "error");
+        }
+    }
+
+    // --- GESTION DES ÉVÉNEMENTS ---
+    mainContent.addEventListener("click", e => {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        const studentId = button.dataset.studentId;
+        const studentName = button.dataset.studentName;
+
+        if (button.classList.contains("btn-re-enroll")) {
+            button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = 'En cours...';
+            processEnrollment(studentId).finally(() => {
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        }
+        if (button.classList.contains("btn-enroll-next-cycle")) {
+            openFieldChoiceModal(studentId, studentName, button.dataset.nextCycleId);
+        }
+        if (button.classList.contains("btn-history")) {
+            openHistoryModal(studentId, studentName);
+        }
+        if (button.id === "btn-enroll-all-passing") {
+            button.disabled = true;
+            const originalText = button.textContent;
+            button.textContent = 'En cours...';
+            processBulkEnrollment().finally(() => {
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        }
+        if (button.classList.contains("btn-exclude")) {
+            const row = button.closest('tr');
+            if (row) {
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            }
+        }
+    });
+
+    modalBtnCancel.addEventListener('click', closeFieldChoiceModal);
+    modalBtnConfirm.addEventListener('click', () => {
+        if (currentStudentForModal) {
+            modalBtnConfirm.disabled = true;
+            const originalText = modalBtnConfirm.textContent;
+            modalBtnConfirm.textContent = 'En cours...';
+            processEnrollment(currentStudentForModal.studentId, fieldSelect.value).finally(() => {
+                modalBtnConfirm.disabled = false;
+                modalBtnConfirm.textContent = originalText;
+            });
+        }
+    });
+    historyModalBtnClose.addEventListener('click', closeHistoryModal);
+
+    // Close modals on overlay click
+    fieldChoiceModal.addEventListener('click', (e) => {
+        if (e.target === fieldChoiceModal) closeFieldChoiceModal();
+    });
+    historyModal.addEventListener('click', (e) => {
+        if (e.target === historyModal) closeHistoryModal();
+    });
+
+    // Close modals on Esc key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (fieldChoiceModal.classList.contains('active')) closeFieldChoiceModal();
+            if (historyModal.classList.contains('active')) closeHistoryModal();
+        }
+    });
+
+    // --- Lancement Initial ---
+    const initialPage = window.location.hash.substring(1) || 'dashboard';
+    switchPage(initialPage);
+});
+</script>
+</body>
+</html>

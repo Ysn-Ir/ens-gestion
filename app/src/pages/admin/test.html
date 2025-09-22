@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test API</title>
+</head>
+<body>
+<h2>Trying to fetch...</h2>
+<pre id="output">Waiting...</pre>
+
+<script>
+(async () => {
+  const url = "http://localhost/ens-gestion/api/admin.php?action=getFilterHierarchy&type=filiere";
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    const data = await res.json();
+    console.log("SUCCESS:", data); // logs to DevTools
+    document.querySelector('#output').textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    console.error("ERROR:", err);
+    document.querySelector('#output').textContent = "Fetch failed: " + err.message;
+  }
+})();
+</script>
+</body>
+</html>

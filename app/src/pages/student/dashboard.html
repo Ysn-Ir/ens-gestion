@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Étudiant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="../../route.js"></script>
+    <style>
+        :root {
+            --primary-color: #3b82f6; /* Modern blue */
+            --primary-light: #60a5fa;
+            --primary-dark: #2563eb;
+            --secondary-color: #1f2937; /* Neutral dark gray */
+            --secondary-light: #374151;
+            --accent-color: #ef4444;
+            --light-color: #f9fafb;
+            --dark-color: #111827;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --text-color: #1f2937;
+            --text-muted: #6b7280;
+            --background-color: #f3f4f6;
+            --card-background: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --gradient-start: #3b82f6;
+            --gradient-end: #1e3a8a;
+        }
+
+        [data-theme="dark"] {
+            --text-color: #e5e7eb;
+            --text-muted: #9ca3af;
+            --background-color: #111827;
+            --card-background: #1f2937;
+            --secondary-color: #1f2937;
+            --secondary-light: #374151;
+            --light-color: #374151;
+            --border-color: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --gradient-start: #1e3a8a;
+            --gradient-end: #111827;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 280px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            backdrop-filter: blur(10px); /* Glassmorphism */
+            padding-top: 1.5rem;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 4px 0 16px var(--shadow-color);
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-header .navbar-brand {
+            color: white;
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .sidebar-header .navbar-brand i {
+            font-size: 1.75rem;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .sidebar .nav-link i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 1.5rem;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-header h1 {
+            font-weight: 600;
+            font-size: 1.75rem;
+        }
+
+        .welcome-message {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .welcome-message span {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            background: var(--card-background);
+            backdrop-filter: blur(8px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px var(--shadow-color);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            padding: 1.25rem 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px var(--shadow-color);
+        }
+
+        .btn-logout {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-theme-toggle {
+            background-color: var(--secondary-light);
+            color: white;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1rem;
+            width: 100%;
+        }
+
+        .btn-theme-toggle:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .form-select, .form-control {
+            border-radius: 12px;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--card-background);
+            color: var(--text-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .badge-success { background-color: var(--success-color); }
+        .badge-warning { background-color: var(--warning-color); }
+        .badge-danger { background-color: var(--danger-color); }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary-color);
+        }
+
+        .error-message {
+            display: none;
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .success-message {
+            display: none;
+            color: var(--success-color);
+            background: rgba(34, 197, 94, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .global-error {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            max-width: 400px;
+            z-index: 2000;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            margin-top: 1.5rem;
+            border-radius: 12px;
+            padding: 1rem;
+            background: var(--card-background);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1.5rem;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .password-form {
+            max-width: 600px;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--border-color) 25%, var(--light-color) 50%, var(--border-color) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 260px;
+                transform: translateX(-260px);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .sidebar-toggle {
+                display: flex !important;
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .card-body {
+                padding: 1.25rem;
+            }
+
+            .info-item {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .info-label {
+                min-width: auto;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1100;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .module-row {
+            background: var(--primary-light);
+            font-weight: 600;
+        }
+
+        .element-row td:first-child,
+        .element-row td:nth-child(2) {
+            background: var(--card-background);
+        }
+    </style>
+</head>
+<body>
+    <div class="global-error error-message" id="globalError"></div>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Ouvrir le menu">
+        <i class="bi bi-list"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <nav class="sidebar" id="sidebar" role="navigation" aria-label="Navigation principale">
+        <div class="sidebar-header">
+            <a class="navbar-brand" href="#" aria-label="Tableau de bord ENS Gestion">
+                <i class="bi bi-mortarboard-fill"></i>
+                <span>ENS Gestion</span>
+            </a>
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-section="home" aria-current="page">
+                    <i class="bi bi-house-door"></i>
+                    <span>Accueil</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="profile">
+                    <i class="bi bi-person"></i>
+                    <span>Profil</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="notes">
+                    <i class="bi bi-journal-bookmark"></i>
+                    <span>Notes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-section="annual">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Résultats Annuels</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="themeToggleBtn" class="btn btn-theme-toggle" aria-label="Changer le thème">
+                <i class="bi bi-moon-stars-fill"></i>
+                <span>Mode Sombre</span>
+            </button>
+            <button id="logoutBtn" class="btn btn-logout" aria-label="Déconnexion">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Déconnexion</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container-fluid main-content" id="mainContent">
+        <div id="homeSection" class="section animate__animated animate__fadeIn">
+            <p class="welcome-message">Bonjour, <span id="welcomeName"></span>!</p>
+        </div>
+
+        <div id="profileSection" class="section" style="display: none;">
+            <div class="page-header">
+                <h1><i class="bi bi-person me-2"></i>Profil Étudiant</h1>
+            </div>
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <h2 id="profileName"></h2>
+                    <p id="profileEmail"></p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informations Personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">CIN :</span>
+                                <span class="info-value" id="cin"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">CNE :</span>
+                                <span class="info-value" id="cne"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Date de naissance :</span>
+                                <span class="info-value" id="birthdate"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Nationalité :</span>
+                                <span class="info-value" id="nationalite"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">Téléphone :</span>
+                                <span class="info-value" id="telephone"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Adresse :</span>
+                                <span class="info-value" id="adresse"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Groupe :</span>
+                                <span class="info-value" id="groupId"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email :</span>
+                                <span class="info-value" id="email"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lock me-2"></i>Changer le Mot de Passe</h5>
+                </div>
+                <div class="card-body">
+                    <div class="error-message" id="passwordError"></div>
+                    <div class="success-message" id="passwordSuccess"></div>
+                    <div class="password-form">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="newPassword" class="form-label">Nouveau mot de passe</label>
+                                <input type="password" id="newPassword" class="form-control" placeholder="Entrez le nouveau mot de passe">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+                                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirmez le nouveau mot de passe">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button id="changePasswordBtn" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Changer le mot de passe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notesSection" class="section" style="display: none;">
+            <div class="page-header">
+                <h1><i class="bi bi-journal-bookmark me-2"></i>Notes Académiques</h1>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sélection des Paramètres</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="cycleSelect" class="form-label">Cycle</label>
+                            <select id="cycleSelect" class="form-select">
+                                <option value="">Sélectionner un cycle</option>
+                            </select>
+                            <div class="error-message mt-2" id="cycleError"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="semesterSelect" class="form-label">Semestre</label>
+                            <select id="semesterSelect" class="form-select">
+                                <option value="">Sélectionner un semestre</option>
+                            </select>
+                            <div class="error-message mt-2" id="semesterError"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button id="fetchNotesBtn" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>Afficher les notes
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-spinner" id="notesSpinner">
+                <div class="spinner-border spinner" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2">Chargement des notes...</p>
+            </div>
+            <div class="error-message" id="notesError"></div>
+            <div id="notesTable" class="mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Notes par Semestre</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="notesTableContent" aria-label="Notes académiques par semestre">
+                                <thead>
+                                    <tr>
+                                        <th>Code Module</th>
+                                        <th>Module</th>
+                                        <th>Élément</th>
+                                        <th>TP</th>
+                                        <th>TD</th>
+                                        <th>CC</th>
+                                        <th>Examen</th>
+                                        <th>Rattrapage</th>
+                                        <th>Finale Élément</th>
+                                        <th>Décision</th>
+                                        <th>Finale Module</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container" id="notesChartContainer" style="display: none;">
+                    <canvas id="notesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="annualSection" class="section" style="display: none;">
+            <div class="page-header">
+                <h1><i class="bi bi-graph-up me-2"></i>Résultats Annuels</h1>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sélection de l'Année</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="anneeSelect" class="form-label">Année Académique</label>
+                            <select id="anneeSelect" class="form-select">
+                                <option value="">Sélectionner une année</option>
+                            </select>
+                            <div class="error-message mt-2" id="anneeError"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button id="fetchAnnualBtn" class="btn btn-primary">
+                            <i class="bi bi-graph-up me-2"></i>Afficher les résultats
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="loading-spinner" id="annualSpinner">
+                <div class="spinner-border spinner" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2">Chargement des résultats annuels...</p>
+            </div>
+            <div class="error-message" id="annualError"></div>
+            <div id="annualResult" class="card mt-4" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">Détails des Résultats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">Note Annuelle :</span>
+                                <span class="info-value" id="noteAnnee"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Décision :</span>
+                                <span class="info-value">
+                                    <span id="decisionAnnee" class="badge"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">Classement :</span>
+                                <span class="info-value" id="classement"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Total Étudiants :</span>
+                                <span class="info-value" id="totalStudents"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="rankingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const user = JSON.parse(localStorage.getItem('userData'));
+            const globalError = document.getElementById('globalError');
+
+            // Function to show global error message
+            function showGlobalError(message) {
+                console.error('Global Error:', message);
+                globalError.textContent = message;
+                globalError.style.display = 'block';
+                setTimeout(() => {
+                    globalError.style.display = 'none';
+                }, 5000); // Hide after 5 seconds
+            }
+
+            // Validate user data
+            if (!user || !user.user_id) {
+                showGlobalError('Aucune donnée utilisateur trouvée. Veuillez vous reconnecter.');
+                setTimeout(() => {
+                    window.location.href = loginPage;
+                }, 3000);
+                return;
+            }
+
+            // Theme toggle
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            themeToggleBtn.innerHTML = currentTheme === 'dark' 
+                ? '<i class="bi bi-sun-fill"></i><span>Mode Clair</span>'
+                : '<i class="bi bi-moon-stars-fill"></i><span>Mode Sombre</span>';
+
+            themeToggleBtn.addEventListener('click', function() {
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeToggleBtn.innerHTML = newTheme === 'dark' 
+                    ? '<i class="bi bi-sun-fill"></i><span>Mode Clair</span>'
+                    : '<i class="bi bi-moon-stars-fill"></i><span>Mode Sombre</span>';
+            });
+
+            // Mobile sidebar toggle
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+            });
+
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+            });
+
+            // Show/hide sections based on nav clicks
+            const sections = document.querySelectorAll('.section');
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section') + 'Section';
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('active');
+                        sidebarOverlay.classList.remove('active');
+                    }
+                    sections.forEach(section => section.style.display = 'none');
+                    document.getElementById(sectionId).style.display = 'block';
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Skeleton loading
+            function showSkeleton(elementId, count = 3) {
+                const element = document.getElementById(elementId).querySelector('tbody') || document.getElementById(elementId);
+                element.innerHTML = Array(count).fill().map(() => `
+                    <tr><td colspan="11"><div class="skeleton" style="height: 40px; margin: 0.5rem 0; border-radius: 8px;"></div></td></tr>
+                `).join('');
+            }
+
+            // Fetch and display student info
+            let studentCycleId;
+            let studentName = '';
+            showSkeleton('profileSection', 4);
+            fetch(adminURL + '/student.php?action=me', {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                    }
+                    if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                    return response.json();
+                })
+                .then(json => {
+                    console.log('Student Info Response:', json); // Debug log
+                    if (json.status !== 200 || !json.data || !json.data.student) {
+                        throw new Error(json.data?.message || 'Réponse invalide: données étudiant manquantes');
+                    }
+                    const student = json.data.student;
+                    studentName = `${student.prenom} ${student.nom}`;
+                    document.getElementById('welcomeName').textContent = studentName || 'Étudiant';
+                    document.getElementById('profileName').textContent = studentName || 'Étudiant';
+                    document.getElementById('profileEmail').textContent = student.email || 'Non renseigné';
+                    document.getElementById('cin').textContent = student.cin || 'Non renseigné';
+                    document.getElementById('cne').textContent = student.cne || 'Non renseigné';
+                    document.getElementById('birthdate').textContent = student.date_naissance || 'Non renseigné';
+                    document.getElementById('nationalite').textContent = student.nationalite || 'Non renseigné';
+                    document.getElementById('telephone').textContent = student.telephone || 'Non renseigné';
+                    document.getElementById('adresse').textContent = student.adresse || 'Non renseigné';
+                    document.getElementById('groupId').textContent = student.group_id || 'Non renseigné';
+                    document.getElementById('email').textContent = student.email || 'Non renseigné';
+                    studentCycleId = student.cycle_id;
+
+                    // Populate cycle dropdown
+                    const cycleError = document.getElementById('cycleError');
+                    fetch(adminURL + '/student.php?action=getCycleOfStudent&id=' + user.user_id, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                            }
+                            if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(json => {
+                            console.log('Cycle Response:', json); // Debug log
+                            if (json.status !== 200 || !json.data || !json.data.cycle_id) {
+                                throw new Error(json.data?.message || 'Réponse invalide: données du cycle non valides');
+                            }
+                            const cycle = json.data;
+                            const cycleSelect = document.getElementById('cycleSelect');
+                            const option = document.createElement('option');
+                            option.value = cycle.cycle_id;
+                            option.textContent = cycle.cycle_name || 'Licence';
+                            cycleSelect.appendChild(option);
+                            cycleSelect.value = cycle.cycle_id;
+                            cycleSelect.dispatchEvent(new Event('change'));
+                        })
+                        .catch(err => {
+                            console.error('Erreur lors de la récupération du cycle:', err);
+                            cycleError.textContent = `Erreur: ${err.message}`;
+                            cycleError.style.display = 'block';
+                            showGlobalError(err.message);
+                        });
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la récupération des infos étudiant:', err);
+                    showGlobalError(err.message);
+                });
+
+            // Update semesters when cycle changes
+            const semesterError = document.getElementById('semesterError');
+            document.getElementById('cycleSelect').addEventListener('change', function () {
+                const cycleId = this.value;
+                const semesterSelect = document.getElementById('semesterSelect');
+                semesterSelect.innerHTML = '<option value="">Sélectionner un semestre</option>';
+                semesterError.style.display = 'none';
+
+                if (cycleId) {
+                    fetch(adminURL + '/student.php?action=getSemestresOfStudentByCycle&cycle_id=' + cycleId + '&id=' + user.user_id, {
+                        method: 'GET',
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (response.status === 401 || response.status === 403) {
+                                throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                            }
+                            if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(json => {
+                            console.log('Semesters Response:', json); // Debug log
+                            if (json.status !== 200 || !json.data || !Array.isArray(json.data)) {
+                                throw new Error(json.data?.message || 'Réponse invalide: données des semestres non valides');
+                            }
+                            const semestres = json.data;
+                            semestres.forEach(semestre => {
+                                const option = document.createElement('option');
+                                option.value = semestre.semestre_id;
+                                option.textContent = semestre.semestre_name || `Semestre ${semestre.nom || semestre.semestre_id}`;
+                                semesterSelect.appendChild(option);
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Erreur lors de la récupération des semestres:', err);
+                            semesterError.textContent = `Erreur: ${err.message}`;
+                            semesterError.style.display = 'block';
+                            showGlobalError(err.message);
+                        });
+                } else {
+                    semesterError.textContent = 'Veuillez sélectionner un cycle.';
+                    semesterError.style.display = 'block';
+                    showGlobalError('Veuillez sélectionner un cycle.');
+                }
+            });
+
+            // Fetch notes by semester and render chart
+            let notesChart = null;
+            document.getElementById('fetchNotesBtn').addEventListener('click', function () {
+                const userId = user.user_id;
+                const cycleId = document.getElementById('cycleSelect').value;
+                const semesterId = document.getElementById('semesterSelect').value;
+                const notesSpinner = document.getElementById('notesSpinner');
+                const notesError = document.getElementById('notesError');
+                const notesTableContent = document.getElementById('notesTableContent').querySelector('tbody');
+                const notesChartContainer = document.getElementById('notesChartContainer');
+                const fetchButton = this;
+
+                if (!cycleId || !semesterId) {
+                    notesError.textContent = 'Veuillez sélectionner un cycle et un semestre.';
+                    notesError.style.display = 'block';
+                    showGlobalError('Veuillez sélectionner un cycle et un semestre.');
+                    return;
+                }
+
+                notesSpinner.style.display = 'block';
+                fetchButton.disabled = true;
+                showSkeleton('notesTableContent', 5);
+                notesError.style.display = 'none';
+                notesChartContainer.style.display = 'none';
+
+                fetch(adminURL + '/student.php?action=getNoteOfStudentBySemester&id=' + userId + '&semester_id=' + semesterId, {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(response => {
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                        }
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        console.log('Notes Response:', json); // Debug log
+                        notesSpinner.style.display = 'none';
+                        fetchButton.disabled = false;
+                        if (json.status !== 200 || !json.data || !Array.isArray(json.data)) {
+                            throw new Error(json.data?.message || 'Réponse invalide: données des notes non valides');
+                        }
+                        const modules = json.data;
+                        if (modules.length === 0) {
+                            notesError.textContent = 'Aucune note trouvée pour ce semestre.';
+                            notesError.style.display = 'block';
+                            showGlobalError('Aucune note trouvée pour ce semestre.');
+                            return;
+                        }
+
+                        let html = '';
+                        modules.forEach(mod => {
+                            if (!mod.module_code || !mod.elements || !Array.isArray(mod.elements)) {
+                                throw new Error('Données du module incomplètes ou invalides');
+                            }
+                            const moduleDecision = mod.module_decision === 'V' ? '<span class="badge badge-success">Validé</span>' :
+                                                  mod.module_decision === 'NV' ? '<span class="badge badge-danger">Non Validé</span>' :
+                                                  mod.module_decision === 'R' ? '<span class="badge badge-warning">Rattrapage</span>' :
+                                                  '-';
+
+                            html += `
+                                <tr class="module-row">
+                                    <td>${mod.module_code || 'N/A'}</td>
+                                    <td colspan="8">${mod.module_name || 'N/A'}</td>
+                                    <td class="text-center">${moduleDecision}</td>
+                                    <td class="text-center"><strong>${mod.module_finale !== null ? parseFloat(mod.module_finale).toFixed(2) : '-'}</strong></td>
+                                </tr>
+                            `;
+                            mod.elements.forEach(el => {
+                                if (!el.element_name) {
+                                    throw new Error('Données de l\'élément incomplètes');
+                                }
+                                const elementDecision = el.element_decision_ratt || el.element_decision;
+                                const decisionDisplay = elementDecision === 'V' ? '<span class="badge badge-success">Validé</span>' :
+                                                       elementDecision === 'NV' ? '<span class="badge badge-danger">Non Validé</span>' :
+                                                       elementDecision === 'R' ? '<span class="badge badge-warning">Rattrapage</span>' :
+                                                       '-';
+
+                                html += `
+                                    <tr class="element-row">
+                                        <td></td>
+                                        <td></td>
+                                        <td>${el.element_name || 'N/A'}</td>
+                                        <td>${el.note_tp !== null ? parseFloat(el.note_tp).toFixed(2) : '-'}</td>
+                                        <td>${el.note_td !== null ? parseFloat(el.note_td).toFixed(2) : '-'}</td>
+                                        <td>${el.note_cc !== null ? parseFloat(el.note_cc).toFixed(2) : '-'}</td>
+                                        <td>${el.note_exam !== null ? parseFloat(el.note_exam).toFixed(2) : '-'}</td>
+                                        <td>${el.note_rattrapage !== null ? parseFloat(el.note_rattrapage).toFixed(2) : '-'}</td>
+                                        <td><strong>${el.element_finale !== null ? parseFloat(el.element_finale).toFixed(2) : '-'}</strong></td>
+                                        <td>${decisionDisplay}</td>
+                                        <td></td>
+                                    </tr>
+                                `;
+                            });
+                        });
+                        notesTableContent.innerHTML = html;
+
+                        if (notesChart) {
+                            notesChart.destroy();
+                        }
+
+                        const ctx = document.getElementById('notesChart').getContext('2d');
+                        notesChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: modules.map(mod => mod.module_code),
+                                datasets: [{
+                                    label: 'Note Finale par Module',
+                                    data: modules.map(mod => mod.module_finale),
+                                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                                    borderColor: 'rgba(59, 130, 246, 1)',
+                                    borderWidth: 1,
+                                    borderRadius: 8,
+                                    barThickness: 20
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: {
+                                    duration: 1000,
+                                    easing: 'easeOutQuart'
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 20,
+                                        title: {
+                                            display: true,
+                                            text: 'Note Finale',
+                                            color: '#6b7280'
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.05)'
+                                        }
+                                    },
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: 'Modules',
+                                            color: '#6b7280'
+                                        },
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: {
+                                            color: '#6b7280',
+                                            font: { size: 14 }
+                                        }
+                                    },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        borderRadius: 8,
+                                        padding: 12
+                                    }
+                                }
+                            }
+                        });
+                        notesChartContainer.style.display = 'block';
+                    })
+                    .catch(err => {
+                        notesSpinner.style.display = 'none';
+                        fetchButton.disabled = false;
+                        notesError.textContent = err.message.includes('Session') ? err.message : `Erreur: ${err.message}`;
+                        notesError.style.display = 'block';
+                        showGlobalError(err.message);
+                        console.error('Erreur lors de la récupération des notes:', err);
+                    });
+            });
+
+            // Populate annee dropdown
+            const anneeError = document.getElementById('anneeError');
+            const userId = user.user_id;
+            fetch(adminURL + '/student.php?action=getYearStudied&id=' + userId, {
+                method: 'GET',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (response.status === 401 || response.status === 403) {
+                        throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                    }
+                    if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                    return response.json();
+                })
+                .then(json => {
+                    console.log('Years Studied Response:', json); // Debug log
+                    if (json.status !== 200 || !json.data || !json.data.data || !Array.isArray(json.data.data)) {
+                        throw new Error(json.data?.message || 'Réponse invalide: données des années non valides');
+                    }
+                    const annees = json.data.data;
+                    const anneeSelect = document.getElementById('anneeSelect');
+                    annees.forEach(annee => {
+                        const option = document.createElement('option');
+                        option.value = annee.annee_id;
+                        option.textContent = annee.annee_id;
+                        anneeSelect.appendChild(option);
+                    });
+                    // Set the most recent year as default
+                    if (annees.length > 0) {
+                        anneeSelect.value = annees[0].annee_id; // Select the first (most recent) year
+                    }
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la récupération des années étudiées:', err);
+                    anneeError.textContent = `Erreur: ${err.message}`;
+                    anneeError.style.display = 'block';
+                    showGlobalError(err.message);
+                });
+
+            // Fetch annual note and ranking
+            let rankingChart = null;
+            document.getElementById('fetchAnnualBtn').addEventListener('click', function () {
+                const userId = user.user_id;
+                const anneeId = document.getElementById('anneeSelect').value;
+                const annualSpinner = document.getElementById('annualSpinner');
+                const annualError = document.getElementById('annualError');
+                const annualResult = document.getElementById('annualResult');
+
+                if (!anneeId) {
+                    annualError.textContent = 'Veuillez sélectionner une année académique.';
+                    annualError.style.display = 'block';
+                    showGlobalError('Veuillez sélectionner une année académique.');
+                    return;
+                }
+
+                setTimeout(() => { annualSpinner.style.display = 'block'; }, 100);
+                annualError.style.display = 'none';
+                annualResult.style.display = 'none';
+
+                fetch(adminURL + '/student.php?action=getAnnualNoteAndRanking&user_id=' + userId + '&annee_id=' + anneeId, {
+                    method: 'GET',
+                    credentials: 'include'
+                })
+                    .then(response => {
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                        }
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        console.log('Annual Results Response:', json); // Debug log
+                        annualSpinner.style.display = 'none';
+                        if (json.status !== 200 || !json.data) {
+                            throw new Error(json.data?.message || 'Réponse invalide: données absentes');
+                        }
+                        const data = json.data;
+                        document.getElementById('noteAnnee').textContent = data.note_annee !== null ? data.note_annee : 'N/A';
+                        const decisionAnnee = document.getElementById('decisionAnnee');
+                        decisionAnnee.textContent = data.decision_annee === 'V' ? 'Validé' : data.decision_annee === 'NV' ? 'Non Validé' : 'N/A';
+                        decisionAnnee.className = 'badge ' + (data.decision_annee === 'V' ? 'badge-success' : data.decision_annee === 'NV' ? 'badge-danger' : '');
+                        document.getElementById('classement').textContent = data.classement !== null ? data.classement : 'N/A';
+                        document.getElementById('totalStudents').textContent = data.total_students !== null ? data.total_students : 'N/A';
+                        annualResult.style.display = 'block';
+
+                        if (rankingChart) {
+                            rankingChart.destroy();
+                        }
+
+                        const ctx = document.getElementById('rankingChart').getContext('2d');
+                        rankingChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['Votre Position', 'Autres Étudiants'],
+                                datasets: [{
+                                    data: [data.classement || 0, (data.total_students || 0) - (data.classement || 0)],
+                                    backgroundColor: ['rgba(59, 130, 246, 0.6)', 'rgba(209, 213, 219, 0.6)'],
+                                    borderColor: ['rgba(59, 130, 246, 1)', 'rgba(209, 213, 219, 1)'],
+                                    borderWidth: 1,
+                                    borderRadius: 8
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: {
+                                    duration: 1000,
+                                    easing: 'easeOutQuart'
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        borderRadius: 8,
+                                        padding: 12,
+                                        callbacks: {
+                                            label: function(context) {
+                                                return context.dataset.label + ': ' + context.raw + ' étudiant(s)';
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        beginAtZero: true,
+                                        max: data.total_students || 100,
+                                        title: {
+                                            display: true,
+                                            text: 'Nombre d\'étudiants',
+                                            color: '#6b7280'
+                                        },
+                                        grid: {
+                                            color: 'rgba(0, 0, 0, 0.05)'
+                                        }
+                                    },
+                                    y: {
+                                        grid: { display: false }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        annualSpinner.style.display = 'none';
+                        annualError.textContent = err.message.includes('Session') ? err.message : `Erreur: ${err.message}`;
+                        annualError.style.display = 'block';
+                        showGlobalError(err.message);
+                        console.error('Erreur lors de la récupération des résultats annuels:', err);
+                    });
+            });
+
+            // Change password
+            document.getElementById('changePasswordBtn').addEventListener('click', function () {
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const passwordError = document.getElementById('passwordError');
+                const passwordSuccess = document.getElementById('passwordSuccess');
+
+                passwordError.style.display = 'none';
+                passwordSuccess.style.display = 'none';
+
+                if (!newPassword || !confirmPassword) {
+                    passwordError.textContent = 'Veuillez remplir tous les champs.';
+                    passwordError.style.display = 'block';
+                    showGlobalError('Veuillez remplir tous les champs.');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    passwordError.textContent = 'Les nouveaux mots de passe ne correspondent pas.';
+                    passwordError.style.display = 'block';
+                    showGlobalError('Les nouveaux mots de passe ne correspondent pas.');
+                    return;
+                }
+
+                if (newPassword.length < 8) {
+                    passwordError.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+                    passwordError.style.display = 'block';
+                    showGlobalError('Le mot de passe doit contenir au moins 8 caractères.');
+                    return;
+                }
+
+                fetch(adminURL + '/student.php?action=changePassword', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'user_id=' + encodeURIComponent(user.user_id) + '&newPassword=' + encodeURIComponent(newPassword)
+                })
+                    .then(response => {
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('Session invalide ou accès refusé. Veuillez vous reconnecter.');
+                        }
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        console.log('Change Password Response:', json); // Debug log
+                        if (json.status !== 200) {
+                            throw new Error(json.data?.message || 'Erreur inconnue');
+                        }
+                        passwordSuccess.textContent = 'Mot de passe changé avec succès !';
+                        passwordSuccess.style.display = 'block';
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                    })
+                    .catch(err => {
+                        passwordError.textContent = err.message.includes('Session') ? err.message : `Erreur: ${err.message}`;
+                        passwordError.style.display = 'block';
+                        showGlobalError(err.message);
+                        console.error('Erreur lors du changement de mot de passe:', err);
+                    });
+            });
+
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', function () {
+                fetch(adminURL + '/auth.php?action=logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Erreur HTTP ! Statut: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(json => {
+                        console.log('Logout Response:', json); // Debug log
+                        localStorage.removeItem('userData');
+                        window.location.href = loginPage;
+                    })
+                    .catch(err => {
+                        console.error('Erreur lors de la déconnexion:', err);
+                        showGlobalError('Erreur lors de la déconnexion. Veuillez réessayer.');
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

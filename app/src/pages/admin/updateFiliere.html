@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Filières</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">    <script src="../../route.js"></script>
+
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #34495e;
+      --accent: #3498db;
+      --light: #f8f9fa;
+      --dark: #2c3e50;
+      --success: #27ae60;
+      --border: #e0e0e0;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: #f5f7f9;
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* Header Styles */
+    .dashboard-header {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      padding: 1.2rem 2rem;
+      box-shadow: var(--card-shadow);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+
+    .logo i {
+      margin-right: 10px;
+      font-size: 1.6rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    /* Main Content */
+    .main-content {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+    }
+
+    .welcome-container {
+      background-color: white;
+      border-radius: 10px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--card-shadow);
+      border-left: 4px solid var(--accent);
+    }
+
+    .welcome-message {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .alert {
+      border: none;
+      border-radius: 8px;
+      background-color: #e8f4fd;
+      color: #2a6c9c;
+      padding: 1rem 1.5rem;
+    }
+
+    /* Button Styles */
+    .btn {
+      border-radius: 6px;
+      font-weight: 600;
+      padding: 0.6rem 1.5rem;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-dark {
+      background: var(--dark);
+    }
+
+    .btn-dark:hover {
+      background: var(--secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-success {
+      background: var(--success);
+      padding: 0.8rem 2rem;
+      font-size: 1.1rem;
+    }
+
+    .btn-success:hover {
+      background: #219653;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    }
+
+    /* Form Styles */
+    .form-container {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 2rem;
+    }
+
+    .form-title {
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 1.8rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+
+    .form-title i {
+      margin-right: 12px;
+      font-size: 1.6rem;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.6rem;
+      font-size: 0.95rem;
+    }
+
+    .form-control, .form-select {
+      border-radius: 6px;
+      padding: 0.8rem 1rem;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.2);
+    }
+
+    /* Dynamic Sections */
+    #elementsContainer {
+      background-color: #f9fafb;
+      padding: 2rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+      display: none;
+      margin-top: 2rem;
+    }
+
+    .dynamic-section {
+      background: #fff;
+      padding: 1.8rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      box-shadow: var(--card-shadow);
+      transition: all 0.3s ease;
+    }
+
+    .dynamic-section:hover {
+      box-shadow: var(--hover-shadow);
+    }
+
+    .dynamic-section h5 {
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .dynamic-section h5 i {
+      margin-right: 10px;
+      color: var(--accent);
+    }
+
+    .dynamic-section label.form-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .dynamic-section input.form-control-sm {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 0.7rem 0.9rem;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .dynamic-section input.form-control-sm:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.2);
+    }
+
+    .section-group-input {
+      background-color: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+      margin-bottom: 1.2rem;
+      transition: all 0.2s ease;
+    }
+
+    .section-group-input:hover {
+      background-color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .main-content {
+        padding: 0 1.5rem;
+      }
+      
+      .form-container {
+        padding: 2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 1rem 1.5rem;
+      }
+      
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      
+      .user-info {
+        align-self: flex-end;
+      }
+      
+      .main-content {
+        padding: 0 1rem;
+        margin: 1.5rem auto;
+      }
+      
+      .welcome-message {
+        font-size: 1.5rem;
+      }
+      
+      .form-container {
+        padding: 1.5rem;
+      }
+      
+      #elementsContainer {
+        padding: 1.5rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .action-buttons .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    /* Animation for dynamic content */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dynamic-section {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    /* Custom utilities */
+    .text-accent {
+      color: var(--accent);
+    }
+    
+    /* Module Container Styles */
+    .module-container {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #4e73df;
+      position: relative;
+    }
+    
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .btn-remove {
+      color: #dc3545;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .element-name {
+      width: 85% !important;
+    }
+    
+    .element-coeff {
+      width: 60% !important;
+    }
+    
+    @media (max-width: 768px) {
+      .element-name, .element-coeff {
+        width: 100% !important;
+      }
+    }
+    
+    .alert-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+      min-width: 300px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .coefficient-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .coefficient-title {
+      font-weight: 600;
+      color: var(--dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+    }
+    .titles {
+      font-weight: 600;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+    }
+
+    .coefficient-title i {
+      margin-right: 8px;
+      color: var(--success);
+    }
+
+    .coefficient-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .coefficient-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--dark);
+    }
+    .alert-coeff {
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .module-coefficients {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #28a745;
+    }
+    
+    .has-elements-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .etape-container {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border: 1px solid #e0e0e0;
+    }
+    
+    .etape-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #4e73df;
+    }
+    
+    .semestre-container {
+      background-color: #f9fafb;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .semestre-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 15px;
+    }
+    
+    .module-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border: 1px solid #e0e0e0;
+      position: relative;
+    }
+    
+    .module-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .module-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .semestre-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .semestre-toggle {
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: #6c757d;
+      transition: all 0.3s;
+    }
+    
+    .semestre-toggle:hover {
+      color: #495057;
+    }
+    
+    .semestre-content {
+      transition: all 0.3s ease;
+    }
+    
+    .semestre-closed .semestre-content {
+      display: none;
+    }
+    
+    /* Styles pour les éléments */
+    .element-container {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid #6f42c1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .element-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .add-module-btn-container {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .modules-action-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    
+    /* Styles pour les nouveaux champs */
+    .horaire-container {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #fd7e14;
+    }
+    
+    .horaire-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+
+    /* Styles pour les coefficients */
+    .coefficient-group {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #28a745;
+    }
+
+    /* Styles pour les coefficients */
+    .coefficient-group {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #28a745;
+    }
+
+    /* Styles pour les profs associés */
+    .professeurs-group {
+      background-color: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      border-left: 4px solid #007bff;
+    }
+
+   
+
+     .langues {
+        display: flex;
+        align-items: center;     /* vertical alignment */
+        gap: 1rem;               /* space between label and select */
+        background-color: #e9ecef;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.2rem;
+        border-left: 4px solid var(--dark);
+      }
+
+    .langues i {
+      color: #0d6efd; /* Bootstrap primary blue */
+      margin-right: 0.5rem; /* space between icon and text */
+    }
+
+     .langues select {
+      width:fit-content;
+    }
+    .professeurs-group {
+      background-color: #e9ecef;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      border-left: 4px solid var(--accent);
+    }
+    .module-section {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .module-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .section-label {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-label i {
+      margin-right: 8px;
+      color: var(--accent);
+    }
+    
+    
+
+   
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-graduation-cap"></i>
+        <span>Gestion des Filières</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="d-flex justify-content-between mb-4">
+      <div>     
+        <button type="button" class="btn btn-dark" onclick="retourner()">
+          <i class="fas fa-arrow-left me-2"></i>Retourner à la liste des filières
+        </button>
+      </div>
+    </div>
+
+    <div class="form-container">
+      <h3 class="form-title"><i class="bi bi-pencil"></i>Modifier une filière</h3>
+
+      <form id="filiereForm">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="nom" class="form-label">Nom de la filière</label>
+            <input type="text" class="form-control" id="nom" placeholder="ex: Génie Informatique" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="diplome" class="form-label">Diplôme correspondant</label>
+            <input type="text" class="form-control" id="diplome" placeholder="ex: License ..." required>
+          </div>        
+        </div>
+
+        <!-- Diplôme et Cycle dans la même ligne -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="departement" class="form-label">Département</label>
+            <select class="form-select" id="departement" required>
+              <option value="">-- Sélectionner --</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="cycle" class="form-label">Cycle</label>
+            <select class="form-select" id="cycle" required>
+              <option value="">-- Sélectionner --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Professeur responsable et dates d'affectation dans la même ligne -->
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="professeur" class="form-label">Professeur Responsable</label>
+            <select class="form-select" id="professeur" required>
+              <option value="">-- Prof disponible --</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="date_debut_affectation" class="form-label">Date début affectation</label>
+            <input type="text" class="form-control" placeholder="Date de début" id="date_debut_affectation" onfocus="this.type='date'" onblur="this.type='text'" required>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="date_fin_affectation" class="form-label">Date fin affectation</label>
+            <input type="text" class="form-control" placeholder="Date de fin" id="date_fin_affectation" onfocus="this.type='date'" onblur="this.type='text'" required>
+          </div>
+        </div>
+
+        <!-- Années d'accréditation et statut dans la même ligne -->
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="annee_debut_accreditation" class="form-label">Année début accréditation</label>
+            <select class="form-select" id="annee_debut_accreditation" required>
+              <option value="">-- Sélectionner --</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="annee_fin_accreditation" class="form-label">Année fin accréditation</label>
+            <select class="form-select" id="annee_fin_accreditation" required>
+              <option value="">-- Sélectionner --</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="statut" class="form-label">Statut</label>
+            <select class="form-select" id="statut" required>
+              <option value="">-- Sélectionner --</option>
+              <option value="actif">Actif</option>
+              <option value="inactif">Inactif</option>
+            </select>
+          </div>
+        </div>
+        
+        <div id="elementsContainer"></div>
+        <div id="groupesContainer"></div>
+        
+        <!-- Modules Container -->
+        <div id="modulesContainer" style="display: none;">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">Gestion des Modules</h4>
+            <button type="button" class="btn btn-outline-danger" id="annulerModulesBtn">
+              <i class="fas fa-times me-2"></i>Annuler l'ajout des modules
+            </button>
+          </div>
+          
+          <div id="etapesContainer"></div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3 mt-4">
+          <div class="p-2">     
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save me-2"></i>Enregistrer les modifications
+            </button>
+          </div>
+          <div class="p-2">     
+            <button type="button" class="btn btn-secondary" id="ajouterModulesBtn">
+              <i class="fas fa-book me-2"></i>Ajouter les modules
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- Toast Alert -->
+  <div class="toast align-items-center text-white bg-danger border-0 alert-toast" role="alert" aria-live="assertive" aria-atomic="true" id="errorToast">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span id="toastMessage"></span>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+
+  <!-- Template pour un conteneur de module -->
+  <template id="moduleTemplate">
+    <div class="module-card">
+      <div class="module-card-header">
+        <h5 class="module-card-title">Module <span class="module-number"></span></h5>
+        <button type="button" class="btn-remove">×</button>
+      </div>
+      
+      <div class="module-section">
+        <div class="section-label"><i class="fas fa-info-circle me-2"></i>Informations de base</div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Code</label>
+            <input type="text" class="form-control module-code" placeholder="Code de module" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Nom</label>
+            <input type="text" class="form-control module-name" placeholder="Nom du module" required>
+          </div>
+        
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">Type de module</label>
+            <select class="form-select module-type" required>
+              <option value="">Sélectionner un type</option>
+              <option value="Soft Skills">Soft Skills</option>
+              <option value="Module d'éducation">Module d'éducation</option>
+              <option value="Module de spécialité">Module de spécialité</option>
+            </select>
+          </div>
+          
+        </div>
+        
+        
+      </div>
+      
+      <div class="has-elements-group">
+        <span class="form-label">Le module est-il composé d'éléments ?</span>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input has-elements-yes" type="radio" value="yes">
+          <label class="form-check-label">Oui</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input has-elements-no" type="radio" value="no" checked>
+          <label class="form-check-label">Non</label>
+        </div>
+      </div>
+      
+      <!-- Conteneur pour les coefficients du module (affiché quand "Non" est sélectionné) -->
+      <div class="module-coefficients">
+         <div class="langues">
+          <label class="form-label titles mb-0 col-md-3">
+            <i class="bi bi-translate"></i> Langue d'enseignement
+          </label>
+          
+          <select class="form-select module-langue col-md-4" >
+            <option value="">Sélectionner une langue</option>
+            <option value="français">Français</option>
+            <option value="anglais">Anglais</option>
+            <option value="arabe">Arabe</option>
+            <option value="espagnol">Espagnol</option>
+            <option value="allemand">Allemand</option>
+          </select>
+        </div>
+        <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+           
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div> 
+        
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de Cours</label>
+              <select class="form-select prof-cours prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            
+          </div>
+        </div>
+
+        <div class="horaire-container">
+          <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
+          <div class="row">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+          </div>
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="horaire-container">
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En présentiel</label>
+            <input type="number" class="form-control volume-presentiel" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">A distance</label>
+            <input type="number" class="form-control volume-distance" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En alternance</label>
+            <input type="number" class="form-control volume-alternance" min="0" value="0">
+          </div>
+        </div>
+      </div>
+      </div>
+      
+      <!-- Conteneur principal qui s'affiche seulement si Oui est sélectionné -->
+      <div class="elements-main-container" style="display: none;">
+        <!-- Conteneur pour les éléments ajoutés dynamiquement -->
+        <div class="dynamic-elements-container"></div>
+        
+        <!-- Bouton pour ajouter un nouvel élément -->
+        <div class="mt-3">
+          <button type="button" class="btn btn-primary add-element-btn">Ajouter élément</button>
+        </div>
+        
+        <!-- Alert for total coefficients -->
+        <div class="alert alert-danger mt-3 total-coeff-alert" style="display: none;">
+          La somme des coefficients de tous les éléments doit être égale à 1.
+        </div>
+      </div>
+      
+    </div>
+  </template>
+
+  <!-- Template pour un conteneur d'élément -->
+  <template id="elementTemplate">
+    <div class="element-container">
+      <div class="element-header">
+        <h5>Élément</h5>
+        <button type="button" class="btn-remove">×</button>
+      </div>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label titles">Nom de l'élément</label>
+          <input type="text" class="form-control element-name" placeholder="Nom de l'élément" required>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label titles">Langue d'enseignement</label>
+            <select class="form-select element-langue" >
+              <option value="">Sélectionner une langue</option>
+              <option value="français">Français</option>
+              <option value="anglais">Anglais</option>
+              <option value="arabe">Arabe</option>
+              <option value="espagnol">Espagnol</option>
+              <option value="allemand">Allemand</option>
+            </select>
+          </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label titles">Coefficient de l'élément</label>
+          <input type="number" class="form-control element-coeff" min="0" max="1" step="0.01" required>
+        </div>
+
+      </div>
+      
+        <div class="coefficient-group">
+          <div class="coefficient-title"><i class="fas fa-weight me-2"></i>Coefficients</div>
+          <div class="coefficient-inputs">
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff d'Ecrit</label>
+              <input type="number" class="form-control coefficient-input coeff-ecrit" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <div class="coefficient-item titles">
+              <label class="form-label">Coeff de CC</label>
+              <input type="number" class="form-control coefficient-input coeff-cc" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TP</label>
+              <input type="number" class="form-control coefficient-input coeff-tp" min="0" max="1" step="0.01" value="0.2">
+            </div>
+            <div class="coefficient-item">
+              <label class="form-label titles">Coeff de TD</label>
+              <input type="number" class="form-control coefficient-input coeff-td"  min="0" max="1" step="0.01" value="0.3">
+            </div>
+            
+           
+          </div>
+          <div class="alert alert-warning alert-coeff mt-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>La somme des coefficients doit être égale à 1.
+          </div>
+        </div> 
+        
+        <div class="professeurs-group">
+          <div class="coefficient-title"><i class="fas fa-chalkboard-teacher me-2"></i>Affectation des Professeurs</div>
+          <div class="row">
+            
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de Cours</label>
+              <select class="form-select prof-cours prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TD</label>
+              <select class="form-select prof-td prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-4">
+              <label class="form-label titles">Prof de TP</label>
+              <select class="form-select prof-tp prof-select">
+                <option value="">Aucun prof</option>
+              </select>
+            </div>
+            
+            
+          </div>
+        </div>
+      
+      <!-- Répartition du volume horaire par activité d’enseignement et d’évaluation -->
+      <div class="horaire-container">
+          <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par activité d’enseignement et d’évaluation</h6>
+          <div class="row">
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">Cours</label>
+            <input type="number" class="form-control form-control-sm small-input volume-cours" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TD</label>
+            <input type="number" class="form-control form-control-sm small-input volume-td" min="0" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label titles">TP</label>
+            <input type="number" class="form-control form-control-sm small-input volume-tp" min="0" value="0">
+          </div>
+          
+          
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Pratique</label>
+            <input type="number" class="form-control form-control-sm small-input volume-pratique" min="0" value="0">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label class="form-label titles">Évaluation</label>
+            <input type="number" class="form-control form-control-sm small-input volume-evaluation" min="0" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="horaire-container">
+        <h6 class="horaire-title"><i class="fas fa-clock me-2"></i>Répartition du volume horaire par mode d'enseignement :</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En présentiel</label>
+            <input type="number" class="form-control volume-presentiel" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">A distance</label>
+            <input type="number" class="form-control volume-distance" min="0" value="0">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label titles">En alternance</label>
+            <input type="number" class="form-control volume-alternance" min="0" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Variables globales
+    let allProfs = [];
+    let elementCounter = 0;
+    let moduleCounter = 0;
+    let currentEtape = 1;
+    let currentSemestre = 1;
+    let etapesCount = 0;
+    
+    // Charger les professeurs
+    function loadProfs() {
+      fetch(adminURL+'/admin2.php?action=GetAllProffessors')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            allProfs = data.data; // Ajoute tous les professeurs à ton tableau
+            populateProfessorDropdowns();
+          } else {
+            alert("Erreur: " + data.message);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          alert("Erreur lors du chargement des professeurs");
+          
+          // Données simulées pour la démonstration en cas d'erreur
+          allProfs = [
+            { id: 1, nom: "Dupont", prenom: "Jean" },
+            { id: 2, nom: "Martin", prenom: "Marie" },
+            { id: 3, nom: "Durand", prenom: "Pierre" },
+            { id: 4, nom: "Leroy", prenom: "Sophie" }
+          ];
+          
+          populateProfessorDropdowns();
+        });
+    }
+    
+    // Remplir les dropdowns des professeurs avec l'option "Aucun prof"
+    function populateProfessorDropdowns() {
+      
+      
+      // Remplir aussi les dropdowns des modules existants
+      document.querySelectorAll(' .prof-tp, .prof-td, .prof-cours').forEach(dropdown => {
+        // Garder l'option par défaut "Aucun prof"
+        while (dropdown.options.length > 1) {
+          dropdown.remove(1);
+        }
+        
+        // Ajouter les professeurs
+        allProfs.forEach(prof => {
+          const option = document.createElement('option');
+          option.value = prof.user_id;
+          option.textContent = `${prof.prenom} ${prof.nom}`;
+          dropdown.appendChild(option);
+        });
+      });
+    }
+    
+    // Remplir les dropdowns d'un élément spécifique
+    function populateElementDropdowns(elementContainer) {
+      const dropdowns = elementContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours');
+      
+      dropdowns.forEach(dropdown => {
+        // Garder l'option par défaut "Aucun prof"
+        while (dropdown.options.length > 1) {
+          dropdown.remove(1);
+        }
+        
+        // Ajouter les professeurs
+        allProfs.forEach(prof => {
+          const option = document.createElement('option');
+          option.value = prof.user_id;
+          option.textContent = `${prof.prenom} ${prof.nom}`;
+          dropdown.appendChild(option);
+        });
+      });
+    }
+      
+    // Vérifier que la somme des coefficients est égale à 1
+    function validateCoefficients(inputs, alertElement) {
+      let sum = 0;
+      inputs.forEach(input => {
+        sum += parseFloat(input.value) || 0;
+      });
+      
+      if (Math.abs(sum - 1) > 0.01) { // Tolérance de 0.01 pour les erreurs d'arrondi
+        alertElement.style.display = 'block';
+        return false;
+      } else {
+        alertElement.style.display = 'none';
+        return true;
+      }
+    }
+    
+    // Valider les coefficients d'un élément
+    function validateElementCoefficients(elementContainer) {
+      const coeffInputs = elementContainer.querySelectorAll('.coefficient-input');
+      const alertElement = elementContainer.querySelector('.alert-coeff');
+      return validateCoefficients(coeffInputs, alertElement);
+    }
+    
+    // Valider les coefficients du module
+    function validateModuleCoefficients(moduleContainer) {
+      const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+      const alertElement = moduleContainer.querySelector('.alert-coeff');
+      return validateCoefficients(coeffInputs, alertElement);
+    }
+    
+    // Valider la somme des coefficients de tous les éléments
+    function validateTotalElementCoefficients(moduleContainer) {
+      const elementCoeffInputs = moduleContainer.querySelectorAll('.element-coeff');
+      let total = 0;
+      
+      elementCoeffInputs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+      });
+      
+      const totalAlert = moduleContainer.querySelector('.total-coeff-alert');
+      
+      if (Math.abs(total - 1) > 0.01) {
+        totalAlert.style.display = 'block';
+        return false;
+      } else {
+        totalAlert.style.display = 'none';
+        return true;
+      }
+    }
+    
+    // Afficher une alerte toast
+    function showToast(message) {
+      const toastElement = document.getElementById('errorToast');
+      const toastMessage = document.getElementById('toastMessage');
+      
+      toastMessage.textContent = message;
+      
+      // Utiliser Bootstrap Toast si disponible, sinon une alerte simple
+      if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+      } else {
+        // Fallback si Bootstrap n'est pas disponible
+        toastElement.style.display = 'block';
+        setTimeout(() => {
+          toastElement.style.display = 'none';
+        }, 3000);
+      } 
+    }
+    
+    // Valider un module complet
+     function validateModule(moduleContainer) {
+      // MODIFICATION: Récupérer le bouton radio sélectionné avec le nom unique
+      const uniqueName = `hasElements-${moduleContainer.dataset.moduleId}`;
+      const selectedRadio = moduleContainer.querySelector(`input[name="${uniqueName}"]:checked`);
+      const hasElements = selectedRadio.value === 'yes';
+      
+      if (hasElements) {
+        // Valider chaque élément
+        const elementContainers = moduleContainer.querySelectorAll('.element-container');
+        let allElementsValid = true;
+        
+        elementContainers.forEach(container => {
+          if (!validateElementCoefficients(container)) {
+            allElementsValid = false;
+          }
+        });
+        
+        // Valider la somme totale des coefficients d'éléments
+        if (!validateTotalElementCoefficients(moduleContainer)) {
+          showToast("La somme des coefficients de tous les éléments doit être égale à 1.");
+          return false;
+        }
+        
+        if (!allElementsValid) {
+          showToast("Veuillez corriger les coefficients des éléments.");
+          return false;
+        }
+      } else {
+        // Valider les coefficients du module
+        if (!validateModuleCoefficients(moduleContainer)) {
+          showToast("La somme des coefficients du module doit être égale à 1.");
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    // Ajouter un nouvel élément
+    function addNewElement(moduleContainer) {
+      const template = document.getElementById('elementTemplate');
+      const newElement = template.content.cloneNode(true);
+      const elementContainer = newElement.querySelector('.element-container');
+      
+      // Ajouter un identifiant unique
+      elementContainer.dataset.elementId = ++elementCounter;
+      
+      // Configurer les écouteurs d'événements pour les coefficients
+      const coeffInputs = elementContainer.querySelectorAll('.coefficient-input');
+      coeffInputs.forEach(input => {
+        input.addEventListener('change', () => validateElementCoefficients(elementContainer));
+      });
+      
+      // Configurer l'écouteur pour le coefficient de l'élément
+      const elementCoeffInput = elementContainer.querySelector('.element-coeff');
+      elementCoeffInput.addEventListener('change', () => validateTotalElementCoefficients(moduleContainer));
+      
+      // Configurer le bouton de suppression
+      const removeBtn = elementContainer.querySelector('.btn-remove');
+      removeBtn.addEventListener('click', function() {
+        elementContainer.remove();
+        validateTotalElementCoefficients(moduleContainer);
+      });
+      
+      // Remplir les dropdowns des professeurs
+      populateElementDropdowns(elementContainer);
+      
+      // Ajouter au conteneur
+      moduleContainer.querySelector('.dynamic-elements-container').appendChild(newElement);
+      
+      // Valider les coefficients
+      validateElementCoefficients(elementContainer);
+      validateTotalElementCoefficients(moduleContainer);
+    }
+    
+    // Mettre à jour la numérotation des modules dans un semestre
+    function updateModuleNumbers(semestreContainer) {
+      const modules = semestreContainer.querySelectorAll('.module-card');
+      modules.forEach((module, index) => {
+        module.querySelector('.module-number').textContent = index + 1;
+      });
+    }
+    
+    // Ajouter un nouveau module
+     function addNewModule(semestreId) {
+      const template = document.getElementById('moduleTemplate');
+      const newModule = template.content.cloneNode(true);
+      const moduleContainer = newModule.querySelector('.module-card');
+      
+      // Ajouter un identifiant unique
+      moduleCounter++;
+      moduleContainer.dataset.moduleId = moduleCounter;
+      
+      // Remplir les dropdowns du module
+      if (moduleContainer) {
+        const profDropdowns = moduleContainer.querySelectorAll('.prof-tp, .prof-td, .prof-cours');
+        
+        if (profDropdowns && profDropdowns.length > 0) {
+          profDropdowns.forEach(dropdown => {
+            // Garder l'option par défaut
+            if (dropdown && dropdown.options) {
+              while (dropdown.options.length > 1) {
+                dropdown.remove(1);
+              }
+              
+              // Ajouter les professeurs
+              allProfs.forEach(prof => {
+                const option = document.createElement('option');
+                option.value = prof.user_id;
+                option.textContent = `${prof.prenom} ${prof.nom}`;
+                dropdown.appendChild(option);
+              });
+            }
+          });
+        }
+      }
+      
+      // MODIFICATION IMPORTANTE: Donner un nom unique aux boutons radio
+      const uniqueName = `hasElements-${moduleCounter}`;
+      const yesRadio = moduleContainer.querySelector('.has-elements-yes');
+      const noRadio = moduleContainer.querySelector('.has-elements-no');
+      
+      yesRadio.name = uniqueName;
+      noRadio.name = uniqueName;
+      
+      // Configurer les écouteurs d'événements pour les coefficients du module
+      const moduleCoeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+      moduleCoeffInputs.forEach(input => {
+        input.addEventListener('change', () => validateModuleCoefficients(moduleContainer));
+      });
+      
+      // Configurer le bouton de suppression
+      const removeBtn = moduleContainer.querySelector('.btn-remove');
+      removeBtn.addEventListener('click', function() {
+        moduleContainer.remove();
+        // Mettre à jour la numérotation après suppression
+        const semestreContainer = document.getElementById(semestreId);
+        updateModuleNumbers(semestreContainer);
+      });
+      
+      // Configurer les radios pour afficher/masquer les éléments
+      const elementRadios = moduleContainer.querySelectorAll(`input[name="${uniqueName}"]`);
+      elementRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          if (this.value === 'yes') {
+            moduleContainer.querySelector('.elements-main-container').style.display = 'block';
+            moduleContainer.querySelector('.module-coefficients').style.display = 'none';
+            // Ajouter le premier élément
+            if (moduleContainer.querySelector('.dynamic-elements-container').children.length === 0) {
+              addNewElement(moduleContainer);
+            }
+          } else {
+            moduleContainer.querySelector('.elements-main-container').style.display = 'none';
+            moduleContainer.querySelector('.module-coefficients').style.display = 'block';
+            // Vider le conteneur d'éléments
+            moduleContainer.querySelector('.dynamic-elements-container').innerHTML = '';
+          }
+        });
+      });
+      
+      // Configurer le bouton d'ajout d'élément
+      const addElementBtn = moduleContainer.querySelector('.add-element-btn');
+      addElementBtn.addEventListener('click', () => addNewElement(moduleContainer));
+      
+      // Ajouter au conteneur du semestre spécifié
+      const semestreContainer = document.getElementById(semestreId);
+      const modulesContainer = semestreContainer.querySelector('.modules-container');
+      modulesContainer.appendChild(newModule);
+      
+      // Mettre à jour la numérotation des modules
+      updateModuleNumbers(semestreContainer);
+      
+      // Valider les coefficients du module au chargement
+      validateModuleCoefficients(moduleContainer);
+    }
+
+    
+    // Créer la structure des étapes et semestres
+    function createEtapeSemestreStructure() {
+      const etapesContainer = document.getElementById('etapesContainer');
+      etapesContainer.innerHTML = '';
+      
+      // Déterminer le nombre d'étapes selon le cycle
+      const nombreSemestre = cyclesData[document.getElementById('cycle').value];  
+    
+      
+      // Créer les conteneurs pour chaque étape et semestre
+      for (let etape = 1; etape <= nombreSemestre/2; etape++) {
+        const etapeDiv = document.createElement('div');
+        etapeDiv.className = 'etape-container';
+        etapeDiv.innerHTML = `<h4 class="etape-title">Étape ${etape}</h4>`;
+        
+        for (let semestre = 1; semestre <= 2; semestre++) {
+          const semestreDiv = document.createElement('div');
+          semestreDiv.className = 'semestre-container';
+          semestreDiv.id = `semestre-${etape}-${semestre}`;
+          
+          // Ajouter le bouton pour ajouter des modules à ce semestre
+          semestreDiv.innerHTML = `
+            <div class="semestre-actions">
+              <h5 class="semestre-title">Semestre ${semestre}</h5>
+              <div>
+                <span class="semestre-toggle ms-2" data-semestre="semestre-${etape}-${semestre}">
+                  <i class="fas fa-chevron-up"></i>
+                </span>
+              </div>
+            </div>
+            <div class="semestre-content">
+              <div class="modules-container"></div>
+              <div class="add-module-btn-container">
+                <button type="button" class="btn btn-primary add-module-semestre-btn" data-semestre="semestre-${etape}-${semestre}">
+                  <i class="fas fa-plus me-1"></i>Ajouter Module
+                </button>
+              </div>
+            </div>
+          `;
+          
+          etapeDiv.appendChild(semestreDiv);
+        }
+        
+        etapesContainer.appendChild(etapeDiv);
+      }
+      
+      // Ajouter les écouteurs d'événements pour les boutons d'ajout de module par semestre
+      document.querySelectorAll('.add-module-semestre-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const semestreId = this.dataset.semestre;
+          addNewModule(semestreId);
+        });
+      });
+      
+      // Ajouter les écouteurs d'événements pour les boutons de toggle des semestres
+      document.querySelectorAll('.semestre-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+          const semestreId = this.dataset.semestre;
+          const semestreContainer = document.getElementById(semestreId);
+          semestreContainer.classList.toggle('semestre-closed');
+          
+          const icon = this.querySelector('i');
+          if (semestreContainer.classList.contains('semestre-closed')) {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+          } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+          }
+        });
+      });
+    }
+    
+    // Fonction pour annuler l'ajout des modules
+    function annulerAjoutModules() {
+      // Cacher le conteneur des modules
+      document.getElementById('modulesContainer').style.display = 'none';
+      
+      // Réafficher le bouton "Ajouter les modules"
+      document.getElementById('ajouterModulesBtn').style.display = 'block';
+      
+      // Vider le conteneur des étapes
+      document.getElementById('etapesContainer').innerHTML = '';
+    }
+    
+    // Fonction pour retourner à la liste des filières
+    function retourner() {
+      window.location.href = "filieres.html";
+    }
+    
+    // Helper to convert numeric-keyed objects to arrays, ignoring non-object keys like http_code
+    function objectToArray(obj) {
+      return Object.values(obj).filter(item => typeof item === 'object' && item !== null);
+    }
+    
+    // Générer les options d'années pour les selects d'accréditation
+    function populateYearDropdowns() {
+      const startYearSelect = document.getElementById('annee_debut_accreditation');
+      const endYearSelect = document.getElementById('annee_fin_accreditation');
+      
+      // Vider les selects
+      startYearSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+      endYearSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+      
+      // Ajouter les années (de 2000 à 2030)
+      const currentYear = new Date().getFullYear();
+      for (let year = 2000; year <= 2030; year++) {
+        const startOption = document.createElement('option');
+        startOption.value = year;
+        startOption.textContent = year;
+        startYearSelect.appendChild(startOption);
+        
+        const endOption = document.createElement('option');
+        endOption.value = year;
+        endOption.textContent = year;
+        endYearSelect.appendChild(endOption);
+      }
+      
+      // Définir les valeurs par défaut
+      startYearSelect.value = currentYear;
+      endYearSelect.value = currentYear + 5;
+    }
+   function setSelectValue(name, value, { container = document, triggerChange = false } = {}) {
+  // Look by id in the container first, then by class
+  let select = container.querySelector(`#${name}, select.${name}`);
+  if (!select) {
+    console.warn(`No <select> found with "${name}" inside`, container);
+    return null;
+  }
+
+  const trySet = () => {
+    const hasOption = Array.from(select.options).some(o => String(o.value) === String(value));
+    if (!hasOption) return false;
+
+    select.value = String(value);
+
+    if (triggerChange) {
+      select.dispatchEvent(new Event('input',  { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    return true;
+  };
+
+  if (trySet()) return select;
+
+  // Wait for dynamic options
+  const obs = new MutationObserver(() => {
+    if (trySet()) obs.disconnect();
+  });
+  obs.observe(select, { childList: true, subtree: true });
+
+  return select;
+}
+                let cyclesData = {};  
+
+    
+    
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+
+
+      // Fetch Professors
+      //       fetch(adminURL+`/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement&depart_id=${document.getElementById("departement").value}`)
+      //             .then(res => res.json())
+      //             .then(data => {
+                    
+      //               const filiereData =JSON.parse(localStorage.getItem("filiereToUpdate")) ;
+      //               const localChefId = filiereData.head_professor_id ;
+      //               const   localChefName =filiereData.nom_professeur_responsable;
+
+      //               // Add the chef from localStorage as a pre-selected option
+      //               if (localChefName && localChefId) {
+      //                 const option = document.createElement('option');
+      //                 option.value = localChefId;
+      //                 option.textContent = localChefName;
+      //                 option.selected = true; // force it selected
+      //                 profSelect.appendChild(option);
+      //               }
+      //               const profs = objectToArray(data);
+      //               profs.forEach(prof => {
+      //                 const option = document.createElement('option');
+      //                 option.value = prof.user_id;
+      //                 option.textContent = `${prof.nom} ${prof.prenom}`;
+      //                 profSelect.appendChild(option);
+      //               });
+      //             })
+      //             .catch(() => {
+      //               alert("Erreur lors du chargement des professeurs");
+      //             });
+      // // Charger les professeurs
+      loadProfs();
+      
+      // Remplir les selects d'années
+      // populateYearDropdowns();
+
+      // Fetch Annee
+      fetch(adminURL+'/admin2.php?action=YEARS')
+        .then(res => res.json())
+        .then(data => {
+          const annees = objectToArray(data);
+          annees.forEach(annee => {
+            const option = document.createElement('option');
+            option.value = annee.annee_id;
+            option.textContent = annee.annee_id;
+            document.getElementById('annee_fin_accreditation').appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des annees"));
+        
+      // Fetch Annee
+      fetch(adminURL+'/admin2.php?action=YEARS')
+        .then(res => res.json())
+        .then(data => {
+          const annees = objectToArray(data);
+          annees.forEach(annee => {
+            const option = document.createElement('option');
+            option.value = annee.annee_id;
+            option.textContent = annee.annee_id;
+            document.getElementById('annee_debut_accreditation').appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des annees"));
+
+    
+      
+      // Fetch Departments
+      fetch(adminURL+'/admin2.php?action=GetAllDepartment')
+        .then(res => res.json())
+        .then(data => {
+          const departs = objectToArray(data);
+          departs.forEach(depart => {
+            const option = document.createElement('option');
+            option.value = depart.department_id;
+            option.textContent = depart.nom;
+            document.getElementById('departement').appendChild(option);
+          });
+        })
+        .catch(() => alert("Erreur lors du chargement des departements"));
+
+      // Fetch Cycles
+      fetch(adminURL+'/admin2.php?action=GetAllCycle')
+          .then(res => res.json())
+          .then(data => {
+            const cycles = objectToArray(data);
+            cycles.forEach(cycle => {
+              cyclesData[cycle.cycle_id] = cycle.Nombre_semestre;
+
+              const option = document.createElement('option');
+              option.value = cycle.cycle_id;
+              option.textContent = cycle.nom;
+              document.getElementById('cycle').appendChild(option);
+            });
+          })
+          .catch(() => alert("Erreur lors du chargement des cycles"));
+      
+      document.getElementById('ajouterModulesBtn').addEventListener('click', function () {
+              displayMod();
+        
+              if(displayMod()){
+                  this.style.display = 'none';
+                } 
+        });
+
+        // 👉 Cycle : mise à jour quand on change
+        document.getElementById('cycle').addEventListener('change', function () {
+          // Seulement si le conteneur est déjà affiché (bouton cliqué une fois)
+          if (document.getElementById('modulesContainer').style.display === 'block') {
+            displayMod();
+          }
+        });
+      
+      // Configurer le bouton "Annuler l'ajout des modules"
+      document.getElementById('annulerModulesBtn').addEventListener('click', annulerAjoutModules);
+      
+      // Configurer le formulaire principal
+      document.getElementById('filiereForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        UpdateFiliere();
+      });
+
+      
+
+      const filiereStr = localStorage.getItem("filiereToUpdate");
+        if (filiereStr) {
+                const filiereData = JSON.parse(filiereStr);
+                console.log(filiereData);
+                const filedId=filiereData.field_id;
+                document.getElementById("nom").value = filiereData.nom_filiere ?? "";
+
+                // Utilise la fonction pour pré-sélectionner le bon texte
+                setSelectValue("annee_debut_accreditation", filiereData.annee_accreditation ?? "");
+                setSelectValue("annee_fin_accreditation", filiereData.annee_fin_accrediation ?? "");
+                setSelectValue("cycle", filiereData.cycle_id ?? "");
+                setSelectValue("statut", filiereData.status ?? "");
+                setSelectValue("departement", filiereData.department_id ?? "", { triggerChange: true });
+                setSelectValue("professeur", filiereData.head_professor_id ?? "");
+                // Dates
+                document.getElementById("date_debut_affectation").value = filiereData.debut_affectation ?? "";
+                document.getElementById("date_fin_affectation").value = filiereData.fin_affectation ?? "";
+                document.getElementById("diplome").value = filiereData.nom_diplome?? "";
+
+        }
+
+
+  
+    });
+    function displayMod() {
+        const cycleId = document.getElementById('cycle').value;
+        if (!cycleId) {
+          showToast("Veuillez d'abord sélectionner un cycle.");
+          return false;
+        }
+
+        // Rebuild la structure des étapes/semestres
+        createEtapeSemestreStructure();
+
+        // Afficher le conteneur
+        document.getElementById('modulesContainer').style.display = 'block';
+      }
+      
+
+      let profSelect=document.getElementById("professeur");
+    document.getElementById("departement").addEventListener('change',()=>{
+            fetch(adminURL+`/admin2.php?action=GetAllRegularProffessors&role=Chef_de_Departement&depart_id=${document.getElementById("departement").value}`)
+                  .then(res => res.json())
+                  .then(data => {
+                    console.log(data);
+                    const filiereData =JSON.parse(localStorage.getItem("filiereToUpdate")) ;
+                    const localChefId = filiereData.head_professor_id ;
+                    const   localChefName =filiereData.nom_professeur_responsable;
+                    profSelect.innerHTML = "";
+                   
+                    // Add the chef from localStorage as a pre-selected option
+                    if (localChefName && localChefId) {
+                      const option = document.createElement('option');
+                      option.value = localChefId;
+                      option.textContent = localChefName;
+                      option.selected = true; // force it selected
+                      profSelect.appendChild(option);
+                    }
+                    
+                    const profs = objectToArray(data);
+                    profs.forEach(prof => {
+                      const option = document.createElement('option');
+                      option.value = prof.user_id;
+                      option.textContent = `${prof.nom} ${prof.prenom}`;
+                      profSelect.appendChild(option);
+                    });
+                  })
+                  .catch(() => {
+                    alert("Erreur lors du chargement des professeurs");
+                  });
+      });
+
+    // Fonction pour collecter tous les volumes horaires
+    function collectAllVolumes() {
+      const volumesData = {
+        modules: [],
+        elements: []
+      };
+      
+      // Collecter les volumes pour les modules sans éléments
+      document.querySelectorAll('.module-card').forEach(moduleContainer => {
+        const hasElements = moduleContainer.querySelector('input[name="hasElements"]:checked').value === 'yes';
+        
+        if (!hasElements) {
+          const moduleId = moduleContainer.dataset.moduleId;
+          const moduleVolumes = {
+            moduleId: moduleId,
+            tp: moduleContainer.querySelector('.volume-tp').value,
+            td: moduleContainer.querySelector('.volume-td').value,
+            cours: moduleContainer.querySelector('.volume-cours').value,
+            pratique: moduleContainer.querySelector('.volume-pratique').value,
+            evaluation: moduleContainer.querySelector('.volume-evaluation').value,
+            presentiel: moduleContainer.querySelector('.volume-presentiel').value,
+            distance: moduleContainer.querySelector('.volume-distance').value,
+            alternance: moduleContainer.querySelector('.volume-alternance').value
+          };
+          volumesData.modules.push(moduleVolumes);
+        }
+      });
+      
+      // Collecter les volumes pour les éléments des modules avec éléments
+      document.querySelectorAll('.element-container').forEach(elementContainer => {
+        const elementId = elementContainer.dataset.elementId;
+        const moduleContainer = elementContainer.closest('.module-card');
+        const moduleId = moduleContainer.dataset.moduleId;
+        
+        const elementVolumes = {
+          moduleId: moduleId,
+          elementId: elementId,
+          tp: elementContainer.querySelector('.volume-tp').value,
+          td: elementContainer.querySelector('.volume-td').value,
+          cours: elementContainer.querySelector('.volume-cours').value,
+          pratique: elementContainer.querySelector('.volume-pratique').value,
+          evaluation: elementContainer.querySelector('.volume-evaluation').value,
+          presentiel: elementContainer.querySelector('.volume-presentiel').value,
+          distance: elementContainer.querySelector('.volume-distance').value,
+          alternance: elementContainer.querySelector('.volume-alternance').value
+        };
+        volumesData.elements.push(elementVolumes);
+      });
+      
+      return volumesData;
+    }
+
+    function handleServerResponse(response) {
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+          return response.json();
+      } else {
+          return response.text().then(text => {
+              // Si le serveur renvoie du HTML ou du texte, on essaie d'extraire le message d'erreur
+              const errorMatch = text.match(/<b>(.*?)<\/b>|<br\s*\/?>(.*)/i);
+              const errorMessage = errorMatch ? (errorMatch[1] || errorMatch[2] || text) : text;
+              
+              throw new Error(errorMessage.substring(0, 200)); // Limiter la longueur du message
+          });
+      }
+    }
+
+    function UpdateFiliere() {
+      const depart = document.getElementById('departement').value;
+      const prof = document.getElementById('professeur').value;
+      const cycle = document.getElementById('cycle').value;
+      const nom = document.getElementById('nom').value;
+      const diplome = document.getElementById('diplome').value;
+      const dateDebutAffectation = document.getElementById('date_debut_affectation').value;
+      const dateFinAffectation = document.getElementById('date_fin_affectation').value;
+      const anneeDebutAccreditation = document.getElementById('annee_debut_accreditation').value;
+      const anneeFinAccreditation = document.getElementById('annee_fin_accreditation').value;
+      const statut = document.getElementById('statut').value;
+
+      if (!depart || !prof || !cycle || !nom || !diplome || !dateDebutAffectation || !dateFinAffectation || !anneeDebutAccreditation || !anneeFinAccreditation || !statut) {
+          alert("Veuillez remplir tous les champs obligatoires.");
+          return;
+      }
+      // ✅ Vérifier cohérence dates d'affectation (YYYY-MM-DD se compare bien en string)
+      if (dateFinAffectation < dateDebutAffectation) {
+          alert("La date de fin d'affectation doit être postérieure à la date de début.");
+          return;
+      }
+
+      // ✅ Vérifier cohérence années d'accréditation (YYYY se compare aussi en string)
+      if (anneeFinAccreditation < anneeDebutAccreditation) {
+          alert("L'année de fin d'accréditation doit être postérieure à l'année de début.");
+          return;
+      }
+      const [deb1, fin1] = anneeDebutAccreditation.split("-").map(Number);
+      const [deb2, fin2] = anneeFinAccreditation.split("-").map(Number);
+
+      // Chaque période doit être correcte (2020 < 2021, etc.)
+      if (fin1 <= deb1) {
+          alert("La période d'accréditation est invalide.");
+          return;
+      }
+      if (fin2 <= deb2) {
+          alert("La période d'accréditation est invalide.");
+          return;
+      }
+
+      // La période de fin doit commencer après ou au moins la même année que celle de début
+      if (deb2 < deb1 || fin2 < fin1) {
+          alert("L'accréditation de fin doit être postérieure à l'accréditation de début.");
+          return;
+      }
+
+      // Valider tous les modules
+      let allModulesValid = true;
+      const moduleContainers = document.querySelectorAll('.module-card');
+      
+      
+      
+      moduleContainers.forEach(moduleContainer => {
+        if (!validateModule(moduleContainer)) {
+          allModulesValid = false;
+        }
+      });
+      
+      if (!allModulesValid) {
+        showToast("Veuillez corriger les erreurs dans les modules avant de continuer.");
+        return;
+      }
+      
+      // Récupérer les données des modules
+      const modules = [];
+      document.querySelectorAll('.module-card').forEach(moduleContainer => {
+        const semestreContainer = moduleContainer.closest('.semestre-container');
+        
+        // FIX: Check if semestreContainer exists
+        if (!semestreContainer) return;
+        
+        const semestreId = semestreContainer.id;
+        const match = semestreId.match(/semestre-(\d+)-(\d+)/);
+        
+        // FIX: Check if match is valid
+        if (!match) return;
+        
+        const [_, etape, semestre] = match;
+        
+        // Récupérer la valeur du bouton radio "hasElements"
+        const uniqueName = `hasElements-${moduleContainer.dataset.moduleId}`;
+        const selectedRadio = moduleContainer.querySelector(`input[name="${uniqueName}"]:checked`);
+        
+        // FIX: Check if selectedRadio exists
+        if (!selectedRadio) return;
+        
+        const hasElements = selectedRadio.value === 'yes';
+        
+                const moduleData = {
+                  code: moduleContainer.querySelector('.module-code').value,
+                  nom: moduleContainer.querySelector('.module-name').value,
+                  type: moduleContainer.querySelector('.module-type').value,
+                  has_elements: hasElements,
+                  etape: parseInt(etape),
+                  semestre: parseInt(semestre),
+                  elements: [],
+                  volume_tp: moduleContainer.querySelector('.volume-tp').value || 0,
+                  volume_td: moduleContainer.querySelector('.volume-td').value || 0,
+                  volume_cours: moduleContainer.querySelector('.volume-cours').value || 0,
+                  volume_pratique: moduleContainer.querySelector('.volume-pratique').value || 0,
+                  volume_evaluation: moduleContainer.querySelector('.volume-evaluation').value || 0,
+                  volume_presentiel: moduleContainer.querySelector('.volume-presentiel').value || 0,
+                  volume_distance: moduleContainer.querySelector('.volume-distance').value || 0,
+                  volume_alternance: moduleContainer.querySelector('.volume-alternance').value || 0
+              };
+              
+              // Si le module a des éléments
+              if (moduleData.has_elements) {
+                  moduleContainer.querySelectorAll('.element-container').forEach(elementContainer => {
+                      const elementData = {
+                            nom: elementContainer.querySelector('.element-name').value,
+                            coeff_element: elementContainer.querySelector('.element-coeff').value || 0,
+                            coeff_td: elementContainer.querySelector('.coeff-td').value || 0,
+                            coeff_tp: elementContainer.querySelector('.coeff-tp').value || 0,
+                            coeff_cc: elementContainer.querySelector('.coeff-cc').value || 0,
+                            coeff_projet: elementContainer.querySelector('.coeff-projet').value || 0,
+                            coeff_ecrit: elementContainer.querySelector('.coeff-ecrit').value || 0,
+
+                            // Professors
+                            Ref_prof_tp: elementContainer.querySelector('.prof-tp').value || null,
+                            Ref_prof_td: elementContainer.querySelector('.prof-td').value || null,
+                            Ref_prof_cours: elementContainer.querySelector('.prof-cours').value || null,
+
+                            //langue
+                            langue:elementContainer.querySelector('.element-langue').value,
+
+                            // Volumes
+                            horraire_tp: elementContainer.querySelector('.volume-tp').value || 0,
+                            horraire_td: elementContainer.querySelector('.volume-td').value || 0,
+                            horraire_cours: elementContainer.querySelector('.volume-cours').value || 0,
+                            horraire_activite_pratique: elementContainer.querySelector('.volume-pratique').value || 0,
+                            horraire_evaluation: elementContainer.querySelector('.volume-evaluation').value || 0,
+                            presentiel: elementContainer.querySelector('.volume-presentiel').value || 0,
+                            a_distance: elementContainer.querySelector('.volume-distance').value || 0,
+                            en_alternance: elementContainer.querySelector('.volume-alternance').value || 0
+                      };
+                      moduleData.elements.push(elementData);
+                  });
+              } else {
+                  // Si le module n'a pas d'éléments
+                  const coeffInputs = moduleContainer.querySelectorAll('.coefficient-input');
+                  moduleData.coeff_tp = coeffInputs[0]?.value || 0;
+                  moduleData.coeff_td = coeffInputs[1]?.value || 0;
+                  moduleData.coeff_ecrit = coeffInputs[2]?.value || 0;
+                  moduleData.coeff_cc = coeffInputs[3]?.value || 0;
+                  moduleData.coeff_element = 1; // ou un champ input si tu veux le laisser configurable
+                  moduleData.prof_tp = moduleContainer.querySelector('.prof-tp').value || null;
+                  moduleData.prof_td = moduleContainer.querySelector('.prof-td').value || null;
+                  moduleData.prof_cours = moduleContainer.querySelector('.prof-cours').value || null;
+                  moduleData.langue= moduleContainer.querySelector('.module-langue').value || null;
+
+
+              }
+
+              
+              modules.push(moduleData);
+          });
+      
+
+
+      const filiereStr = localStorage.getItem("filiereToUpdate");
+        if (filiereStr) {
+        const filiereData = JSON.parse(filiereStr);
+      console.log(filiereData);
+      const filedId=filiereData.field_id;
+
+      const data = {
+          fieldId:filedId,
+          nom,
+          depart_id: depart,
+          prof_id: prof,
+          cycle_id: cycle,
+          diplome,
+          date_debut_affectation: dateDebutAffectation,
+          date_fin_affectation: dateFinAffectation,
+          annee_debut_accreditation: anneeDebutAccreditation,
+          annee_fin_accreditation: anneeFinAccreditation,
+          statut,
+          modules
+      };
+      console.log(data);
+
+      fetch(adminURL+'/admin2.php?action=UpdateFiliere', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(data)
+      })
+      .then(handleServerResponse)
+      .then(result => {
+          if (result.message === "Filière modifié avec succès") {
+              window.location.href = "filieres.html";
+          } else {
+              console.log(result);
+              alert("Erreur : " + result.message);
+          }
+      })
+      .catch(error => {
+          console.error("Erreur détaillée:", error);
+          alert("Erreur lors de la modification de la filière: " + error.message);
+      });
+    }
+    }
+  </script>
+</body>
+</html>
