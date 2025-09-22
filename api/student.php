@@ -6,7 +6,7 @@ require_once __DIR__ . '/controllers/StudentController.php';
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-API-KEY");
-header("Access-Control-Allow-Credentials: true"); // Allow cookies
+header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 
 // Handle OPTIONS preflight request
@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header("HTTP/1.1 204 No Content");
     exit;
 }
+
 // Sanitize input parameters
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_SPECIAL_CHARS);
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
@@ -62,7 +63,7 @@ try {
             $etapeId = filter_input(INPUT_GET, 'etape_id', FILTER_VALIDATE_INT);
             $semesterId = filter_input(INPUT_GET, 'semester_id', FILTER_VALIDATE_INT);
             if (!$userId || !$etapeId || !$semesterId) {
-                throw new Exception('Missing user ID, etape ID or semester ID', 400);
+                throw new Exception('Missing user ID, etape ID, or semester ID', 400);
             }
             $controller->getAllNotesByUserIdAndEtapeAndSemester($userId, $etapeId, $semesterId);
             break;
@@ -90,7 +91,7 @@ try {
             if (!$userId || !$newPassword) {
                 throw new Exception('Missing user ID or new password', 400);
             }
-            $controller->changePassword($userId,$newPassword);
+            $controller->changePassword($userId, $newPassword);
             break;
 
         case 'getCycleOfStudent':
@@ -109,11 +110,17 @@ try {
             if (!$id) throw new Exception('Missing student ID', 400);
             $semesterId = filter_input(INPUT_GET, 'semester_id', FILTER_VALIDATE_INT);
             if (!$semesterId) throw new Exception('Missing semester ID', 400);
-            $controller->getNoteOfStudentBysemestre($id, $semesterId);
+            $controller->getNoteOfStudentBySemestre($id, $semesterId); // Fixed typo
             break;
-            
 
- 
+        case 'auth/logout':
+            session_destroy();
+            $response = new Response();
+            $response->send(200, [
+                'status' => 'success',
+                'message' => 'Déconnecté avec succès'
+            ]);
+            break;
 
         default:
             throw new Exception('Action non reconnue', 404);
@@ -122,10 +129,9 @@ try {
 } catch (Exception $e) {
     $code = $e->getCode();
     http_response_code((is_numeric($code) && $code >= 100 && $code < 600) ? (int)$code : 500);
-
     echo json_encode([
-        'error' => $e->getMessage(),
         'status' => 'error',
+        'message' => $e->getMessage(),
         'code' => $e->getCode()
     ]);
 }
