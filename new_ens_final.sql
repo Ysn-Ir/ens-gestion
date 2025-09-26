@@ -91,10 +91,10 @@ CREATE TABLE `cycles` (
 --
 
 INSERT INTO `cycles` (`cycle_id`, `nom`, `Nombre_semestre`) VALUES
-(1, 'DEUG', 2),
-(2, 'License', 2),
-(3, 'Master', 2),
-(4, 'Doctorat', 2);
+(1, 'DEUG', 4),
+(2, 'License', 6),
+(3, 'Master', 4),
+(4, 'Doctorat', 4);
 
 -- --------------------------------------------------------
 
